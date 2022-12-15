@@ -3,13 +3,23 @@ package de.drachenfels.gcontrl
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.widget.Button
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
+
 
 class MainActivity : AppCompatActivity() {
+
+    // TODO: make the variables configurable though the setup
+    private val serverURI = "tcp://mqtt.drachen-fels.de:1883"
+    private val clientId = "AndroidTraveler"
+    private val username = "traveler"
+    private val password = "traveler"
+
+    private val mqttServer = MQTTConnection()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -28,20 +38,27 @@ class MainActivity : AppCompatActivity() {
 
         val closeButton: Button = findViewById(R.id.closebutton)
         closeButton.setOnClickListener { closeDoor() }
+
+        mqttServer.connect(serverURI, clientId, username, password)
     }
 
     private fun openDoor() {
         if (isConnected()) {
             Toast.makeText(applicationContext, "open the door", Toast.LENGTH_LONG).show()
+            mqttServer.sendMessage("garage", "open")
         }
     }
 
     private fun closeDoor() {
         if (isConnected()) {
             Toast.makeText(applicationContext, "close the door", Toast.LENGTH_LONG).show()
+            mqttServer.sendMessage("garage", "close")
         }
     }
 
+    // check the if we have an internet connection
+
+    // TODO:move to connection class possibly rename
     private fun isConnected(): Boolean {
         var result = false
         val cm = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
