@@ -13,7 +13,7 @@ import androidx.appcompat.app.AppCompatActivity
 class MainActivity : AppCompatActivity() {
 
     // TODO: make the variables configurable though the setup
-    private val serverURI = "tcp://mqtt.drachen-fels.de:1883"
+    private val serverURI = "ssl://mqtt.drachen-fels.de:8883"
     private val clientId = "AndroidTraveler"
     private val username = "traveler"
     private val password = "traveler"
