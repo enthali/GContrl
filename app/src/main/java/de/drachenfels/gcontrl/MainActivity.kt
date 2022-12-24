@@ -4,7 +4,6 @@ import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.Bundle
-import android.util.Log
 import android.widget.Button
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -28,7 +27,9 @@ class MainActivity : AppCompatActivity() {
          *  Check if Internet connection is available
          *  to remind the user that we'll need an internet connection
          *  */
-        isConnected()
+        if (!isConnected()) {
+            Toast.makeText(applicationContext, "Network connection required !!", Toast.LENGTH_LONG).show()
+        }
 
         /**
          *  connect the buttons
@@ -39,26 +40,59 @@ class MainActivity : AppCompatActivity() {
         val closeButton: Button = findViewById(R.id.closebutton)
         closeButton.setOnClickListener { closeDoor() }
 
-        mqttServer.connect(serverURI, clientId, username, password)
     }
 
     private fun openDoor() {
         if (isConnected()) {
-            Toast.makeText(applicationContext, "open the door", Toast.LENGTH_LONG).show()
-            mqttServer.sendMessage("garage", "open")
+            if (mqttServer.connect(serverURI, clientId, username, password)) {
+                if (mqttServer.sendMessage("garage", "open")) {
+                    Toast.makeText(applicationContext, "opening the door", Toast.LENGTH_LONG).show()
+                }else{
+                    Toast.makeText(applicationContext, "command delivery failed", Toast.LENGTH_LONG).show()
+                }
+                mqttServer.disconnect()
+            } else {
+                Toast.makeText(
+                    applicationContext,
+                    "Server connection failed - please try again",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        } else {
+            Toast.makeText(
+                applicationContext,
+                "No network connection - please try again",
+                Toast.LENGTH_LONG
+            ).show()
         }
     }
 
     private fun closeDoor() {
         if (isConnected()) {
-            Toast.makeText(applicationContext, "close the door", Toast.LENGTH_LONG).show()
-            mqttServer.sendMessage("garage", "close")
+            if (mqttServer.connect(serverURI, clientId, username, password)) {
+                if (mqttServer.sendMessage("garage", "close")) {
+                    Toast.makeText(applicationContext, "closing the door", Toast.LENGTH_LONG).show()
+                }else{
+                    Toast.makeText(applicationContext, "command delivery failed", Toast.LENGTH_LONG).show()
+                }
+                mqttServer.disconnect()
+            } else {
+                Toast.makeText(
+                    applicationContext,
+                    "Server connection failed - please try again",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        } else {
+            Toast.makeText(
+                applicationContext,
+                "No network connection - please try again",
+                Toast.LENGTH_LONG
+            ).show()
         }
     }
 
     // check the if we have an internet connection
-
-    // TODO:move to connection class possibly rename
     private fun isConnected(): Boolean {
         var result = false
         val cm = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
@@ -70,14 +104,6 @@ class MainActivity : AppCompatActivity() {
                         capabilities.hasTransport(NetworkCapabilities.TRANSPORT_VPN) -> true
                 else -> false
             }
-        }
-        if (!result) {
-            Log.d(this.javaClass.name, "Internet connection NOT available")
-            Toast.makeText(
-                applicationContext,
-                "Internet connection NOT available",
-                Toast.LENGTH_LONG
-            ).show()
         }
         return result
     }

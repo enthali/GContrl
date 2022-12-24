@@ -10,7 +10,7 @@ class MQTTConnection {
 
     private var client: MqttClient? = null
 
-    fun connect(serverURI: String, clientId: String, username: String, password: String) {
+    fun connect(serverURI: String, clientId: String, username: String, password: String): Boolean {
         try {
             client = MqttClient(serverURI, clientId, null)
             client!!.setCallback(null)
@@ -32,12 +32,16 @@ class MQTTConnection {
                 javaClass.canonicalName,
                 "Connection attempt failed with reason code = " + e.reasonCode + ":" + e.cause
             )
+            return false
         }
-        //TODO: return a proper status
-        return
+        return true
     }
 
-    fun sendMessage(topic: String, payload: String) {
+    fun disconnect() {
+        client!!.disconnect()
+    }
+
+    fun sendMessage(topic: String, payload: String): Boolean {
         // Now, try to publish a message
         try {
             val message = MqttMessage()
@@ -47,13 +51,12 @@ class MQTTConnection {
             client!!.publish(tp, message)
         } catch (e: MqttException) {
             Log.d(javaClass.canonicalName, "Publish failed with reason code = " + e.reasonCode)
+            return false
         }
-        //TODO: return a proper status
-        return
+        return true
     }
 /*
-
-// TODO: install callback handling
+At this point mqtt call back function are not needed for this app
 
     fun connectionLost(cause: Throwable) {
         Log.d("MQTT", "MQTT Server connection lost" + cause.message)
@@ -67,6 +70,5 @@ class MQTTConnection {
         Log.d("MQTT", "Delivery complete")
     }
     */
-
 
 }
