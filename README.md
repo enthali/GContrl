@@ -1,5 +1,5 @@
-Garrage Door Opener
-This is the android app to the Drachen-Fels Garrage Door Opener.
+Garage Door Opener
+This is the android app to the Drachen-Fels Garage Door Opener System.
 
 System Setup
 
@@ -8,7 +8,7 @@ Raspberry Pi hosting
 - Mosquitto MQTT server
 - Node Red server
 
-MEROS Garrage Door Opener
+MEROS Garage Door Opener
 
 This app, sending commands via MQTT
 
