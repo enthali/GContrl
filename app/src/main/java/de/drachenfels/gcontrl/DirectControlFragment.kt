@@ -18,10 +18,10 @@ import de.drachenfels.gcontrl.databinding.FragmentDirectControlBinding
 
 /**
  * A simple [Fragment] subclass.
- * Use the [DirectControl.newInstance] factory method to
+ * Use the [DirectControlFragment.newInstance] factory method to
  * create an instance of this fragment.
  */
-class DirectControl : Fragment() {
+class DirectControlFragment : Fragment() {
     // TODO: Rename and change types of parameters
     // private var param1: String? = null
 
@@ -146,12 +146,12 @@ class DirectControl : Fragment() {
          * this fragment using the provided parameters.
          *
          * // @param param1 Parameter 1.
-         * @return A new instance of fragment DirectControl.
+         * @return A new instance of fragment DirectControlFragment.
          */
         // TODO: Rename and change types and number of parameters
         @JvmStatic
         fun newInstance(/*param1: String*/ ) =
-            DirectControl().apply {
+            DirectControlFragment().apply {
 //                arguments = Bundle().apply {
 //                    putString(ARG_PARAM1, param1)
 //                }
