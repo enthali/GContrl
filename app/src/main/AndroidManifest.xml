@@ -20,7 +20,10 @@
 
         <activity
             android:name=".MainActivity"
-            android:exported="true">
+            android:exported="true"
+            android:label="Remote Control"
+            android:theme="@style/Theme.GContrl"
+            >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -32,7 +35,9 @@
                 android:value="" />
         </activity>
 
-        <service android:name="org.eclipse.paho.android.service.MqttService" />
+        <service
+            android:name="org.eclipse.paho.android.service.MqttService"
+            />
     </application>
 
 </manifest>
