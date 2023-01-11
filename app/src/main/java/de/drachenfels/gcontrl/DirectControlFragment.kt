@@ -4,49 +4,43 @@ import android.content.Context.CONNECTIVITY_SERVICE
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.Bundle
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.fragment.app.Fragment
+import androidx.preference.PreferenceManager
 import de.drachenfels.gcontrl.databinding.FragmentDirectControlBinding
 
 
-// TODO: Rename parameter arguments, choose names that match
-// the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-// private const val ARG_PARAM1 = "param1"
-
 /**
- * A simple [Fragment] subclass.
- * Use the [DirectControlFragment.newInstance] factory method to
- * create an instance of this fragment.
+ * a fragment to control the garage door directly though two buttons "open" and "close"
  */
 class DirectControlFragment : Fragment() {
-    // TODO: Rename and change types of parameters
-    // private var param1: String? = null
 
-    // TODO: make the variables configurable though the setup
-    private val serverURI = "ssl://mqtt.drachen-fels.de:8883"
-    private val clientId = "AndroidTraveler"
-    private val username = "traveler"
-    private val password = "traveler"
+    // private variables - connection information
+    private lateinit var serverURI : String
+    private lateinit var clientId : String
+    private lateinit var username : String
+    private lateinit var password : String
 
-    private lateinit var mqttServer : MQTTConnection
+    //
+    private lateinit var mqttServer: MQTTConnection
 
     private var _binding: FragmentDirectControlBinding? = null
     private val binding get() = _binding!!
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-//        arguments?.let {
-//            param1 = it.getString(ARG_PARAM1)
-//        }
-        /**
-         *  Check if Internet connection is available
-         *  to remind the user that we'll need an internet connection
-         *  */
+
+        //  Check if Internet connection is available
+        //  to remind the user that we'll need an internet connection
         if (!isConnected()) {
-            Toast.makeText(activity?.applicationContext, "Network connection required !!", Toast.LENGTH_LONG).show()
+            Toast.makeText(
+                activity?.applicationContext,
+                "Network connection required !!",
+                Toast.LENGTH_LONG
+            ).show()
         }
         mqttServer = MQTTConnection()
     }
@@ -60,27 +54,65 @@ class DirectControlFragment : Fragment() {
 
         _binding = FragmentDirectControlBinding.inflate(inflater, container, false)
         return binding.root
-   }
+    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        /**
-         *  connect the buttons
-         *  */
+        // connect the buttons
         binding.openbutton.setOnClickListener { openDoor() }
 
         binding.closebutton.setOnClickListener { closeDoor() }
 
     }
 
+    /**
+     * onStart() is called each time the fragment comes back into focus
+     * the best place to reset the private variables from the preferences
+     */
+    override fun onStart() {
+
+        val sharedPreferences =
+            context?.let { PreferenceManager.getDefaultSharedPreferences(it /* Activity context */) }
+
+        // compile the server URI
+        serverURI = if (sharedPreferences?.getBoolean("ssl", false) == true) {
+            "ssl://"
+        } else {
+            "tcp://"
+        }
+        serverURI = serverURI.plus(sharedPreferences?.getString("uri", "").toString())
+        serverURI = serverURI.plus(":")
+        serverURI = serverURI.plus(sharedPreferences?.getString("port", "").toString())
+
+        // get the clientId
+        clientId = sharedPreferences?.getString("clientId", "").toString()
+        // get the user name
+        username = sharedPreferences?.getString("user", "").toString()
+        // get the user password
+        password = sharedPreferences?.getString("password", "").toString()
+
+        super.onStart()
+    }
+
+    /**
+     * sent the open command to the MQTT server
+     */
     private fun openDoor() {
         if (isConnected()) {
             if (mqttServer.connect(serverURI, clientId, username, password)) {
                 if (mqttServer.sendMessage("garage", "open")) {
-                    Toast.makeText(activity?.applicationContext, "opening the door", Toast.LENGTH_LONG).show()
-                }else{
-                    Toast.makeText(activity?.applicationContext, "command delivery failed", Toast.LENGTH_LONG).show()
+                    Toast.makeText(
+                        activity?.applicationContext,
+                        "opening the door",
+                        Toast.LENGTH_LONG
+                    ).show()
+                } else {
+                    Toast.makeText(
+                        activity?.applicationContext,
+                        "command delivery failed",
+                        Toast.LENGTH_LONG
+                    ).show()
                 }
                 mqttServer.disconnect()
             } else {
@@ -99,13 +131,24 @@ class DirectControlFragment : Fragment() {
         }
     }
 
+    /**
+     * send the close command to the MQTT server
+     */
     private fun closeDoor() {
         if (isConnected()) {
             if (mqttServer.connect(serverURI, clientId, username, password)) {
                 if (mqttServer.sendMessage("garage", "close")) {
-                    Toast.makeText(activity?.applicationContext, "closing the door", Toast.LENGTH_LONG).show()
-                }else{
-                    Toast.makeText(activity?.applicationContext, "command delivery failed", Toast.LENGTH_LONG).show()
+                    Toast.makeText(
+                        activity?.applicationContext,
+                        "closing the door",
+                        Toast.LENGTH_LONG
+                    ).show()
+                } else {
+                    Toast.makeText(
+                        activity?.applicationContext,
+                        "command delivery failed",
+                        Toast.LENGTH_LONG
+                    ).show()
                 }
                 mqttServer.disconnect()
             } else {
@@ -124,7 +167,9 @@ class DirectControlFragment : Fragment() {
         }
     }
 
-    // check the if we have an internet connection
+    /**
+     * check if there is access to the internet
+     */
     private fun isConnected(): Boolean {
         var result = false
         val cm = activity?.getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
@@ -138,23 +183,5 @@ class DirectControlFragment : Fragment() {
             }
         }
         return result
-    }
-
-    companion object {
-        /**
-         * Use this factory method to create a new instance of
-         * this fragment using the provided parameters.
-         *
-         * // @param param1 Parameter 1.
-         * @return A new instance of fragment DirectControlFragment.
-         */
-        // TODO: Rename and change types and number of parameters
-        @JvmStatic
-        fun newInstance(/*param1: String*/ ) =
-            DirectControlFragment().apply {
-//                arguments = Bundle().apply {
-//                    putString(ARG_PARAM1, param1)
-//                }
-           }
     }
 }

@@ -10,7 +10,6 @@ import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupActionBarWithNavController
 import de.drachenfels.gcontrl.databinding.ActivityMainBinding
 
-
 class MainActivity : AppCompatActivity() {
 
     private lateinit var appBarConfiguration: AppBarConfiguration
@@ -21,20 +20,21 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
+        // bind the activity main
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
+        // activate the action bar
         setSupportActionBar(binding.toolbar)
 
-
+        // get the nav host running
         val navHostController = supportFragmentManager
             .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
 
+        // set the variables for navController and appBarConfiguration
         navController = navHostController.navController
         appBarConfiguration = AppBarConfiguration(navController.graph)
 
-
+        // get the appBar up and running
         setupActionBarWithNavController(navController, appBarConfiguration)
 
     }

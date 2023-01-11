@@ -1,38 +1,46 @@
-<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
+<PreferenceScreen
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android"
     >
 
-    <PreferenceCategory app:title="MQTT Server Connection">
+    <PreferenceCategory android:title="MQTT Server Connection">
 
         <EditTextPreference
-            app:key="url"
-            app:title="MQTT server URL"
+            app:key="uri"
+            app:defaultValue="mqtt.drachen-fels.de"
+            app:title="MQTT server URI"
             app:useSimpleSummaryProvider="true" />
 
         <EditTextPreference
             app:key="port"
+            app:defaultValue="8883"
             app:title="MQTT server Port"
             app:useSimpleSummaryProvider="true" />
 
         <SwitchPreferenceCompat
             app:key="ssl"
+            app:defaultValue="true"
             app:title="Use transport layer encryption (SSL)" />
     </PreferenceCategory>
 
-    <PreferenceCategory app:title="User Settings">
+    <PreferenceCategory android:title="User Settings">
 
         <EditTextPreference
             app:key="clientId"
+            app:defaultValue="AndroidTraveler"
             app:title="Device ID"
             app:useSimpleSummaryProvider="true" />
 
         <EditTextPreference
             app:key="user"
+            app:defaultValue="traveler"
             app:title="User"
             app:useSimpleSummaryProvider="true" />
 
         <EditTextPreference
-            app:key="change_password_key"
-            app:title="Change Password"
+            app:key="password"
+            app:title="Password"
+            app:defaultValue="traveler"
             app:persistent="true"
             app:useSimpleSummaryProvider="true" />
 
