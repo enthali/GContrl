@@ -16,7 +16,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var navController: NavController
 
-//    private late init var appBarConfiguration: AppBarConfiguration
+    //    private late init var appBarConfiguration: AppBarConfiguration
     private lateinit var binding: ActivityMainBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -28,7 +28,6 @@ class MainActivity : AppCompatActivity() {
         setSupportActionBar(binding.toolbar)
 
 
-
         val navHostController = supportFragmentManager
             .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
 
@@ -36,7 +35,7 @@ class MainActivity : AppCompatActivity() {
         appBarConfiguration = AppBarConfiguration(navController.graph)
 
 
-        setupActionBarWithNavController(navController,appBarConfiguration)
+        setupActionBarWithNavController(navController, appBarConfiguration)
 
     }
 
@@ -50,17 +49,21 @@ class MainActivity : AppCompatActivity() {
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
-//        return when (item.itemId) {
-//            R.id.action_settings -> true
-//            else -> super.onOptionsItemSelected(item)
-//        }
-
-        // TODO something's wrong here. Shouldn't this be done in the Fragment ?
-        navController.navigate(R.id.action_directControl_to_settingsFragment)
-
-        return true
+        return when (item.itemId) {
+            R.id.action_settings -> {
+                // Dont go to settings if the settingsFragment is already in focus
+                if (navController.currentDestination?.id == R.id.settingsFragment) {
+                    // nothing to do here
+                    return true
+                } else {
+                    // lets to to settings
+                    navController.navigate(R.id.settingsFragment)
+                    return true
+                }
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
     }
-
 
     override fun onSupportNavigateUp(): Boolean {
         return navController.navigateUp() || super.onSupportNavigateUp()

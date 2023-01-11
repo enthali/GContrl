@@ -33,7 +33,6 @@
         <EditTextPreference
             app:key="change_password_key"
             app:title="Change Password"
-            app:inputType="textPassword"
             app:persistent="true"
             app:useSimpleSummaryProvider="true" />
 
