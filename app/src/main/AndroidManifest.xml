@@ -15,7 +15,7 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_gc_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.GContrl.NoActionBar"
+        android:theme="@style/Theme.GContrl"
         tools:targetApi="31">
 
         <activity
