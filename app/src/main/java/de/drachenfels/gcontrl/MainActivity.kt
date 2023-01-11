@@ -50,7 +50,7 @@ class MainActivity : AppCompatActivity() {
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         return when (item.itemId) {
-            R.id.action_settings -> {
+            R.id.action_preferences -> {
                 // Dont go to settings if the settingsFragment is already in focus
                 if (navController.currentDestination?.id == R.id.settingsFragment) {
                     // nothing to do here

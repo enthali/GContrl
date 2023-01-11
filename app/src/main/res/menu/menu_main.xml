@@ -5,9 +5,12 @@
     tools:context="de.drachenfels.gcontrl.MainActivity">
 
     <item
-        android:id="@+id/action_settings"
+        android:id="@+id/action_preferences"
         android:orderInCategory="100"
         android:title="@string/settings"
         android:icon="@drawable/ic_setup"
         app:showAsAction="always" />
+    <item
+        android:id="@+id/action_test_preferences"
+        android:title="test preferences" />
 </menu>

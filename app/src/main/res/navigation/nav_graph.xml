@@ -13,6 +13,6 @@
         tools:layout="@layout/fragment_direct_control" />
     <fragment
         android:id="@+id/settingsFragment"
-        android:name="de.drachenfels.gcontrl.SettingsFragment"
+        android:name="de.drachenfels.gcontrl.PreferencesFragment"
         android:label="@string/title_activity_settings" />
 </navigation>
