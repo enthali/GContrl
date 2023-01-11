@@ -11,8 +11,8 @@ android {
         applicationId "de.drachenfels.gcontrl"
         minSdk 23
         targetSdk 33
-        versionCode 5
-        versionName "preference release"
+        versionCode 8
+        versionName "Preferences"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
