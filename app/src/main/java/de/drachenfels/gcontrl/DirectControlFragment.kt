@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.preference.PreferenceManager
@@ -89,7 +90,8 @@ class DirectControlFragment : Fragment() {
             "ssl://"
         } else {
             "tcp://"
-        }.plus(sharedPreferences?.getString("uri", "").toString()).plus(":")
+        }.plus(sharedPreferences?.getString("uri", "").toString())
+            .plus(":")
             .plus(sharedPreferences?.getString("port", "").toString())
 
         // get the clientId
@@ -98,6 +100,12 @@ class DirectControlFragment : Fragment() {
         username = sharedPreferences?.getString("user", "").toString()
         // get the user password
         password = sharedPreferences?.getString("password", "").toString()
+
+        if (sharedPreferences?.getBoolean("enable_location_features",false)==true) {
+            (binding.controlTableLayout.layoutParams as LinearLayout.LayoutParams).weight = 1.0f
+        } else {
+            (binding.controlTableLayout.layoutParams as LinearLayout.LayoutParams).weight = 0.0f
+        }
     }
 
     /**
