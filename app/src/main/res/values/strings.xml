@@ -7,4 +7,11 @@
     <string name="settings">Settings</string>
     <string name="home">Home</string>
     <string name="car">Car</string>
+    <string name="en_loc_features">Enable Location based Features</string>
+    <string name="password">Password</string>
+    <string name="user">User</string>
+    <string name="device_id">Device ID</string>
+    <string name="use_ssl">Use transport layer encryption (SSL)</string>
+    <string name="mqtt_port">MQTT server Port</string>
+    <string name="mqtt_uri">MQTT server URI</string>
 </resources>

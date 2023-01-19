@@ -8,19 +8,19 @@
         <EditTextPreference
             app:key="uri"
             app:defaultValue="mqtt.drachen-fels.de"
-            app:title="MQTT server URI"
+            app:title="@string/mqtt_uri"
             app:useSimpleSummaryProvider="true" />
 
         <EditTextPreference
             app:key="port"
             app:defaultValue="8883"
-            app:title="MQTT server Port"
+            app:title="@string/mqtt_port"
             app:useSimpleSummaryProvider="true" />
 
         <SwitchPreferenceCompat
             app:key="ssl"
             app:defaultValue="true"
-            app:title="Use transport layer encryption (SSL)" />
+            app:title="@string/use_ssl" />
     </PreferenceCategory>
 
     <PreferenceCategory android:title="User Settings">
@@ -28,18 +28,18 @@
         <EditTextPreference
             app:key="clientId"
             app:defaultValue="AndroidTraveler"
-            app:title="Device ID"
+            app:title="@string/device_id"
             app:useSimpleSummaryProvider="true" />
 
         <EditTextPreference
             app:key="user"
             app:defaultValue="traveler"
-            app:title="User"
+            app:title="@string/user"
             app:useSimpleSummaryProvider="true" />
 
         <EditTextPreference
             app:key="password"
-            app:title="Password"
+            app:title="@string/password"
             app:defaultValue="traveler"
             app:persistent="true"
             app:useSimpleSummaryProvider="true" />
@@ -50,7 +50,7 @@
         <SwitchPreference
             android:defaultValue="false"
             android:key="enable_location_features"
-            android:title="enable_loc_features" />
+            android:title="@string/en_loc_features" />
     </PreferenceCategory>
 
 </PreferenceScreen>
