@@ -45,5 +45,12 @@
             app:useSimpleSummaryProvider="true" />
 
     </PreferenceCategory>
+    <PreferenceCategory android:title="Geo Location Servicess">
+
+        <SwitchPreference
+            android:defaultValue="false"
+            android:key="enable_location_features"
+            android:title="enable_loc_features" />
+    </PreferenceCategory>
 
 </PreferenceScreen>
