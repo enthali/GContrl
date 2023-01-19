@@ -19,10 +19,10 @@ import de.drachenfels.gcontrl.databinding.FragmentDirectControlBinding
 class DirectControlFragment : Fragment() {
 
     // private variables - connection information
-    private lateinit var serverURI : String
-    private lateinit var clientId : String
-    private lateinit var username : String
-    private lateinit var password : String
+    private lateinit var serverURI: String
+    private lateinit var clientId: String
+    private lateinit var username: String
+    private lateinit var password: String
 
     //
     private lateinit var mqttServer: MQTTConnection
@@ -71,7 +71,16 @@ class DirectControlFragment : Fragment() {
      * the best place to reset the private variables from the preferences
      */
     override fun onStart() {
+        super.onStart()
+        getPreferences()
+    }
 
+    override fun onResume() {
+        super.onResume()
+        getPreferences()
+    }
+
+    private fun getPreferences() {
         val sharedPreferences =
             context?.let { PreferenceManager.getDefaultSharedPreferences(it /* Activity context */) }
 
@@ -80,10 +89,8 @@ class DirectControlFragment : Fragment() {
             "ssl://"
         } else {
             "tcp://"
-        }
-        serverURI = serverURI.plus(sharedPreferences?.getString("uri", "").toString())
-        serverURI = serverURI.plus(":")
-        serverURI = serverURI.plus(sharedPreferences?.getString("port", "").toString())
+        }.plus(sharedPreferences?.getString("uri", "").toString()).plus(":")
+            .plus(sharedPreferences?.getString("port", "").toString())
 
         // get the clientId
         clientId = sharedPreferences?.getString("clientId", "").toString()
@@ -91,8 +98,6 @@ class DirectControlFragment : Fragment() {
         username = sharedPreferences?.getString("user", "").toString()
         // get the user password
         password = sharedPreferences?.getString("password", "").toString()
-
-        super.onStart()
     }
 
     /**
