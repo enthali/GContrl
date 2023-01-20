@@ -1,5 +1,7 @@
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+<PreferenceScreen
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    >
 
     <PreferenceCategory android:title="Geo Location Servicess">
 
@@ -14,6 +16,11 @@
             android:singleLine="true"
             android:title="Geofence size"
             app:summary="A circle around the home location that defines the area in which the automatic door control and direct control buttons will be functional. A reasonable value is between 50 and 200 m" />
+        <Preference
+            android:title="@string/prf_setHomeLocation"
+            android:key="geo_setHomeLocation"
+            app:summary="Setting the home location to the current location"
+            />
         <SwitchPreference
             android:defaultValue="true"
             android:key="geo_enable_protect"
