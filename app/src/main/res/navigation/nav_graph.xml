@@ -14,5 +14,9 @@
     <fragment
         android:id="@+id/settingsFragment"
         android:name="de.drachenfels.gcontrl.PreferencesFragment"
-        android:label="@string/title_activity_settings" />
+        android:label="@string/preferences" >
+        <action
+            android:id="@+id/action_settingsFragment_self"
+            app:destination="@id/settingsFragment" />
+    </fragment>
 </navigation>

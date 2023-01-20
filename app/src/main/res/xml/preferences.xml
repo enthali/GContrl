@@ -1,56 +1,75 @@
-<PreferenceScreen
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    >
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <PreferenceCategory android:title="MQTT Server Connection">
-
-        <EditTextPreference
-            app:key="uri"
-            app:defaultValue="mqtt.drachen-fels.de"
-            app:title="@string/mqtt_uri"
-            app:useSimpleSummaryProvider="true" />
-
-        <EditTextPreference
-            app:key="port"
-            app:defaultValue="8883"
-            app:title="@string/mqtt_port"
-            app:useSimpleSummaryProvider="true" />
-
-        <SwitchPreferenceCompat
-            app:key="ssl"
-            app:defaultValue="true"
-            app:title="@string/use_ssl" />
-    </PreferenceCategory>
-
-    <PreferenceCategory android:title="User Settings">
-
-        <EditTextPreference
-            app:key="clientId"
-            app:defaultValue="AndroidTraveler"
-            app:title="@string/device_id"
-            app:useSimpleSummaryProvider="true" />
-
-        <EditTextPreference
-            app:key="user"
-            app:defaultValue="traveler"
-            app:title="@string/user"
-            app:useSimpleSummaryProvider="true" />
-
-        <EditTextPreference
-            app:key="password"
-            app:title="@string/password"
-            app:defaultValue="traveler"
-            app:persistent="true"
-            app:useSimpleSummaryProvider="true" />
-
-    </PreferenceCategory>
     <PreferenceCategory android:title="Geo Location Servicess">
 
         <SwitchPreference
             android:defaultValue="false"
             android:key="enable_location_features"
-            android:title="@string/en_loc_features" />
+            android:title="@string/prf_en_loc_features" />
+        <EditTextPreference
+            android:defaultValue="50"
+            android:key="geo_fence_size"
+            android:selectAllOnFocus="true"
+            android:singleLine="true"
+            android:title="Geofence size"
+            app:summary="A circle around the home location that defines the area in which the automatic door control and direct control buttons will be functional. A reasonable value is between 50 and 200 m" />
+        <SwitchPreference
+            android:defaultValue="true"
+            android:key="geo_enable_protect"
+            android:title="Geofence direct control"
+            app:summary="Activates the direct control buttons only when you are at home." />
+        <SwitchPreference
+            android:defaultValue="true"
+            android:key="geo_autocontrol"
+            android:title="Automatic Door Control"
+            app:summary="Activates the automatic opening of the garage door when you come home, and close when you leave" />
+    </PreferenceCategory>
+    <PreferenceCategory android:title="MQTT Server Connection">
+
+        <EditTextPreference
+            app:defaultValue="mqtt.drachen-fels.de"
+            app:key="uri"
+            app:title="@string/prf_mqtt_uri"
+            app:useSimpleSummaryProvider="true" />
+
+        <EditTextPreference
+            app:defaultValue="8883"
+            app:key="port"
+            app:summary="The port address under which the MQTT server can be reachetd. The default ports are 8883 for SSL connections and 1833 for non secured connections (your setting might differ)"
+            app:title="@string/prf_mqtt_port"
+            app:useSimpleSummaryProvider="false" />
+
+        <SwitchPreference
+            app:defaultValue="true"
+            app:key="ssl"
+            app:summary="MQTT can use secure socket layer communications. Enabling encrypts the MQTT messages over the public internet. If the server side supports SSL it's recomeded to turn this feature on"
+            app:title="@string/prf_use_ssl" />
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="User Settings">
+
+        <EditTextPreference
+            app:defaultValue="AndroidTraveler"
+            app:key="clientId"
+            app:title="@string/prf_device_id"
+            app:useSimpleSummaryProvider="true" />
+
+        <EditTextPreference
+            app:defaultValue="traveler"
+            app:key="user"
+            app:summary="The user acount name for the MQTT server access"
+            app:title="@string/prf_user"
+            app:useSimpleSummaryProvider="false" />
+
+        <EditTextPreference
+            app:defaultValue="traveler"
+            app:key="password"
+            app:persistent="true"
+            app:summary="The password of the user at the MQTT server"
+            app:title="@string/prf_password"
+            app:useSimpleSummaryProvider="false" />
+
     </PreferenceCategory>
 
 </PreferenceScreen>
