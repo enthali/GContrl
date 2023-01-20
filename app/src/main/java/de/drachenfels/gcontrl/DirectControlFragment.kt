@@ -27,6 +27,7 @@ class DirectControlFragment : Fragment() {
 
     //
     private lateinit var mqttServer: MQTTConnection
+    private lateinit var geoService: GeoServices
 
     private var _binding: FragmentDirectControlBinding? = null
     private val binding get() = _binding!!
@@ -44,6 +45,7 @@ class DirectControlFragment : Fragment() {
             ).show()
         }
         mqttServer = MQTTConnection()
+        geoService = GeoServices(activity)
     }
 
     override fun onCreateView(
@@ -101,7 +103,7 @@ class DirectControlFragment : Fragment() {
         // get the user password
         password = sharedPreferences?.getString("password", "").toString()
 
-        if (sharedPreferences?.getBoolean("enable_location_features",false)==true) {
+        if (sharedPreferences?.getBoolean("enable_location_features", false) == true) {
             (binding.controlTableLayout.layoutParams as LinearLayout.LayoutParams).weight = 1.0f
         } else {
             (binding.controlTableLayout.layoutParams as LinearLayout.LayoutParams).weight = 0.0f
