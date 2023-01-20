@@ -11,6 +11,7 @@ import android.provider.Settings
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.preference.PreferenceManager
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import java.util.*
@@ -49,33 +50,40 @@ class GeoServices(_appActivity: Activity?) {
      */
     @SuppressLint("MissingPermission")
     private fun getLocation() {
-        // check if location access is permitted by the user
-        if (checkPermissions()) {
-            // check if the location service is enabled on the device
-            if (isLocationEnabled()) {
-                // get the last known location and execute setLocation()
-                mFusedLocationClient.lastLocation.addOnCompleteListener { task ->
-                    //   val lastLoc: Location = task.result
-                    currentLocation = task.result
-                    Toast.makeText(
-                        appActivity,
-                        "latitude : ".plus(currentLocation.latitude.toString()),
-                        Toast.LENGTH_LONG
-                    ).show()
+        if (geoServies()) {
+            // check if location access is permitted by the user
+            if (checkPermissions()) {
+                // check if the location service is enabled on the device
+                if (isLocationEnabled()) {
+                    // get the last known location and execute setLocation()
+                    mFusedLocationClient.lastLocation.addOnCompleteListener { task ->
+                        //   val lastLoc: Location = task.result
+                        currentLocation = task.result
+                        Toast.makeText(
+                            appActivity,
+                            "latitude : ".plus(currentLocation.latitude.toString()),
+                            Toast.LENGTH_LONG
+                        ).show()
 //                    setLocation(task.result)
+                    }
+                } else {
+                    // request the user to turn on the location service on his device
+                    Toast.makeText(appActivity, "Please turn on location", Toast.LENGTH_LONG).show()
+                    val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+                    //                startActivity(intent)
+                    appActivity.startActivity(intent)
+
                 }
             } else {
-                // request the user to turn on the location service on his device
-                Toast.makeText(appActivity, "Please turn on location", Toast.LENGTH_LONG).show()
-                val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
-                //                startActivity(intent)
-                appActivity.startActivity(intent)
-
+                // ask the user to allow permission
+                requestPermissions()
             }
-        } else {
-            // ask the user to allow permission
-            requestPermissions()
         }
+    }
+
+    private fun geoServies(): Boolean {
+        val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(appActivity)
+        return sharedPreferences?.getBoolean("enable_location_features", false) == true
     }
 
 //    /**

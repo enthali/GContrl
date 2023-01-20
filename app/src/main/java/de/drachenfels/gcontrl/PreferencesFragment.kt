@@ -3,10 +3,7 @@ package de.drachenfels.gcontrl
 import android.os.Bundle
 import android.text.InputType
 import androidx.navigation.fragment.findNavController
-import androidx.preference.EditTextPreference
-import androidx.preference.PreferenceFragmentCompat
-import androidx.preference.PreferenceManager
-import androidx.preference.SwitchPreference
+import androidx.preference.*
 
 
 class PreferencesFragment : PreferenceFragmentCompat() {
@@ -24,6 +21,10 @@ class PreferencesFragment : PreferenceFragmentCompat() {
 
         val geoServiceEnabled: SwitchPreference? = findPreference("enable_location_features")
         geoServiceEnabled?.setOnPreferenceClickListener { refreshFragment() }
+
+        val geoSetHomeLocation: Preference? = findPreference("geo_setHomeLocation")
+        geoSetHomeLocation?.isVisible =
+            sharedPreferences?.getBoolean("enable_location_features", false) == true
 
         val geoFenceSize: EditTextPreference? = findPreference("geo_fence_size")
         geoFenceSize?.isVisible =

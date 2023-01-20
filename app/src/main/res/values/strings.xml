@@ -13,4 +13,5 @@
     <string name="prf_mqtt_port">MQTT server Port</string>
     <string name="prf_mqtt_uri">MQTT server URI</string>
     <string name="geo_distance_from_home">distance from home :</string>
+    <string name="prf_setHomeLocation">Set Home Location</string>
 </resources>
