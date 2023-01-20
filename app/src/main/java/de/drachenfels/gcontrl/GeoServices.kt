@@ -14,6 +14,7 @@ import androidx.core.app.ActivityCompat
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import java.util.*
+import java.util.concurrent.TimeUnit
 
 class GeoServices(_appActivity: Activity?) {
 
@@ -28,10 +29,18 @@ class GeoServices(_appActivity: Activity?) {
     private lateinit var currentLocation: Location
 
     // the location is updated every now and then
-    private var locationPullTime = 1
+    private var locationPollTime: Long = 10
 
     init {
-        getLocation()
+        Timer().scheduleAtFixedRate(
+            object : TimerTask() {
+                override fun run() {
+                    getLocation()
+                }
+            },
+            0,
+            TimeUnit.SECONDS.toMillis(locationPollTime)
+        ) //put here time 1000 milliseconds=1 second
     }
 
     /**
