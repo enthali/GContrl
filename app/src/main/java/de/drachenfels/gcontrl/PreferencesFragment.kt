@@ -2,7 +2,7 @@ package de.drachenfels.gcontrl
 
 import android.os.Bundle
 import android.text.InputType
-import androidx.navigation.fragment.NavHostFragment
+import androidx.navigation.fragment.findNavController
 import androidx.preference.EditTextPreference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
@@ -41,8 +41,10 @@ class PreferencesFragment : PreferenceFragmentCompat() {
 
     private fun refreshFragment(): Boolean {
         // This method refreshes the fragment
-        NavHostFragment.findNavController(this@PreferencesFragment)
-            .navigate(R.id.action_settingsFragment_self)
+        findNavController().run {
+            popBackStack()
+            navigate(R.id.settingsFragment)
+        }
         return true
     }
 
