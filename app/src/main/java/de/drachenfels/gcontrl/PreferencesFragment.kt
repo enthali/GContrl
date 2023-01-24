@@ -19,24 +19,24 @@ class PreferencesFragment : PreferenceFragmentCompat() {
             editText.inputType = InputType.TYPE_CLASS_NUMBER
         }
 
-        val geoServiceEnabled: SwitchPreference? = findPreference("enable_location_features")
+        val geoServiceEnabled: SwitchPreference? = findPreference("geo_enable_location_features")
         geoServiceEnabled?.setOnPreferenceClickListener { refreshFragment() }
 
         val geoSetHomeLocation: Preference? = findPreference("geo_setHomeLocation")
         geoSetHomeLocation?.isVisible =
-            sharedPreferences?.getBoolean("enable_location_features", false) == true
+            sharedPreferences?.getBoolean("geo_enable_location_features", false) == true
 
         val geoFenceSize: EditTextPreference? = findPreference("geo_fence_size")
         geoFenceSize?.isVisible =
-            sharedPreferences?.getBoolean("enable_location_features", false) == true
+            sharedPreferences?.getBoolean("geo_enable_location_features", false) == true
 
         val geoEnableProtect: SwitchPreference? = findPreference("geo_enable_protect")
         geoEnableProtect?.isVisible =
-            sharedPreferences?.getBoolean("enable_location_features", false) == true
+            sharedPreferences?.getBoolean("geo_enable_location_features", false) == true
 
-        val geoAutoControl: SwitchPreference? = findPreference("geo_autocontrol")
+        val geoAutoControl: SwitchPreference? = findPreference("geo_autoControl")
         geoAutoControl?.isVisible =
-            sharedPreferences?.getBoolean("enable_location_features", false) == true
+            sharedPreferences?.getBoolean("geo_enable_location_features", false) == true
 
     }
 

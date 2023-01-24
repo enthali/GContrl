@@ -83,7 +83,7 @@ class GeoServices(_appActivity: Activity?) {
 
     private fun geoServies(): Boolean {
         val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(appActivity)
-        return sharedPreferences?.getBoolean("enable_location_features", false) == true
+        return sharedPreferences?.getBoolean("geo_enable_location_features", false) == true
     }
 
 //    /**

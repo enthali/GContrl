@@ -1,17 +1,22 @@
 <resources>
+
     <string name="app_name">Remote Control</string>
     <string name="dc_btn_1">Open</string>
     <string name="dc_btn_2">Close</string>
     <string name="preferences">Preferences</string>
     <string name="home">Home</string>
     <string name="car">Car</string>
-    <string name="prf_en_loc_features">Enable Location based Features</string>
-    <string name="prf_password">Password</string>
-    <string name="prf_user">User</string>
-    <string name="prf_device_id">Device ID</string>
-    <string name="prf_use_ssl">Use transport layer encryption (SSL)</string>
+
+    <string name="prf_mqtt_password">Password</string>
+    <string name="prf_mqtt_user">User</string>
+    <string name="prf_mqtt_device_id">Device ID - Topic</string>
+    <string name="prf_mqtt_client_id">Client ID</string>
+    <string name="prf_mqtt_use_ssl">Use transport layer encryption (SSL)</string>
     <string name="prf_mqtt_port">MQTT server Port</string>
     <string name="prf_mqtt_uri">MQTT server URI</string>
-    <string name="geo_distance_from_home">distance from home :</string>
-    <string name="prf_setHomeLocation">Set Home Location</string>
+
+    <string name="prf_geo_en_loc_features">Enable Location based Features</string>
+    <string name="prf_geo_distance_from_home">distance from home :</string>
+    <string name="prf_geo_setHomeLocation">Set Home Location</string>
+
 </resources>

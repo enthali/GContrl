@@ -19,13 +19,6 @@ import de.drachenfels.gcontrl.databinding.FragmentDirectControlBinding
  */
 class DirectControlFragment : Fragment() {
 
-    // private variables - connection information
-    private lateinit var serverURI: String
-    private lateinit var clientId: String
-    private lateinit var username: String
-    private lateinit var password: String
-
-    //
     private lateinit var mqttServer: MQTTConnection
     private lateinit var geoService: GeoServices
 
@@ -44,7 +37,7 @@ class DirectControlFragment : Fragment() {
                 Toast.LENGTH_LONG
             ).show()
         }
-        mqttServer = MQTTConnection()
+        mqttServer = MQTTConnection(activity)
         geoService = GeoServices(activity)
     }
 
@@ -63,10 +56,8 @@ class DirectControlFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         // connect the buttons
-        binding.openbutton.setOnClickListener { openDoor() }
-
-        binding.closebutton.setOnClickListener { closeDoor() }
-
+        binding.openbutton.setOnClickListener { manageDoor(1) }
+        binding.closebutton.setOnClickListener { manageDoor(0) }
     }
 
     /**
@@ -87,98 +78,28 @@ class DirectControlFragment : Fragment() {
         val sharedPreferences =
             context?.let { PreferenceManager.getDefaultSharedPreferences(it /* Activity context */) }
 
-        // compile the server URI
-        serverURI = if (sharedPreferences?.getBoolean("ssl", false) == true) {
-            "ssl://"
-        } else {
-            "tcp://"
-        }.plus(sharedPreferences?.getString("uri", "").toString())
-            .plus(":")
-            .plus(sharedPreferences?.getString("port", "").toString())
-
-        // get the clientId
-        clientId = sharedPreferences?.getString("clientId", "").toString()
-        // get the user name
-        username = sharedPreferences?.getString("user", "").toString()
-        // get the user password
-        password = sharedPreferences?.getString("password", "").toString()
-
-        if (sharedPreferences?.getBoolean("enable_location_features", false) == true) {
+        if (sharedPreferences?.getBoolean("geo_enable_location_features", false) == true) {
             (binding.controlTableLayout.layoutParams as LinearLayout.LayoutParams).weight = 1.0f
         } else {
             (binding.controlTableLayout.layoutParams as LinearLayout.LayoutParams).weight = 0.0f
         }
     }
 
-    /**
-     * sent the open command to the MQTT server
-     */
-    private fun openDoor() {
-        if (isConnected()) {
-            if (mqttServer.connect(serverURI, clientId, username, password)) {
-                if (mqttServer.sendMessage("garage", "open")) {
-                    Toast.makeText(
-                        activity?.applicationContext,
-                        "opening the door",
-                        Toast.LENGTH_LONG
-                    ).show()
-                } else {
-                    Toast.makeText(
-                        activity?.applicationContext,
-                        "command delivery failed",
-                        Toast.LENGTH_LONG
-                    ).show()
-                }
-                mqttServer.disconnect()
-            } else {
-                Toast.makeText(
-                    activity?.applicationContext,
-                    "Server connection failed - please try again",
-                    Toast.LENGTH_LONG
-                ).show()
-            }
-        } else {
-            Toast.makeText(
-                activity?.applicationContext,
-                "No network connection - please try again",
-                Toast.LENGTH_LONG
-            ).show()
+    private fun manageDoor(cmd: Int) {
+        val cmdString = when (cmd) {
+            0 -> "close"
+            1 -> "open"
+            else -> "status"
         }
-    }
-
-    /**
-     * send the close command to the MQTT server
-     */
-    private fun closeDoor() {
         if (isConnected()) {
-            if (mqttServer.connect(serverURI, clientId, username, password)) {
-                if (mqttServer.sendMessage("garage", "close")) {
-                    Toast.makeText(
-                        activity?.applicationContext,
-                        "closing the door",
-                        Toast.LENGTH_LONG
-                    ).show()
-                } else {
-                    Toast.makeText(
-                        activity?.applicationContext,
-                        "command delivery failed",
-                        Toast.LENGTH_LONG
-                    ).show()
-                }
-                mqttServer.disconnect()
-            } else {
+
+            if (mqttServer.sendMessage(cmdString)) {
                 Toast.makeText(
                     activity?.applicationContext,
-                    "Server connection failed - please try again",
+                    cmdString.plus(" the door"),
                     Toast.LENGTH_LONG
                 ).show()
             }
-        } else {
-            Toast.makeText(
-                activity?.applicationContext,
-                "No network connection - please try again",
-                Toast.LENGTH_LONG
-            ).show()
         }
     }
 
@@ -196,6 +117,13 @@ class DirectControlFragment : Fragment() {
                         capabilities.hasTransport(NetworkCapabilities.TRANSPORT_VPN) -> true
                 else -> false
             }
+        }
+        if (!result) {
+            Toast.makeText(
+                activity?.applicationContext,
+                "No network connection - please try again",
+                Toast.LENGTH_LONG
+            ).show()
         }
         return result
     }
