@@ -19,7 +19,7 @@
         <Preference
             android:title="@string/prf_geo_setHomeLocation"
             android:key="geo_setHomeLocation"
-            app:summary="Setting the home location to the current location"
+            app:summary="@string/geo_setHomeLocationSummary"
             />
         <SwitchPreference
             android:defaultValue="true"

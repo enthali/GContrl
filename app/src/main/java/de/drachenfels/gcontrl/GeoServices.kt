@@ -44,6 +44,15 @@ class GeoServices(_appActivity: Activity?) {
         ) //put here time 1000 milliseconds=1 second
     }
 
+    fun setCurrentHomeLocation() : Boolean  {
+        Toast.makeText(
+            appActivity,
+            "Set Current Home Location".plus(currentLocation.latitude.toString()),
+            Toast.LENGTH_LONG
+        ).show()
+        return true
+    }
+
     /**
      * run task to get lastLocation and call setLocation() to perform what
      * ever the app want's to do with the location

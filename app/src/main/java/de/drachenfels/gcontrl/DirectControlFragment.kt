@@ -10,6 +10,7 @@ import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.preference.PreferenceManager
 import de.drachenfels.gcontrl.databinding.FragmentDirectControlBinding
 
@@ -19,11 +20,10 @@ import de.drachenfels.gcontrl.databinding.FragmentDirectControlBinding
  */
 class DirectControlFragment : Fragment() {
 
-    private lateinit var mqttServer: MQTTConnection
-    private lateinit var geoService: GeoServices
-
     private var _binding: FragmentDirectControlBinding? = null
     private val binding get() = _binding!!
+
+    private val viewModel: ComViewModel by activityViewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,25 +37,24 @@ class DirectControlFragment : Fragment() {
                 Toast.LENGTH_LONG
             ).show()
         }
-        mqttServer = MQTTConnection(activity)
-        geoService = GeoServices(activity)
+        viewModel.mqttServer = MQTTConnection(activity)
+        viewModel.geoService = GeoServices(activity)
     }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
+
         // Inflate the layout for this fragment
         // return inflater.inflate(R.layout.fragment_direct_control, container, false)
-
         _binding = FragmentDirectControlBinding.inflate(inflater, container, false)
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        // connect the buttons
+        // bind the buttons
         binding.openbutton.setOnClickListener { manageDoor(1) }
         binding.closebutton.setOnClickListener { manageDoor(0) }
     }
@@ -78,6 +77,7 @@ class DirectControlFragment : Fragment() {
         val sharedPreferences =
             context?.let { PreferenceManager.getDefaultSharedPreferences(it /* Activity context */) }
 
+        // adopt the layout if geo-services are enabled or not
         if (sharedPreferences?.getBoolean("geo_enable_location_features", false) == true) {
             (binding.controlTableLayout.layoutParams as LinearLayout.LayoutParams).weight = 1.0f
         } else {
@@ -93,7 +93,7 @@ class DirectControlFragment : Fragment() {
         }
         if (isConnected()) {
 
-            if (mqttServer.sendMessage(cmdString)) {
+            if (viewModel.mqttServer.sendMessage(cmdString)) {
                 Toast.makeText(
                     activity?.applicationContext,
                     cmdString.plus(" the door"),
