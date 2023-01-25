@@ -37,8 +37,11 @@ class DirectControlFragment : Fragment() {
                 Toast.LENGTH_LONG
             ).show()
         }
-        viewModel.mqttServer = MQTTConnection(activity)
-        viewModel.geoService = GeoServices(activity)
+        viewModel.activity = requireActivity()
+        viewModel.sp =
+            context?.let { PreferenceManager.getDefaultSharedPreferences(it /* Activity context */) }!!
+        viewModel.mqttServer = MQTTConnection(viewModel)
+        viewModel.geoService = GeoServices(viewModel)
     }
 
     override fun onCreateView(

@@ -2,7 +2,6 @@ package de.drachenfels.gcontrl
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Location
@@ -11,45 +10,41 @@ import android.provider.Settings
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
-import androidx.preference.PreferenceManager
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
+import com.google.android.gms.tasks.Task
 import java.util.*
-import java.util.concurrent.TimeUnit
 
-class GeoServices(_appActivity: Activity?) {
+class GeoServices(_viewModel: ComViewModel) {
 
-    private val appActivity: Activity = _appActivity!!
+    private val viewModel = _viewModel
+
+    private var setLocation : Boolean = false
 
     // Location handling
     private var mFusedLocationClient: FusedLocationProviderClient =
-        LocationServices.getFusedLocationProviderClient(appActivity)
+        LocationServices.getFusedLocationProviderClient(viewModel.activity)
     private val permissionId = 2
 
-    // the current location, polled every now and then
-    private lateinit var currentLocation: Location
+//    // the location is updated every now and then
+//    private var locationPollTime: Long = 10
+//
+////    init {
+//        Timer().scheduleAtFixedRate(
+//            object : TimerTask() {
+//                override fun run() {
+//                    getLocation()
+//                }
+//            },
+//            0,
+//            TimeUnit.SECONDS.toMillis(locationPollTime)
+//        ) //put here time 1000 milliseconds=1 second
+//    }
 
-    // the location is updated every now and then
-    private var locationPollTime: Long = 10
-
-    init {
-        Timer().scheduleAtFixedRate(
-            object : TimerTask() {
-                override fun run() {
-                    getLocation()
-                }
-            },
-            0,
-            TimeUnit.SECONDS.toMillis(locationPollTime)
-        ) //put here time 1000 milliseconds=1 second
-    }
-
-    fun setCurrentHomeLocation() : Boolean  {
-        Toast.makeText(
-            appActivity,
-            "Set Current Home Location".plus(currentLocation.latitude.toString()),
-            Toast.LENGTH_LONG
-        ).show()
+    fun setCurrentHomeLocation(): Boolean {
+        // getLocation might not have been called yet, so call it once now
+        setLocation = true
+        getLocation()
         return true
     }
 
@@ -59,28 +54,23 @@ class GeoServices(_appActivity: Activity?) {
      */
     @SuppressLint("MissingPermission")
     private fun getLocation() {
-        if (geoServies()) {
+        // check if geo services are enabled in the preferences
+        if (viewModel.sp.getBoolean("geo_enable_location_features", false)) {
             // check if location access is permitted by the user
             if (checkPermissions()) {
                 // check if the location service is enabled on the device
                 if (isLocationEnabled()) {
                     // get the last known location and execute setLocation()
                     mFusedLocationClient.lastLocation.addOnCompleteListener { task ->
-                        //   val lastLoc: Location = task.result
-                        currentLocation = task.result
-                        Toast.makeText(
-                            appActivity,
-                            "latitude : ".plus(currentLocation.latitude.toString()),
-                            Toast.LENGTH_LONG
-                        ).show()
-//                    setLocation(task.result)
+                        onLocationReady(task)
                     }
                 } else {
                     // request the user to turn on the location service on his device
-                    Toast.makeText(appActivity, "Please turn on location", Toast.LENGTH_LONG).show()
+                    Toast.makeText(viewModel.activity, "Please turn on location", Toast.LENGTH_LONG)
+                        .show()
                     val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
                     //                startActivity(intent)
-                    appActivity.startActivity(intent)
+                    viewModel.activity.startActivity(intent)
 
                 }
             } else {
@@ -90,9 +80,16 @@ class GeoServices(_appActivity: Activity?) {
         }
     }
 
-    private fun geoServies(): Boolean {
-        val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(appActivity)
-        return sharedPreferences?.getBoolean("geo_enable_location_features", false) == true
+    private fun onLocationReady(task: Task<Location>) {
+        // get the current location
+        viewModel.currentLocation = task.result
+        viewModel.preferenceFragment?.onLocationSetComplete()
+
+        Toast.makeText(
+            viewModel.activity,
+            "latitude : ".plus(viewModel.currentLocation.latitude.toString()),
+            Toast.LENGTH_LONG
+        ).show()
     }
 
 //    /**
@@ -126,7 +123,7 @@ class GeoServices(_appActivity: Activity?) {
      */
     private fun isLocationEnabled(): Boolean {
         val locationManager: LocationManager =
-            appActivity.getSystemService(AppCompatActivity.LOCATION_SERVICE) as LocationManager
+            viewModel.activity.getSystemService(AppCompatActivity.LOCATION_SERVICE) as LocationManager
         return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) || locationManager.isProviderEnabled(
             LocationManager.NETWORK_PROVIDER
         )
@@ -137,9 +134,9 @@ class GeoServices(_appActivity: Activity?) {
      */
     private fun checkPermissions(): Boolean {
         if (ActivityCompat.checkSelfPermission(
-                appActivity, Manifest.permission.ACCESS_COARSE_LOCATION
+                viewModel.activity, Manifest.permission.ACCESS_COARSE_LOCATION
             ) == PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
-                appActivity, Manifest.permission.ACCESS_FINE_LOCATION
+                viewModel.activity, Manifest.permission.ACCESS_FINE_LOCATION
             ) == PackageManager.PERMISSION_GRANTED
         ) {
             return true
@@ -152,7 +149,7 @@ class GeoServices(_appActivity: Activity?) {
      */
     private fun requestPermissions() {
         ActivityCompat.requestPermissions(
-            appActivity, arrayOf(
+            viewModel.activity, arrayOf(
                 Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION
             ), permissionId
         )
