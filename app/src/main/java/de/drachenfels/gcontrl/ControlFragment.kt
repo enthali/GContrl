@@ -18,7 +18,7 @@ import de.drachenfels.gcontrl.databinding.FragmentDirectControlBinding
 /**
  * a fragment to control the garage door directly though two buttons "open" and "close"
  */
-class DirectControlFragment : Fragment() {
+class ControlFragment : Fragment() {
 
     private var _binding: FragmentDirectControlBinding? = null
     private val binding get() = _binding!!

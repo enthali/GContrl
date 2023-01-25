@@ -14,7 +14,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_weight="1"
-        tools:context=".DirectControlFragment">
+        tools:context=".ControlFragment">
 
         <TableRow
             android:id="@+id/trSpacer1"
