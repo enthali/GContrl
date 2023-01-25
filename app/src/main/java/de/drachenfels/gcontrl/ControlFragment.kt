@@ -39,8 +39,8 @@ class ControlFragment : Fragment() {
         }
 
         viewModel.activity = requireActivity()
-        viewModel.sp =
-            context?.let { PreferenceManager.getDefaultSharedPreferences(it /* Activity context */) }!!
+//        viewModel.sharedPref =
+//            context?.let { PreferenceManager.getDefaultSharedPreferences(it /* Activity context */) }!!
 
         viewModel.initViewModel()
     }

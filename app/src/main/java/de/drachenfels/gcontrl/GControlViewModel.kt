@@ -1,12 +1,14 @@
 package de.drachenfels.gcontrl
 
 import android.annotation.SuppressLint
+import android.app.Application
 import android.content.SharedPreferences
 import android.location.Location
 import androidx.fragment.app.FragmentActivity
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
+import androidx.preference.PreferenceManager
 
-class GControlViewModel : ViewModel() {
+class GControlViewModel(application: Application) : AndroidViewModel(application) {
 
     @SuppressLint("StaticFieldLeak")
     lateinit var activity: FragmentActivity
@@ -16,7 +18,7 @@ class GControlViewModel : ViewModel() {
 
     var preferenceFragment: PreferencesFragment? = null
 
-    lateinit var sp: SharedPreferences //sharedPreferences
+    lateinit var sharedPref: SharedPreferences //sharedPreferences
     lateinit var currentLocation: Location
 
     init {
@@ -27,5 +29,6 @@ class GControlViewModel : ViewModel() {
     {
         mqttServer = MQTTConnection(this)
         geoService = GeoServices(this)
+        sharedPref = PreferenceManager.getDefaultSharedPreferences(getApplication())
     }
 }

@@ -55,7 +55,7 @@ class GeoServices(_viewModel: GControlViewModel) {
     @SuppressLint("MissingPermission")
     private fun getLocation() {
         // check if geo services are enabled in the preferences
-        if (viewModel.sp.getBoolean("geo_enable_location_features", false)) {
+        if (viewModel.sharedPref.getBoolean("geo_enable_location_features", false)) {
             // check if location access is permitted by the user
             if (checkPermissions()) {
                 // check if the location service is enabled on the device

@@ -30,25 +30,25 @@ class PreferencesFragment : PreferenceFragmentCompat() {
 
         val geoSetHomeLocation: Preference? = findPreference("geo_setHomeLocation")
         geoSetHomeLocation?.isVisible =
-            viewModel.sp.getBoolean("geo_enable_location_features", false) == true
+            viewModel.sharedPref.getBoolean("geo_enable_location_features", false) == true
         geoSetHomeLocation?.summary = getString(R.string.geo_setHomeLocationSummary)
             .plus("\nCurrent Home Location : ")
             .plus("\nLat : ")
-            .plus(viewModel.sp.getString("geo_latitude", "null").toString())
+            .plus(viewModel.sharedPref.getString("geo_latitude", "null").toString())
             .plus("\nLon :")
-            .plus(viewModel.sp.getString("geo_longitude", "null").toString())
+            .plus(viewModel.sharedPref.getString("geo_longitude", "null").toString())
 
         val geoFenceSize: EditTextPreference? = findPreference("geo_fence_size")
         geoFenceSize?.isVisible =
-            viewModel.sp.getBoolean("geo_enable_location_features", false) == true
+            viewModel.sharedPref.getBoolean("geo_enable_location_features", false) == true
 
         val geoEnableProtect: SwitchPreference? = findPreference("geo_enable_protect")
         geoEnableProtect?.isVisible =
-            viewModel.sp.getBoolean("geo_enable_location_features", false) == true
+            viewModel.sharedPref.getBoolean("geo_enable_location_features", false) == true
 
         val geoAutoControl: SwitchPreference? = findPreference("geo_autoControl")
         geoAutoControl?.isVisible =
-            viewModel.sp.getBoolean("geo_enable_location_features", false) == true
+            viewModel.sharedPref.getBoolean("geo_enable_location_features", false) == true
 
 
         /**
@@ -69,8 +69,8 @@ class PreferencesFragment : PreferenceFragmentCompat() {
     }
 
     fun onLocationSetComplete() {
-        viewModel.sp.edit().putString("geo_latitude", viewModel.currentLocation.latitude.toString()).apply()
-        viewModel.sp.edit().putString("geo_longitude", viewModel.currentLocation.longitude.toString()).apply()
+        viewModel.sharedPref.edit().putString("geo_latitude", viewModel.currentLocation.latitude.toString()).apply()
+        viewModel.sharedPref.edit().putString("geo_longitude", viewModel.currentLocation.longitude.toString()).apply()
         viewModel.preferenceFragment = null
         // TODO figure out how to refresh the screen in this call back
     }
