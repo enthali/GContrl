@@ -22,7 +22,6 @@ class ControlFragment : Fragment() {
 
     private var _binding: FragmentDirectControlBinding? = null
     private val binding get() = _binding!!
-
     private val viewModel: GControlViewModel by activityViewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -39,8 +38,6 @@ class ControlFragment : Fragment() {
         }
 
         viewModel.activity = requireActivity()
-//        viewModel.sharedPref =
-//            context?.let { PreferenceManager.getDefaultSharedPreferences(it /* Activity context */) }!!
 
         viewModel.initViewModel()
     }
@@ -49,7 +46,6 @@ class ControlFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-
         // Inflate the layout for this fragment
         // return inflater.inflate(R.layout.fragment_direct_control, container, false)
         _binding = FragmentDirectControlBinding.inflate(inflater, container, false)

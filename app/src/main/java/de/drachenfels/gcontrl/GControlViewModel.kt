@@ -14,6 +14,15 @@ class GControlViewModel(application: Application) : AndroidViewModel(application
     lateinit var activity: FragmentActivity
 
     lateinit var mqttServer: MQTTConnection
+
+    /**
+     * 0 - ok
+     * 1 - connection failed
+     * 2 - publish failed
+     */
+    var statusMQTT = 0
+
+
     lateinit var geoService: GeoServices
 
     var preferenceFragment: PreferencesFragment? = null

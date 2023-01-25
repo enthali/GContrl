@@ -1,7 +1,6 @@
 package de.drachenfels.gcontrl
 
 import android.util.Log
-import android.widget.Toast
 import org.eclipse.paho.client.mqttv3.MqttClient
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions
 import org.eclipse.paho.client.mqttv3.MqttException
@@ -69,20 +68,13 @@ class MQTTConnection(_viewModel: GControlViewModel) {
                 message.payload = payload.toByteArray()
                 client!!.publish(tp, message)
             } catch (e: MqttException) {
-                Toast.makeText(
-                    viewModel.activity.applicationContext,
-                    "MQTT publish failed with reason code = " + e.reasonCode,
-                    Toast.LENGTH_LONG
-                ).show()
+                // publish failed
+                viewModel.statusMQTT = 2
             }
             retVal = true
         } else {
-            Toast.makeText(
-                viewModel.activity.applicationContext,
-                "Server connection failed - please try again",
-                Toast.LENGTH_LONG
-            ).show()
-
+            // connection failed
+            viewModel.statusMQTT = 1
         }
         client!!.disconnect()
         return retVal
