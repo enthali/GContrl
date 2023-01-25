@@ -6,7 +6,7 @@ import android.location.Location
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.ViewModel
 
-class ComViewModel : ViewModel() {
+class GControlViewModel : ViewModel() {
 
 
     @SuppressLint("StaticFieldLeak")

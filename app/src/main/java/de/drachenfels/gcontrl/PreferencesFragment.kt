@@ -12,7 +12,7 @@ import androidx.preference.SwitchPreference
 
 class PreferencesFragment : PreferenceFragmentCompat() {
 
-    private val viewModel: ComViewModel by activityViewModels()
+    private val viewModel: GControlViewModel by activityViewModels()
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         setPreferencesFromResource(R.xml.preferences, rootKey)

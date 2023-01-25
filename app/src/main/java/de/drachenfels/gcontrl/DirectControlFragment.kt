@@ -23,7 +23,7 @@ class DirectControlFragment : Fragment() {
     private var _binding: FragmentDirectControlBinding? = null
     private val binding get() = _binding!!
 
-    private val viewModel: ComViewModel by activityViewModels()
+    private val viewModel: GControlViewModel by activityViewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

@@ -15,7 +15,7 @@ import com.google.android.gms.location.LocationServices
 import com.google.android.gms.tasks.Task
 import java.util.*
 
-class GeoServices(_viewModel: ComViewModel) {
+class GeoServices(_viewModel: GControlViewModel) {
 
     private val viewModel = _viewModel
 
