@@ -37,11 +37,12 @@ class ControlFragment : Fragment() {
                 Toast.LENGTH_LONG
             ).show()
         }
+
         viewModel.activity = requireActivity()
         viewModel.sp =
             context?.let { PreferenceManager.getDefaultSharedPreferences(it /* Activity context */) }!!
-        viewModel.mqttServer = MQTTConnection(viewModel)
-        viewModel.geoService = GeoServices(viewModel)
+
+        viewModel.initViewModel()
     }
 
     override fun onCreateView(
