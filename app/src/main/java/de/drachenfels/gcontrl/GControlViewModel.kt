@@ -11,6 +11,7 @@ import com.google.android.gms.location.FusedLocationProviderClient
 
 class GControlViewModel(application: Application) : AndroidViewModel(application) {
 
+
     @SuppressLint("StaticFieldLeak")
     var activity: FragmentActivity? = null
 
@@ -29,18 +30,23 @@ class GControlViewModel(application: Application) : AndroidViewModel(application
     var preferenceFragment: PreferencesFragment? = null
 
     lateinit var sharedPref: SharedPreferences //sharedPreferences
-    lateinit var currentLocation: Location
 
-    lateinit  var mFusedLocationClient: FusedLocationProviderClient
+    /**
+     * location values
+     */
+    lateinit var mFusedLocationClient: FusedLocationProviderClient
+    var currentLocation: Location = Location("initial")
+
+    var insideFence = true
+    var distanceToHome = 1F
 
     init {
         // ViewModel init section
     }
 
-    fun initViewModel()
-    {
+    fun initViewModel() {
         sharedPref = PreferenceManager.getDefaultSharedPreferences(getApplication())
-        mqttServer = MQTTConnection(this)
         geoService = GeoServices(this)
+        mqttServer = MQTTConnection(this)
     }
 }

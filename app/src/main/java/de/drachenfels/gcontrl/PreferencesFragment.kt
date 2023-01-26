@@ -75,7 +75,7 @@ class PreferencesFragment : PreferenceFragmentCompat() {
         // TODO figure out how to refresh the screen in this call back
     }
 
-    fun refreshFragment(): Boolean {
+    private fun refreshFragment(): Boolean {
         // This method refreshes the fragment
         findNavController().run {
             popBackStack()
