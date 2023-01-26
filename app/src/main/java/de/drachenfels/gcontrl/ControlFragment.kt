@@ -12,6 +12,7 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.preference.PreferenceManager
+import com.google.android.gms.location.LocationServices
 import de.drachenfels.gcontrl.databinding.FragmentDirectControlBinding
 
 
@@ -37,7 +38,10 @@ class ControlFragment : Fragment() {
             ).show()
         }
 
-        viewModel.activity = requireActivity()
+        viewModel.activity = activity
+
+        viewModel.mFusedLocationClient =
+            LocationServices.getFusedLocationProviderClient(requireActivity())
 
         viewModel.initViewModel()
     }
@@ -127,4 +131,5 @@ class ControlFragment : Fragment() {
         }
         return result
     }
+
 }

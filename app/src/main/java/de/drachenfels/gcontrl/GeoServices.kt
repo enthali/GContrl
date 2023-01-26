@@ -2,6 +2,7 @@ package de.drachenfels.gcontrl
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.Application
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Location
@@ -10,8 +11,6 @@ import android.provider.Settings
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
-import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.location.LocationServices
 import com.google.android.gms.tasks.Task
 import java.util.*
 
@@ -19,11 +18,10 @@ class GeoServices(_viewModel: GControlViewModel) {
 
     private val viewModel = _viewModel
 
-    private var setLocation : Boolean = false
+    private var setLocation: Boolean = false
 
     // Location handling
-    private var mFusedLocationClient: FusedLocationProviderClient =
-        LocationServices.getFusedLocationProviderClient(viewModel.activity)
+
     private val permissionId = 2
 
 //    // the location is updated every now and then
@@ -61,16 +59,16 @@ class GeoServices(_viewModel: GControlViewModel) {
                 // check if the location service is enabled on the device
                 if (isLocationEnabled()) {
                     // get the last known location and execute setLocation()
-                    mFusedLocationClient.lastLocation.addOnCompleteListener { task ->
+                    viewModel.mFusedLocationClient.lastLocation.addOnCompleteListener { task ->
                         onLocationReady(task)
                     }
                 } else {
                     // request the user to turn on the location service on his device
-                    Toast.makeText(viewModel.activity, "Please turn on location", Toast.LENGTH_LONG)
-                        .show()
+//                    Toast.makeText(viewModel.activity, "Please turn on location", Toast.LENGTH_LONG)
+//                        .show()
                     val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
                     //                startActivity(intent)
-                    viewModel.activity.startActivity(intent)
+                    viewModel.getApplication<Application>().startActivity(intent)
 
                 }
             } else {
@@ -86,7 +84,7 @@ class GeoServices(_viewModel: GControlViewModel) {
         viewModel.preferenceFragment?.onLocationSetComplete()
 
         Toast.makeText(
-            viewModel.activity,
+            viewModel.getApplication(),
             "latitude : ".plus(viewModel.currentLocation.latitude.toString()),
             Toast.LENGTH_LONG
         ).show()
@@ -123,7 +121,7 @@ class GeoServices(_viewModel: GControlViewModel) {
      */
     private fun isLocationEnabled(): Boolean {
         val locationManager: LocationManager =
-            viewModel.activity.getSystemService(AppCompatActivity.LOCATION_SERVICE) as LocationManager
+            viewModel.getApplication<Application>().getSystemService(AppCompatActivity.LOCATION_SERVICE) as LocationManager
         return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) || locationManager.isProviderEnabled(
             LocationManager.NETWORK_PROVIDER
         )
@@ -134,9 +132,9 @@ class GeoServices(_viewModel: GControlViewModel) {
      */
     private fun checkPermissions(): Boolean {
         if (ActivityCompat.checkSelfPermission(
-                viewModel.activity, Manifest.permission.ACCESS_COARSE_LOCATION
+                viewModel.getApplication(), Manifest.permission.ACCESS_COARSE_LOCATION
             ) == PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
-                viewModel.activity, Manifest.permission.ACCESS_FINE_LOCATION
+                viewModel.getApplication(), Manifest.permission.ACCESS_FINE_LOCATION
             ) == PackageManager.PERMISSION_GRANTED
         ) {
             return true
@@ -149,7 +147,7 @@ class GeoServices(_viewModel: GControlViewModel) {
      */
     private fun requestPermissions() {
         ActivityCompat.requestPermissions(
-            viewModel.activity, arrayOf(
+            viewModel.activity!!, arrayOf(
                 Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION
             ), permissionId
         )
