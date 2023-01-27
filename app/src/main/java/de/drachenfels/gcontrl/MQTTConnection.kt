@@ -17,7 +17,7 @@ class MQTTConnection(_viewModel: GControlViewModel) {
         try {
             client = MqttClient(
                 getUriFromPreferences(),
-                viewModel.sharedPref.getString("mqtt_clientId", ""),
+                viewModel.sharedPreferences.getString("mqtt_clientId", ""),
                 null
             )
             client!!.setCallback(null)
@@ -28,8 +28,8 @@ class MQTTConnection(_viewModel: GControlViewModel) {
         // set default option
         val options = MqttConnectOptions()
         // set application specific options
-        options.userName = viewModel.sharedPref.getString("mqtt_user", "").toString()
-        options.password = viewModel.sharedPref.getString("mqtt_password", "").toString().toCharArray()
+        options.userName = viewModel.sharedPreferences.getString("mqtt_user", "").toString()
+        options.password = viewModel.sharedPreferences.getString("mqtt_password", "").toString().toCharArray()
         options.isHttpsHostnameVerificationEnabled = false
 
         try {
@@ -45,13 +45,13 @@ class MQTTConnection(_viewModel: GControlViewModel) {
     }
 
     private fun getUriFromPreferences(): String {
-        return if (viewModel.sharedPref.getBoolean("mqtt_ssl", false) == true) {
+        return if (viewModel.sharedPreferences.getBoolean("mqtt_ssl", false) == true) {
             "ssl://"
         } else {
             "tcp://"
-        }.plus(viewModel.sharedPref.getString("mqtt_uri", "").toString())
+        }.plus(viewModel.sharedPreferences.getString("mqtt_uri", "").toString())
             .plus(":")
-            .plus(viewModel.sharedPref.getString("mqtt_port", "").toString())
+            .plus(viewModel.sharedPreferences.getString("mqtt_port", "").toString())
     }
 
      fun sendMessage(payload: String): Boolean {
@@ -62,7 +62,7 @@ class MQTTConnection(_viewModel: GControlViewModel) {
                 val message = MqttMessage()
                 val tp = client!!.clientId
                     .plus("/")
-                    .plus(viewModel.sharedPref.getString("mqtt_topic", "").toString())
+                    .plus(viewModel.sharedPreferences.getString("mqtt_topic", "").toString())
                 message.qos = 1
                 message.payload = payload.toByteArray()
                 client!!.publish(tp, message)

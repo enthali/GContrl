@@ -10,7 +10,7 @@
         android:id="@+id/directControl"
         android:name="de.drachenfels.gcontrl.ControlFragment"
         android:label="@string/app_name"
-        tools:layout="@layout/fragment_direct_control" />
+        tools:layout="@layout/fragment_control" />
     <fragment
         android:id="@+id/settingsFragment"
         android:name="de.drachenfels.gcontrl.PreferencesFragment"

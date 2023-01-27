@@ -7,6 +7,14 @@
     <string name="home">Home</string>
     <string name="car">Car</string>
 
+    <string name="ok">OK</string>
+
+    <string name="permission_rationale">Location permission needed for core functionality</string>
+    <string name="permission_denied_explanation">Permission was denied, but is needed for core functionality.</string>
+    <string name="no_location_text">No current location</string>
+
+    <string name="launch_activity">open Remote Control</string>
+
     <string name="prf_mqtt_password">Password</string>
     <string name="prf_mqtt_user">User</string>
     <string name="prf_mqtt_device_id">Device ID - Topic</string>
