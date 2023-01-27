@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:Suppress("DEPRECATION")
+
 package de.drachenfels.gcontrl.services
 
 import android.annotation.SuppressLint
@@ -29,7 +31,7 @@ import androidx.core.app.NotificationCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.preference.PreferenceManager
 import com.google.android.gms.location.*
-import de.drachenfels.gcontrl.ControlFragment
+import de.drachenfels.gcontrl.MainActivity
 import de.drachenfels.gcontrl.R
 import de.drachenfels.gcontrl.utilities.toText
 import java.util.concurrent.TimeUnit
@@ -43,7 +45,7 @@ import java.util.concurrent.TimeUnit
  * versions. Please reference documentation for details.
  */
 class ForegroundOnlyLocationService() : Service() {
-        /*
+    /*
      * Checks whether the bound activity has really gone away (foreground service with notification
      * created) or simply orientation change (no-op).
      */
@@ -177,16 +179,20 @@ class ForegroundOnlyLocationService() : Service() {
         // to maintain the 'while-in-use' label.
 //        // NOTE: If this method is called due to a configuration change in MainActivity,
 //        // we do nothing.
-//        if (!configurationChange && SharedPreferenceUtil.getLocationTrackingPref(this)) {
-        Log.d(TAG, "Start foreground service")
-        val notification = generateNotification(currentLocation)
+        if (!configurationChange && sharedPreferences.getBoolean(
+                "geo_enable_location_features",
+                false
+            )
+        ) {
+            Log.d(TAG, "Start foreground service")
+            val notification = generateNotification(currentLocation)
 
-        startForeground(NOTIFICATION_ID, notification)
+            startForeground(NOTIFICATION_ID, notification)
 
-        Log.d(TAG, "still in foreground ?")
-        serviceRunningInForeground = true
+            Log.d(TAG, "still in foreground ?")
+            serviceRunningInForeground = true
 
-//        }
+        }
 
         // Ensures onRebind() is called if MainActivity (client) rebinds.
         return true
@@ -197,6 +203,7 @@ class ForegroundOnlyLocationService() : Service() {
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {
+        Log.d(TAG, "onConfigurationChanged()")
         super.onConfigurationChanged(newConfig)
         configurationChange = true
     }
@@ -219,7 +226,7 @@ class ForegroundOnlyLocationService() : Service() {
             )
         } catch (unlikely: SecurityException) {
 
-            sharedPreferences.edit().putString("geo_enable_location_features", "false").apply()
+            sharedPreferences.edit().putBoolean("subscribe_location_services", false).apply()
             Log.e(TAG, "Lost location permissions. Couldn't remove updates. $unlikely")
         }
     }
@@ -237,9 +244,9 @@ class ForegroundOnlyLocationService() : Service() {
                     Log.d(TAG, "Failed to remove Location Callback.")
                 }
             }
-            sharedPreferences.edit().putString("geo_enable_location_features", "false").apply()
+            //   sharedPreferences.edit().putBoolean("subscribe_location_services", false).apply()
         } catch (unlikely: SecurityException) {
-            sharedPreferences.edit().putString("geo_enable_location_features", "true").apply()
+            //   sharedPreferences.edit().putBoolean("subscribe_location_services", true).apply()
             Log.e(TAG, "Lost location permissions. Couldn't remove updates. $unlikely")
         }
     }
@@ -282,7 +289,10 @@ class ForegroundOnlyLocationService() : Service() {
 
         // 3. Set up main Intent/Pending Intents for notification.
         // TODO - do we have the problem here?
-        val launchActivityIntent = Intent(this, ControlFragment::class.java)
+        val launchActivityIntent = Intent(
+            /* packageContext = */ this,
+            /* cls = */ MainActivity::class.java
+        )
 
         val cancelIntent = Intent(this, ForegroundOnlyLocationService::class.java)
         cancelIntent.putExtra(EXTRA_CANCEL_LOCATION_TRACKING_FROM_NOTIFICATION, true)
@@ -309,14 +319,15 @@ class ForegroundOnlyLocationService() : Service() {
             .setOngoing(true)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .addAction(
-                R.drawable.ic_launcher_gc_foreground, getString(R.string.launch_activity),
-                activityPendingIntent
+                /* icon = */ R.drawable.ic_launcher_gc_foreground,
+                /* title = */ getString(R.string.launch_activity),
+                /* intent = */ activityPendingIntent
             )
-/*            .addAction(
-                R.drawable.ic_cancel,
-                getString(R.string.stop_location_updates_button_text),
-                servicePendingIntent
-            )*/
+            .addAction(
+                /* icon = */ R.drawable.ic_launcher_gc_foreground,
+                /* title = */ getString(R.string.stop_location_service_notification_text),
+                /* intent = */ servicePendingIntent
+            )
             .build()
     }
 

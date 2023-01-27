@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package de.drachenfels.gcontrl
 
 import android.Manifest
@@ -31,7 +33,7 @@ private const val REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE = 34
 /**
  * a fragment to control the garage door directly though two buttons "open" and "close"
  */
-class ControlFragment : Fragment(), SharedPreferences.OnSharedPreferenceChangeListener {
+class ControlFragment : Fragment() {
 
     private var _binding: FragmentControlBinding? = null
     private val binding get() = _binding!!
@@ -104,10 +106,9 @@ class ControlFragment : Fragment(), SharedPreferences.OnSharedPreferenceChangeLi
      */
     override fun onStart() {
         super.onStart()
-        viewModel.sharedPreferences.registerOnSharedPreferenceChangeListener(this)
 
         val serviceIntent = Intent(activity, ForegroundOnlyLocationService::class.java)
-        serviceIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        serviceIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
         requireActivity().bindService(
             serviceIntent,
             foregroundOnlyServiceConnection,
@@ -123,6 +124,7 @@ class ControlFragment : Fragment(), SharedPreferences.OnSharedPreferenceChangeLi
                 Toast.LENGTH_LONG
             ).show()
         }
+        enableLocationService()
     }
 
     override fun onResume() {
@@ -144,6 +146,7 @@ class ControlFragment : Fragment(), SharedPreferences.OnSharedPreferenceChangeLi
                 )
             )
         }
+        enableLocationService()
     }
 
     override fun onPause() {
@@ -160,12 +163,10 @@ class ControlFragment : Fragment(), SharedPreferences.OnSharedPreferenceChangeLi
             activity?.unbindService(foregroundOnlyServiceConnection)
             foregroundOnlyLocationServiceBound = false
         }
-        viewModel.sharedPreferences.unregisterOnSharedPreferenceChangeListener(this)
-
         super.onStop()
     }
 
-    override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String) {
+    private fun enableLocationService() {
 
         val enabled = viewModel.sharedPreferences.getBoolean("geo_enable_location_features", false)
         // hide the location related information on the screen
@@ -179,7 +180,7 @@ class ControlFragment : Fragment(), SharedPreferences.OnSharedPreferenceChangeLi
 
 
         //  attach / detach location service
-        if (enabled) {
+        if (!enabled) {
             foregroundOnlyLocationService?.unsubscribeToLocationUpdates()
         } else {
             // TODO: Step 1.0, Review Permissions: Checks and requests if needed.

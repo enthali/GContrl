@@ -27,5 +27,6 @@
     <string name="prf_geo_distance_from_home">distance from home :</string>
     <string name="prf_geo_setHomeLocation">Set Home Location</string>
     <string name="geo_setHomeLocationSummary">Setting the home location to the current location</string>
+    <string name="stop_location_service_notification_text">Stop location services</string>
 
 </resources>
