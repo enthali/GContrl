@@ -28,16 +28,6 @@ class ControlFragment : Fragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        //  Check if Internet connection is available
-        //  to remind the user that we'll need an internet connection
-        if (!isConnected()) {
-            Toast.makeText(
-                activity?.applicationContext,
-                "Network connection required !!",
-                Toast.LENGTH_LONG
-            ).show()
-        }
-
         viewModel.activity = activity
 
         viewModel.mFusedLocationClient =
@@ -61,6 +51,11 @@ class ControlFragment : Fragment() {
         // bind the buttons
         binding.openbutton.setOnClickListener { manageDoor(1) }
         binding.closebutton.setOnClickListener { manageDoor(0) }
+
+        viewModel.distanceToHome.observe(viewLifecycleOwner
+        ) { newDistance ->
+            binding.distanceText.text = newDistance.toString()
+        }
     }
 
     /**
@@ -69,15 +64,37 @@ class ControlFragment : Fragment() {
      */
     override fun onStart() {
         super.onStart()
-        getPreferences()
+        viewLocationServiceSection()
+        //  Check if Internet connection is available
+        //  to remind the user that we'll need an internet connection
+        if (!isConnected()) {
+            Toast.makeText(
+                activity?.applicationContext,
+                "Network connection required !!",
+                Toast.LENGTH_LONG
+            ).show()
+        }
     }
 
     override fun onResume() {
         super.onResume()
-        getPreferences()
+        viewLocationServiceSection()
+        //  Check if Internet connection is available
+        //  to remind the user that we'll need an internet connection
+        if (!isConnected()) {
+            Toast.makeText(
+                activity?.applicationContext,
+                "Network connection required !!",
+                Toast.LENGTH_LONG
+            ).show()
+        }
     }
 
-    private fun getPreferences() {
+    /**
+     * viewLocationServiceSelection hides the location related information on the screen
+     * if location services are disabled in the preferences
+     */
+    private fun viewLocationServiceSection() {
         val sharedPreferences =
             context?.let { PreferenceManager.getDefaultSharedPreferences(it /* Activity context */) }
 
@@ -86,8 +103,8 @@ class ControlFragment : Fragment() {
             (binding.controlTableLayout.layoutParams as LinearLayout.LayoutParams).weight = 1.0f
         } else {
             (binding.controlTableLayout.layoutParams as LinearLayout.LayoutParams).weight = 0.0f
-        }
-    }
+        }    }
+
 
     private fun manageDoor(cmd: Int) {
         val cmdString = when (cmd) {
@@ -131,5 +148,4 @@ class ControlFragment : Fragment() {
         }
         return result
     }
-
 }

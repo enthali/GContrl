@@ -14,7 +14,6 @@ class MQTTConnection(_viewModel: GControlViewModel) {
     private var client: MqttClient? = null
 
     private fun connect(): Boolean {
-
         try {
             client = MqttClient(
                 getUriFromPreferences(),
@@ -69,12 +68,12 @@ class MQTTConnection(_viewModel: GControlViewModel) {
                 client!!.publish(tp, message)
             } catch (e: MqttException) {
                 // publish failed
-                viewModel.statusMQTT = 2
+                viewModel.statusMQTT.value = 2
             }
             retVal = true
         } else {
             // connection failed
-            viewModel.statusMQTT = 1
+            viewModel.statusMQTT.value = 1
         }
         client!!.disconnect()
         return retVal
