@@ -71,10 +71,10 @@ class GeoServices(_viewModel: GControlViewModel) {
             val distanceTemp: Float = viewModel.currentLocation.distanceTo(homeLocation)
 
             // only do something if the distance has changed
-            if (distanceTemp != viewModel.distanceToHome) {
+            if (distanceTemp != viewModel.distanceToHome.value) {
 
                 // update distance
-                viewModel.distanceToHome = viewModel.currentLocation.distanceTo(homeLocation)
+                viewModel.distanceToHome.value = viewModel.currentLocation.distanceTo(homeLocation)
 
                 // home zone handling
                 homeZoneRadius = viewModel.sharedPref.getString("geo_fence_size", "20")
@@ -82,15 +82,18 @@ class GeoServices(_viewModel: GControlViewModel) {
                     .toInt()
                     .toFloat()
 
+
+                val homeDistance: Float = viewModel.distanceToHome.value!!
+
                 if (viewModel.insideFence) {
-                    if (viewModel.distanceToHome > homeZoneRadius
+                    if (homeDistance > homeZoneRadius
                     ) {
                         // leaving the home zone
                         viewModel.insideFence = false
                         Log.v(timeTag, "leaving the home zone")
                     }
                 } else {
-                    if (viewModel.distanceToHome < homeZoneRadius) {
+                    if (homeDistance < homeZoneRadius) {
                         // entering home zone
                         viewModel.insideFence = true
                         Log.v(timeTag, "entering the home zone")
