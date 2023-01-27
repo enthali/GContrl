@@ -50,7 +50,7 @@ class GControlViewModel(application: Application) : AndroidViewModel(application
     /**
      * location related variables
      */
-    lateinit var geoService: GeoServices
+    // lateinit var geoService: GeoServices
 
     var preferenceFragment: PreferencesFragment? = null
 
@@ -70,7 +70,7 @@ class GControlViewModel(application: Application) : AndroidViewModel(application
 
     fun initViewModel() {
         sharedPref = PreferenceManager.getDefaultSharedPreferences(getApplication())
-        geoService = GeoServices(this)
+        // geoService = GeoServices(this)
         mqttServer = MQTTConnection(this)
     }
 
