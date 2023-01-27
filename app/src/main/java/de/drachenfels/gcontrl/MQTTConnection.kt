@@ -7,7 +7,7 @@ import org.eclipse.paho.client.mqttv3.MqttException
 import org.eclipse.paho.client.mqttv3.MqttMessage
 
 
-class MQTTConnection(_viewModel: GControlViewModel) {
+class MQTTConnection(_viewModel: ControlViewModel) {
 
     private val viewModel = _viewModel
 

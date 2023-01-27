@@ -37,7 +37,7 @@ class ControlFragment : Fragment(), SharedPreferences.OnSharedPreferenceChangeLi
     private val binding get() = _binding!!
 
     //
-    private val viewModel: GControlViewModel by activityViewModels()
+    private val viewModel: ControlViewModel by activityViewModels()
 
     // >>>>>> LOCATION <<<<<<
     private var foregroundOnlyLocationServiceBound = false
