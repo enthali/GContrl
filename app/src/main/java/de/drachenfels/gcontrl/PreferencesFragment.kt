@@ -21,16 +21,24 @@ class PreferencesFragment : PreferenceFragmentCompat() {
         portPreference?.setOnBindEditTextListener { editText ->
             editText.inputType = InputType.TYPE_CLASS_NUMBER
         }
+
         /**
-         * hide the geo services if they aren't enabled
+         * geo services activities on preference switch
          */
+//        val serviceIntent = Intent(activity, ForegroundOnlyLocationService::class.java)
+//        serviceIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+
+        /**
+         * switch view of geo preferences visibility according to Enable location based Features flag
+         */
+        val enabled =
+            viewModel.sharedPreferences.getBoolean("geo_enable_location_features", false)
 
         val geoServiceEnabled: SwitchPreference? = findPreference("geo_enable_location_features")
         geoServiceEnabled?.setOnPreferenceClickListener { refreshFragment() }
 
         val geoSetHomeLocation: Preference? = findPreference("geo_setHomeLocation")
-        geoSetHomeLocation?.isVisible =
-            viewModel.sharedPreferences.getBoolean("geo_enable_location_features", false) == true
+        geoSetHomeLocation?.isVisible = enabled
         geoSetHomeLocation?.summary = getString(R.string.geo_setHomeLocationSummary)
             .plus("\nCurrent Home Location : ")
             .plus("\nLat : ")
@@ -39,16 +47,13 @@ class PreferencesFragment : PreferenceFragmentCompat() {
             .plus(viewModel.sharedPreferences.getString("geo_longitude", "null").toString())
 
         val geoFenceSize: EditTextPreference? = findPreference("geo_fence_size")
-        geoFenceSize?.isVisible =
-            viewModel.sharedPreferences.getBoolean("geo_enable_location_features", false) == true
+        geoFenceSize?.isVisible = enabled
 
         val geoEnableProtect: SwitchPreference? = findPreference("geo_enable_protect")
-        geoEnableProtect?.isVisible =
-            viewModel.sharedPreferences.getBoolean("geo_enable_location_features", false) == true
+        geoEnableProtect?.isVisible = enabled
 
         val geoAutoControl: SwitchPreference? = findPreference("geo_autoControl")
-        geoAutoControl?.isVisible =
-            viewModel.sharedPreferences.getBoolean("geo_enable_location_features", false) == true
+        geoAutoControl?.isVisible = enabled
 
 
         /**
