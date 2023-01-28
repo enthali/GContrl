@@ -94,11 +94,11 @@ class ForegroundOnlyLocationService() : Service() {
             // IMPORTANT NOTE: Apps running on Android 8.0 and higher devices (regardless of
             // targetSdkVersion) may receive updates less frequently than this interval when the app
             // is no longer in the foreground.
-            interval = TimeUnit.SECONDS.toMillis(60)
+            interval = TimeUnit.SECONDS.toMillis(15)
 
             // Sets the fastest rate for active location updates. This interval is exact, and your
             // application will never receive updates more frequently than this value.
-            fastestInterval = TimeUnit.SECONDS.toMillis(10)
+            fastestInterval = TimeUnit.SECONDS.toMillis(2)
 
             // Sets the maximum time when batched location updates are delivered. Updates may be
             // delivered sooner than this interval.
@@ -180,7 +180,7 @@ class ForegroundOnlyLocationService() : Service() {
 //        // NOTE: If this method is called due to a configuration change in MainActivity,
 //        // we do nothing.
         if (!configurationChange && sharedPreferences.getBoolean(
-                "geo_enable_location_features",
+                getString(R.string.prf_key_geo_enable_location_features),
                 false
             )
         ) {
@@ -189,7 +189,6 @@ class ForegroundOnlyLocationService() : Service() {
 
             startForeground(NOTIFICATION_ID, notification)
 
-            Log.d(TAG, "still in foreground ?")
             serviceRunningInForeground = true
 
         }
@@ -289,10 +288,7 @@ class ForegroundOnlyLocationService() : Service() {
 
         // 3. Set up main Intent/Pending Intents for notification.
         // TODO - do we have the problem here?
-        val launchActivityIntent = Intent(
-            /* packageContext = */ this,
-            /* cls = */ MainActivity::class.java
-        )
+        val launchActivityIntent = Intent(this, MainActivity::class.java)
 
         val cancelIntent = Intent(this, ForegroundOnlyLocationService::class.java)
         cancelIntent.putExtra(EXTRA_CANCEL_LOCATION_TRACKING_FROM_NOTIFICATION, true)
@@ -350,7 +346,7 @@ class ForegroundOnlyLocationService() : Service() {
 
         internal const val EXTRA_LOCATION = "$PACKAGE_NAME.extra.LOCATION"
 
-        private const val EXTRA_CANCEL_LOCATION_TRACKING_FROM_NOTIFICATION =
+        const val EXTRA_CANCEL_LOCATION_TRACKING_FROM_NOTIFICATION =
             "$PACKAGE_NAME.extra.CANCEL_LOCATION_TRACKING_FROM_NOTIFICATION"
 
         private const val NOTIFICATION_ID = 12345678

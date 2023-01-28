@@ -105,15 +105,23 @@ class ControlFragment : Fragment() {
      * the best place to reset the private variables from the preferences
      */
     override fun onStart() {
+        Log.d(TAG, "onStart()")
         super.onStart()
 
-        val serviceIntent = Intent(activity, ForegroundOnlyLocationService::class.java)
-        serviceIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-        requireActivity().bindService(
-            serviceIntent,
-            foregroundOnlyServiceConnection,
-            Context.BIND_AUTO_CREATE
-        )
+        // bind the service only if the location preference is enabled
+        if (viewModel.sharedPreferences.getBoolean(
+                getString(R.string.prf_key_geo_enable_location_features),
+                false
+            )
+        ) {
+            val serviceIntent = Intent(activity, ForegroundOnlyLocationService::class.java)
+            serviceIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            requireActivity().bindService(
+                serviceIntent,
+                foregroundOnlyServiceConnection,
+                Context.BIND_AUTO_CREATE
+            )
+        }
 
         //  Check if Internet connection is available
         //  to remind the user that we'll need an internet connection
@@ -124,10 +132,11 @@ class ControlFragment : Fragment() {
                 Toast.LENGTH_LONG
             ).show()
         }
-        enableLocationService()
+        enableLocationServiceView()
     }
 
     override fun onResume() {
+        Log.d(TAG, "onResume()")
         super.onResume()
         //  Check if Internet connection is available
         //  to remind the user that we'll need an internet connection
@@ -146,7 +155,7 @@ class ControlFragment : Fragment() {
                 )
             )
         }
-        enableLocationService()
+        enableLocationServiceView()
     }
 
     override fun onPause() {
@@ -166,9 +175,15 @@ class ControlFragment : Fragment() {
         super.onStop()
     }
 
-    private fun enableLocationService() {
+    /**
+     * switch view of location services view according to 'Enable location based Features' flag
+     */
+    private fun enableLocationServiceView() {
 
-        val enabled = viewModel.sharedPreferences.getBoolean("geo_enable_location_features", false)
+        val enabled = viewModel.sharedPreferences.getBoolean(
+            getString(R.string.prf_key_geo_enable_location_features),
+            false
+        )
         // hide the location related information on the screen
         // if location services are disabled in the preferences
         // adopt the layout if geo-services are enabled or not
@@ -177,7 +192,6 @@ class ControlFragment : Fragment() {
         } else {
             (binding.controlTableLayout.layoutParams as LinearLayout.LayoutParams).weight = 0.0f
         }
-
 
         //  attach / detach location service
         if (!enabled) {

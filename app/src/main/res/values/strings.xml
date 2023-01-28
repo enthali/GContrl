@@ -15,6 +15,7 @@
 
     <string name="launch_activity">open Remote Control</string>
 
+    <!-- preference onscreen text -->
     <string name="prf_mqtt_password">Password</string>
     <string name="prf_mqtt_user">User</string>
     <string name="prf_mqtt_device_id">Device ID - Topic</string>
@@ -22,11 +23,21 @@
     <string name="prf_mqtt_use_ssl">Use transport layer encryption (SSL)</string>
     <string name="prf_mqtt_port">MQTT server Port</string>
     <string name="prf_mqtt_uri">MQTT server URI</string>
-
     <string name="prf_geo_en_loc_features">Enable Location based Features</string>
     <string name="prf_geo_distance_from_home">distance from home :</string>
     <string name="prf_geo_setHomeLocation">Set Home Location</string>
-    <string name="geo_setHomeLocationSummary">Setting the home location to the current location</string>
+    <string name="geo_setHomeLocationSummary">Set the home location to the current location</string>
+    <!-- preference keys -->
+    <string name="prf_key_geo_enable_location_features">geo_enable_location_features</string>
+    <string name="prf_key_geo_set_home_location">geo_set_home_location</string>
+    <string name="prf_key_geo_latitude">geo_latitude</string>
+    <string name="prf_key_geo_longitude">geo_longitude</string>
+    <string name="prf_key_geo_fence_size">geo_fence_size</string>
+    <string name="prf_key_geo_enable_protect">geo_enable_protect</string>
+    <string name="prf_key_geo_auto_control">geo_auto_control</string>
+
+
     <string name="stop_location_service_notification_text">Stop location services</string>
+
 
 </resources>

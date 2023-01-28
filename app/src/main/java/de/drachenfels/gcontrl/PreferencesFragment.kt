@@ -1,5 +1,7 @@
 package de.drachenfels.gcontrl
 
+import android.app.PendingIntent
+import android.content.Intent
 import android.os.Bundle
 import android.text.InputType
 import androidx.fragment.app.activityViewModels
@@ -8,6 +10,7 @@ import androidx.preference.EditTextPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.SwitchPreference
+import de.drachenfels.gcontrl.services.ForegroundOnlyLocationService
 
 
 class PreferencesFragment : PreferenceFragmentCompat() {
@@ -25,34 +28,48 @@ class PreferencesFragment : PreferenceFragmentCompat() {
         /**
          * geo services activities on preference switch
          */
-//        val serviceIntent = Intent(activity, ForegroundOnlyLocationService::class.java)
-//        serviceIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
 
-        /**
-         * switch view of geo preferences visibility according to Enable location based Features flag
-         */
+       // start the location service
+//       val serviceIntent = Intent(activity, ForegroundOnlyLocationService::class.java)
+//       serviceIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+//
+
+
+
+        // switch view of geo preferences visibility according to Enable location based Features flag
         val enabled =
-            viewModel.sharedPreferences.getBoolean("geo_enable_location_features", false)
+            viewModel.sharedPreferences.getBoolean(getString(R.string.prf_key_geo_enable_location_features), false)
 
-        val geoServiceEnabled: SwitchPreference? = findPreference("geo_enable_location_features")
+//        if (enabled) {
+//            // start the service in foreground mode
+//        } else {
+//            // stop the service - he'S not needed anymore
+//            val cancelIntent = Intent(activity, ForegroundOnlyLocationService::class.java)
+//            cancelIntent.putExtra(ForegroundOnlyLocationService.EXTRA_CANCEL_LOCATION_TRACKING_FROM_NOTIFICATION, true)
+//
+//            val servicePendingIntent = PendingIntent.getService(
+//                activity, 0, cancelIntent, PendingIntent.FLAG_UPDATE_CURRENT
+//            )
+//        }
+
+        val geoServiceEnabled: SwitchPreference? = findPreference(getString(R.string.prf_key_geo_enable_location_features))
         geoServiceEnabled?.setOnPreferenceClickListener { refreshFragment() }
 
-        val geoSetHomeLocation: Preference? = findPreference("geo_setHomeLocation")
-        geoSetHomeLocation?.isVisible = enabled
+        val geoSetHomeLocation: Preference? = findPreference(getString(R.string.prf_key_geo_set_home_location))
         geoSetHomeLocation?.summary = getString(R.string.geo_setHomeLocationSummary)
             .plus("\nCurrent Home Location : ")
             .plus("\nLat : ")
-            .plus(viewModel.sharedPreferences.getString("geo_latitude", "null").toString())
+            .plus(viewModel.sharedPreferences.getString(getString(R.string.prf_key_geo_latitude), "null").toString())
             .plus("\nLon :")
-            .plus(viewModel.sharedPreferences.getString("geo_longitude", "null").toString())
+            .plus(viewModel.sharedPreferences.getString(getString(R.string.prf_key_geo_longitude), "null").toString())
 
-        val geoFenceSize: EditTextPreference? = findPreference("geo_fence_size")
+        val geoFenceSize: EditTextPreference? = findPreference(getString(R.string.prf_key_geo_fence_size))
         geoFenceSize?.isVisible = enabled
 
-        val geoEnableProtect: SwitchPreference? = findPreference("geo_enable_protect")
+        val geoEnableProtect: SwitchPreference? = findPreference(getString(R.string.prf_key_geo_enable_protect))
         geoEnableProtect?.isVisible = enabled
 
-        val geoAutoControl: SwitchPreference? = findPreference("geo_autoControl")
+        val geoAutoControl: SwitchPreference? = findPreference(getString(R.string.prf_key_geo_auto_control))
         geoAutoControl?.isVisible = enabled
 
 
@@ -62,8 +79,8 @@ class PreferencesFragment : PreferenceFragmentCompat() {
          * preferences on click Listener
          */
         geoSetHomeLocation?.setOnPreferenceClickListener {
-            viewModel.sharedPreferences.edit().putString("geo_latitude", viewModel.currentLocation.latitude.toString()).apply()
-            viewModel.sharedPreferences.edit().putString("geo_longitude", viewModel.currentLocation.longitude.toString()).apply()
+            viewModel.sharedPreferences.edit().putString(getString(R.string.prf_key_geo_latitude), viewModel.currentLocation.latitude.toString()).apply()
+            viewModel.sharedPreferences.edit().putString(getString(R.string.prf_key_geo_longitude), viewModel.currentLocation.longitude.toString()).apply()
             refreshFragment()
         }
     }
