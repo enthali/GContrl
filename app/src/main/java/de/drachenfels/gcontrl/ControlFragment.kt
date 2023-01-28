@@ -27,7 +27,7 @@ import com.google.android.material.snackbar.Snackbar
 import de.drachenfels.gcontrl.databinding.FragmentControlBinding
 import de.drachenfels.gcontrl.services.ForegroundOnlyLocationService
 
-private const val TAG = "MainActivity"
+private const val TAG = "ControlFragment"
 private const val REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE = 34
 
 /**
@@ -55,12 +55,14 @@ class ControlFragment : Fragment() {
     private val foregroundOnlyServiceConnection = object : ServiceConnection {
 
         override fun onServiceConnected(name: ComponentName, service: IBinder) {
+            Log.d(TAG, "onServiceConnected()")
             val binder = service as ForegroundOnlyLocationService.LocalBinder
             foregroundOnlyLocationService = binder.service
             foregroundOnlyLocationServiceBound = true
         }
 
         override fun onServiceDisconnected(name: ComponentName) {
+            Log.d(TAG, "onServiceDisconnected()")
             foregroundOnlyLocationService = null
             foregroundOnlyLocationServiceBound = false
         }
@@ -68,6 +70,7 @@ class ControlFragment : Fragment() {
     // <<<<<< LOCATION >>>>>>
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        Log.d(TAG, "onCreate()")
         super.onCreate(savedInstanceState)
 
         viewModel.initViewModel() // this is where we get viewModel.sharedPreferences setup
@@ -81,6 +84,7 @@ class ControlFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
+        Log.d(TAG, "onCreateView()")
         // Inflate the layout for this fragment
         // return inflater.inflate(R.layout.fragment_direct_control, container, false)
         _binding = FragmentControlBinding.inflate(inflater, container, false)
@@ -88,6 +92,7 @@ class ControlFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        Log.d(TAG, "onViewCreated()")
         super.onViewCreated(view, savedInstanceState)
         // bind the buttons
         binding.openbutton.setOnClickListener { manageDoor(1) }
@@ -105,23 +110,33 @@ class ControlFragment : Fragment() {
      * the best place to reset the private variables from the preferences
      */
     override fun onStart() {
-        Log.d(TAG, "onStart()")
+        Log.d(
+            TAG,
+            "onStart()".plus("   : loc service preference : ").plus(
+                viewModel.sharedPreferences.getBoolean(
+                    getString(R.string.prf_key_geo_enable_location_features),
+                    false
+                ).toString()
+            )
+        )
         super.onStart()
 
         // bind the service only if the location preference is enabled
-        if (viewModel.sharedPreferences.getBoolean(
-                getString(R.string.prf_key_geo_enable_location_features),
-                false
-            )
-        ) {
-            val serviceIntent = Intent(activity, ForegroundOnlyLocationService::class.java)
-            serviceIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-            requireActivity().bindService(
-                serviceIntent,
-                foregroundOnlyServiceConnection,
-                Context.BIND_AUTO_CREATE
-            )
-        }
+//        if (viewModel.sharedPreferences.getBoolean(
+//                getString(R.string.prf_key_geo_enable_location_features),
+//                false
+//            )
+//        ) {
+        Log.d(TAG, "onStart() bindService()")
+        val serviceIntent = Intent(activity, ForegroundOnlyLocationService::class.java)
+
+        val result :Boolean = requireActivity().bindService(
+            serviceIntent,
+            foregroundOnlyServiceConnection,
+            Context.BIND_AUTO_CREATE
+        )
+        Log.d(TAG, "onStart() bindService() result : ".plus(result))
+        //      }
 
         //  Check if Internet connection is available
         //  to remind the user that we'll need an internet connection
@@ -140,6 +155,7 @@ class ControlFragment : Fragment() {
         super.onResume()
         //  Check if Internet connection is available
         //  to remind the user that we'll need an internet connection
+        enableLocationServiceView()
         if (!isConnected()) {
             Toast.makeText(
                 activity?.applicationContext,
@@ -147,6 +163,7 @@ class ControlFragment : Fragment() {
                 Toast.LENGTH_LONG
             ).show()
         }
+
         activity?.let {
             LocalBroadcastManager.getInstance(it).registerReceiver(
                 foregroundOnlyBroadcastReceiver,
@@ -155,10 +172,11 @@ class ControlFragment : Fragment() {
                 )
             )
         }
-        enableLocationServiceView()
+
     }
 
     override fun onPause() {
+        Log.d(TAG, "onPause()")
         activity?.let {
             LocalBroadcastManager.getInstance(it).unregisterReceiver(
                 foregroundOnlyBroadcastReceiver
@@ -168,6 +186,7 @@ class ControlFragment : Fragment() {
     }
 
     override fun onStop() {
+        Log.d(TAG, "onStop()")
         if (foregroundOnlyLocationServiceBound) {
             activity?.unbindService(foregroundOnlyServiceConnection)
             foregroundOnlyLocationServiceBound = false
@@ -179,7 +198,7 @@ class ControlFragment : Fragment() {
      * switch view of location services view according to 'Enable location based Features' flag
      */
     private fun enableLocationServiceView() {
-
+        Log.d(TAG, "enableLocationServiceView()")
         val enabled = viewModel.sharedPreferences.getBoolean(
             getString(R.string.prf_key_geo_enable_location_features),
             false
@@ -193,37 +212,49 @@ class ControlFragment : Fragment() {
             (binding.controlTableLayout.layoutParams as LinearLayout.LayoutParams).weight = 0.0f
         }
 
+        requestForegroundPermissions()
+/*
+
         //  attach / detach location service
         if (!enabled) {
             foregroundOnlyLocationService?.unsubscribeToLocationUpdates()
         } else {
             // TODO: Step 1.0, Review Permissions: Checks and requests if needed.
             if (foregroundPermissionApproved()) {
-                foregroundOnlyLocationService?.subscribeToLocationUpdates()
-                    ?: Log.d(TAG, "Service Not Bound")
+                val result = foregroundOnlyLocationService?.subscribeToLocationUpdates()
+
+                Log.d(TAG,
+                    "foregroundOnlyLocationService() value : ".plus(foregroundOnlyLocationService.toString())
+                        .plus("  result : ").plus(result.toString())
+                )
             } else {
                 requestForegroundPermissions()
             }
         }
+*/
     }
 
     /**
      *  Review Permissions: Method checks if permissions approved.
      */
     private fun foregroundPermissionApproved(): Boolean {
+        Log.d(TAG, "foregroundPermissionApproved()")
         // TOTO does the .let call work ??
-        return PackageManager.PERMISSION_GRANTED == activity?.let {
+        val result = PackageManager.PERMISSION_GRANTED == activity?.let {
             ActivityCompat.checkSelfPermission(
                 it,
                 Manifest.permission.ACCESS_FINE_LOCATION
             )
         }
+        Log.d(TAG, "foregroundPermissionApproved() result : ".plus(result.toString()))
+        return result
     }
 
     /**
      * Review Permissions: Method requests permissions.
      */
     private fun requestForegroundPermissions() {
+        Log.d(TAG, "requestForegroundPermission()")
         val provideRationale = foregroundPermissionApproved()
         // If the user denied a previous request, but didn't check "Don't ask again", provide
         // additional rationale.
@@ -267,8 +298,8 @@ class ControlFragment : Fragment() {
         permissions: Array<String>,
         grantResults: IntArray
     ) {
+        Log.d(TAG, "onRequestPermissionResult()")
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        Log.d(TAG, "onRequestPermissionResult")
 
         when (requestCode) {
             REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE -> when {
@@ -310,6 +341,7 @@ class ControlFragment : Fragment() {
      * door handling
      */
     private fun manageDoor(cmd: Int) {
+        Log.d(TAG, "manageDoor()")
         val cmdString = when (cmd) {
             0 -> "close"
             1 -> "open"
@@ -331,6 +363,7 @@ class ControlFragment : Fragment() {
      * check if there is access to the internet
      */
     private fun isConnected(): Boolean {
+        Log.d(TAG, "isConnected()")
         var result = false
         val cm = activity?.getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
         val capabilities = cm.getNetworkCapabilities(cm.activeNetwork)
@@ -359,6 +392,7 @@ class ControlFragment : Fragment() {
     private inner class ForegroundOnlyBroadcastReceiver : BroadcastReceiver() {
 
         override fun onReceive(context: Context, intent: Intent) {
+            Log.d(TAG, "inner : onReceive()")
             val location = intent.getParcelableExtra<Location>(
                 ForegroundOnlyLocationService.EXTRA_LOCATION
             )

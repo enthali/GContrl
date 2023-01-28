@@ -186,11 +186,8 @@ class ForegroundOnlyLocationService() : Service() {
         ) {
             Log.d(TAG, "Start foreground service")
             val notification = generateNotification(currentLocation)
-
             startForeground(NOTIFICATION_ID, notification)
-
             serviceRunningInForeground = true
-
         }
 
         // Ensures onRebind() is called if MainActivity (client) rebinds.
@@ -225,7 +222,7 @@ class ForegroundOnlyLocationService() : Service() {
             )
         } catch (unlikely: SecurityException) {
 
-            sharedPreferences.edit().putBoolean("subscribe_location_services", false).apply()
+//            sharedPreferences.edit().putBoolean("subscribe_location_services", false).apply()
             Log.e(TAG, "Lost location permissions. Couldn't remove updates. $unlikely")
         }
     }
@@ -306,7 +303,7 @@ class ForegroundOnlyLocationService() : Service() {
         val notificationCompatBuilder =
             NotificationCompat.Builder(applicationContext, NOTIFICATION_CHANNEL_ID)
 
-        return notificationCompatBuilder
+        val result = notificationCompatBuilder
             .setStyle(bigTextStyle)
             .setContentTitle(titleText)
             .setContentText(mainNotificationText)
@@ -325,6 +322,10 @@ class ForegroundOnlyLocationService() : Service() {
                 /* intent = */ servicePendingIntent
             )
             .build()
+
+        Log.d(TAG, "generateNotification() result : ".plus(result.toString()))
+
+        return result
     }
 
     /**
@@ -337,7 +338,7 @@ class ForegroundOnlyLocationService() : Service() {
     }
 
     companion object {
-        private const val TAG = "ForegroundOnlyLocationService"
+        private const val TAG = "GeoLocationService"
 
         private const val PACKAGE_NAME = "com.example.android.whileinuselocation"
 

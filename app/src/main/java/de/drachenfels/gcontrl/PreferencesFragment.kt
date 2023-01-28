@@ -1,7 +1,5 @@
 package de.drachenfels.gcontrl
 
-import android.app.PendingIntent
-import android.content.Intent
 import android.os.Bundle
 import android.text.InputType
 import androidx.fragment.app.activityViewModels
@@ -10,7 +8,6 @@ import androidx.preference.EditTextPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.SwitchPreference
-import de.drachenfels.gcontrl.services.ForegroundOnlyLocationService
 
 
 class PreferencesFragment : PreferenceFragmentCompat() {
@@ -56,6 +53,7 @@ class PreferencesFragment : PreferenceFragmentCompat() {
         geoServiceEnabled?.setOnPreferenceClickListener { refreshFragment() }
 
         val geoSetHomeLocation: Preference? = findPreference(getString(R.string.prf_key_geo_set_home_location))
+        geoSetHomeLocation?.isVisible = enabled
         geoSetHomeLocation?.summary = getString(R.string.geo_setHomeLocationSummary)
             .plus("\nCurrent Home Location : ")
             .plus("\nLat : ")
