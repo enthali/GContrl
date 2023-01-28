@@ -59,6 +59,10 @@ class ControlFragment : Fragment() {
             val binder = service as ForegroundOnlyLocationService.LocalBinder
             foregroundOnlyLocationService = binder.service
             foregroundOnlyLocationServiceBound = true
+
+            // enable the location updates
+            foregroundOnlyLocationService?.subscribeToLocationUpdates()
+
         }
 
         override fun onServiceDisconnected(name: ComponentName) {
@@ -103,6 +107,10 @@ class ControlFragment : Fragment() {
         ) { newDistance ->
             binding.distanceText.text = newDistance.toString()
         }
+
+        // make sure we get location permissions if they are enabled
+        if (viewModel.sharedPreferences.getBoolean(getString(R.string.prf_key_geo_enable_location_features),false))
+            requestForegroundPermissions()
     }
 
     /**
@@ -130,7 +138,7 @@ class ControlFragment : Fragment() {
         Log.d(TAG, "onStart() bindService()")
         val serviceIntent = Intent(activity, ForegroundOnlyLocationService::class.java)
 
-        val result :Boolean = requireActivity().bindService(
+        val result: Boolean = requireActivity().bindService(
             serviceIntent,
             foregroundOnlyServiceConnection,
             Context.BIND_AUTO_CREATE
@@ -212,7 +220,8 @@ class ControlFragment : Fragment() {
             (binding.controlTableLayout.layoutParams as LinearLayout.LayoutParams).weight = 0.0f
         }
 
-        requestForegroundPermissions()
+        // requestForegroundPermissions()
+        // foregroundOnlyLocationService?.subscribeToLocationUpdates()
 /*
 
         //  attach / detach location service
