@@ -18,7 +18,6 @@ package de.drachenfels.gcontrl.modules
 import android.content.SharedPreferences
 import android.location.Location
 import androidx.lifecycle.MutableLiveData
-import de.drachenfels.gcontrl.MQTTConnection
 
 /**
  * Returns the `location` object as a human readable string.
@@ -41,7 +40,7 @@ lateinit var sharedPreferences: SharedPreferences
  * the mqtt server is initialized in ControlFragment onCreate and application wide
  * available afterwards
  */
-lateinit var mqttServer: MQTTConnection
+//lateinit var mqttServer: MQTTConnection
 
 
 const val MQTT_STATUS_OK = 0

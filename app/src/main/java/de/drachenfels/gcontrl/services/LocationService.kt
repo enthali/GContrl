@@ -131,6 +131,12 @@ class LocationService : Service() {
                     "0.0"
                 ).toString().toDouble()
 
+            // check preferences on auto door control
+            enableAutoDoorControl = de.drachenfels.gcontrl.modules.sharedPreferences.getBoolean(
+                getString(R.string.prf_key_geo_auto_control),
+                false
+            )
+
             // home location doesn't store the altitude for distance calculation use current altitude
             homeLocation.altitude = lastLocation.altitude
 
@@ -143,8 +149,10 @@ class LocationService : Service() {
 
             // check if the distance just got bigger then the fence -> leaving home 1
             if ((oldDistance > fence) && (newDistance < fence)) {
-                if (fenceWatcher.value != HOME_ZONE_ENTERING)
+                if (fenceWatcher.value != HOME_ZONE_ENTERING) {
                     fenceWatcher.postValue(HOME_ZONE_ENTERING)
+                    onFenceStateChange(HOME_ZONE_ENTERING)
+                }
             }
             if ((oldDistance > fence) && (newDistance > fence)) {
                 if (fenceWatcher.value != HOME_ZONE_OUTSIDE)
@@ -155,8 +163,10 @@ class LocationService : Service() {
                     fenceWatcher.postValue(HOME_ZONE_INSIDE)
             }
             if ((oldDistance < fence) && (newDistance > fence)) {
-                if (fenceWatcher.value != HOME_ZONE_LEAVING)
+                if (fenceWatcher.value != HOME_ZONE_LEAVING) {
                     fenceWatcher.postValue(HOME_ZONE_LEAVING)
+                    onFenceStateChange(HOME_ZONE_LEAVING)
+                }
             }
 
             if (newDistance != oldDistance) {
@@ -165,6 +175,10 @@ class LocationService : Service() {
                 // post the location available for other functions
                 currentLocation.postValue(lastLocation)
             }
+
+//            fenceWatcher.observeForever { fenceState ->
+//                onFenceStateChange(fenceState)
+//            }
         }
     }
 

@@ -23,9 +23,7 @@ import androidx.fragment.app.Fragment
 import androidx.preference.PreferenceManager
 import com.google.android.material.snackbar.Snackbar
 import de.drachenfels.gcontrl.databinding.FragmentControlBinding
-import de.drachenfels.gcontrl.modules.distanceToHome
-import de.drachenfels.gcontrl.modules.mqttServer
-import de.drachenfels.gcontrl.modules.sharedPreferences
+import de.drachenfels.gcontrl.modules.*
 import de.drachenfels.gcontrl.services.LocationService
 
 
@@ -73,7 +71,7 @@ class ControlFragment : Fragment() {
         super.onCreate(savedInstanceState)
 
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(requireActivity())
-        mqttServer = MQTTConnection()
+//        mqttServer = MQTTConnection()
     }
 
     override fun onCreateView(
@@ -306,7 +304,7 @@ class ControlFragment : Fragment() {
             else -> "status"
         }
         if (isConnected()) {
-            if (mqttServer.sendMessage(cmdString)) {
+            if (mqttSendMessage(cmdString)) {
                 Toast.makeText(
                     activity?.applicationContext,
                     cmdString.plus(" the door"),
