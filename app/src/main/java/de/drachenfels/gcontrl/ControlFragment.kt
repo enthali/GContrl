@@ -21,9 +21,11 @@ import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.preference.PreferenceManager
 import com.google.android.material.snackbar.Snackbar
 import de.drachenfels.gcontrl.databinding.FragmentControlBinding
 import de.drachenfels.gcontrl.modules.SharedLocationResources
+import de.drachenfels.gcontrl.modules.sharedPreferences
 import de.drachenfels.gcontrl.services.ForegroundOnlyLocationService
 
 
@@ -77,6 +79,8 @@ class ControlFragment : Fragment() {
         Log.d(TAG, "onCreate()")
         super.onCreate(savedInstanceState)
 
+        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(requireActivity())
+
         viewModel.initViewModel() // this is where we get viewModel.sharedPreferences setup
 
         // >>>>>> LOCATION <<<<<<<
@@ -102,10 +106,15 @@ class ControlFragment : Fragment() {
         binding.openbutton.setOnClickListener { manageDoor(1) }
         binding.closebutton.setOnClickListener { manageDoor(0) }
 
-        viewModel.distanceToHome.observe(
+        SharedLocationResources.distanceToHome.observe(
             viewLifecycleOwner
         ) { newDistance ->
             binding.distanceText.text = newDistance.toString()
+        }
+
+        SharedLocationResources.locationUpdate.observe(
+            viewLifecycleOwner
+        ) {
         }
 
         // make sure we get location permissions if they are enabled
@@ -153,6 +162,8 @@ class ControlFragment : Fragment() {
         // TODO("Not yet implemented")
 //        SharedLocationResources.currentLocation.longitude
 //        SharedLocationResources.currentLocation.latitude
+
+
     }
 
     override fun onResume() {

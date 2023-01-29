@@ -15,6 +15,7 @@
  */
 package de.drachenfels.gcontrl.modules
 
+import android.content.SharedPreferences
 import android.location.Location
 import androidx.lifecycle.MutableLiveData
 
@@ -29,9 +30,12 @@ fun Location?.toText(): String {
     }
 }
 
+lateinit var sharedPreferences: SharedPreferences
 internal object SharedLocationResources {
 
     var currentLocation : Location? = null
+
+
 
     private var privateLocationUpdate = MutableLiveData(0)
     var locationUpdate: MutableLiveData<Int>
@@ -39,6 +43,16 @@ internal object SharedLocationResources {
         set(value) {
             privateLocationUpdate = value
         }
+
+    // distance live data
+    private var privatedistanceToHome = MutableLiveData(0f)
+    var distanceToHome: MutableLiveData<Float>
+        get() = privatedistanceToHome
+        set(value) {
+            privatedistanceToHome = value
+        }
+
+
 
 }
 /*
