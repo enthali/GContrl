@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.drachenfels.gcontrl.utilities
+package de.drachenfels.gcontrl.modules
 
 import android.location.Location
+import androidx.lifecycle.MutableLiveData
 
 /**
  * Returns the `location` object as a human readable string.
@@ -26,6 +27,19 @@ fun Location?.toText(): String {
     } else {
         "Unknown location"
     }
+}
+
+internal object SharedLocationResources {
+
+    var currentLocation : Location? = null
+
+    private var privateLocationUpdate = MutableLiveData(0)
+    var locationUpdate: MutableLiveData<Int>
+        get() = privateLocationUpdate
+        set(value) {
+            privateLocationUpdate = value
+        }
+
 }
 /*
 /**

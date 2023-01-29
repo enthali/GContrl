@@ -8,6 +8,7 @@ import androidx.preference.EditTextPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.SwitchPreference
+import de.drachenfels.gcontrl.modules.SharedLocationResources
 
 
 class PreferencesFragment : PreferenceFragmentCompat() {
@@ -26,16 +27,18 @@ class PreferencesFragment : PreferenceFragmentCompat() {
          * geo services activities on preference switch
          */
 
-       // start the location service
+        // start the location service
 //       val serviceIntent = Intent(activity, ForegroundOnlyLocationService::class.java)
 //       serviceIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
 //
 
 
-
         // switch view of geo preferences visibility according to Enable location based Features flag
         val enabled =
-            viewModel.sharedPreferences.getBoolean(getString(R.string.prf_key_geo_enable_location_features), false)
+            viewModel.sharedPreferences.getBoolean(
+                getString(R.string.prf_key_geo_enable_location_features),
+                false
+            )
 
 //        if (enabled) {
 //            // start the service in foreground mode
@@ -49,25 +52,40 @@ class PreferencesFragment : PreferenceFragmentCompat() {
 //            )
 //        }
 
-        val geoServiceEnabled: SwitchPreference? = findPreference(getString(R.string.prf_key_geo_enable_location_features))
+        val geoServiceEnabled: SwitchPreference? =
+            findPreference(getString(R.string.prf_key_geo_enable_location_features))
         geoServiceEnabled?.setOnPreferenceClickListener { refreshFragment() }
 
-        val geoSetHomeLocation: Preference? = findPreference(getString(R.string.prf_key_geo_set_home_location))
+        val geoSetHomeLocation: Preference? =
+            findPreference(getString(R.string.prf_key_geo_set_home_location))
         geoSetHomeLocation?.isVisible = enabled
         geoSetHomeLocation?.summary = getString(R.string.geo_setHomeLocationSummary)
             .plus("\nCurrent Home Location : ")
             .plus("\nLat : ")
-            .plus(viewModel.sharedPreferences.getString(getString(R.string.prf_key_geo_latitude), "null").toString())
+            .plus(
+                viewModel.sharedPreferences.getString(
+                    getString(R.string.prf_key_geo_latitude),
+                    "null"
+                ).toString()
+            )
             .plus("\nLon :")
-            .plus(viewModel.sharedPreferences.getString(getString(R.string.prf_key_geo_longitude), "null").toString())
+            .plus(
+                viewModel.sharedPreferences.getString(
+                    getString(R.string.prf_key_geo_longitude),
+                    "null"
+                ).toString()
+            )
 
-        val geoFenceSize: EditTextPreference? = findPreference(getString(R.string.prf_key_geo_fence_size))
+        val geoFenceSize: EditTextPreference? =
+            findPreference(getString(R.string.prf_key_geo_fence_size))
         geoFenceSize?.isVisible = enabled
 
-        val geoEnableProtect: SwitchPreference? = findPreference(getString(R.string.prf_key_geo_enable_protect))
+        val geoEnableProtect: SwitchPreference? =
+            findPreference(getString(R.string.prf_key_geo_enable_protect))
         geoEnableProtect?.isVisible = enabled
 
-        val geoAutoControl: SwitchPreference? = findPreference(getString(R.string.prf_key_geo_auto_control))
+        val geoAutoControl: SwitchPreference? =
+            findPreference(getString(R.string.prf_key_geo_auto_control))
         geoAutoControl?.isVisible = enabled
 
 
@@ -77,11 +95,18 @@ class PreferencesFragment : PreferenceFragmentCompat() {
          * preferences on click Listener
          */
         geoSetHomeLocation?.setOnPreferenceClickListener {
-            viewModel.sharedPreferences.edit().putString(getString(R.string.prf_key_geo_latitude), viewModel.currentLocation.latitude.toString()).apply()
-            viewModel.sharedPreferences.edit().putString(getString(R.string.prf_key_geo_longitude), viewModel.currentLocation.longitude.toString()).apply()
+            viewModel.sharedPreferences.edit().putString(
+                getString(R.string.prf_key_geo_latitude),
+                SharedLocationResources.currentLocation?.latitude.toString()
+            ).apply()
+            viewModel.sharedPreferences.edit().putString(
+                getString(R.string.prf_key_geo_longitude),
+                SharedLocationResources.currentLocation?.longitude.toString()
+            ).apply()
             refreshFragment()
         }
     }
+
     private fun refreshFragment(): Boolean {
         // This method refreshes the fragment
         findNavController().run {

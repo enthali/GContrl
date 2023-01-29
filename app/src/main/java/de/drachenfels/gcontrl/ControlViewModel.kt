@@ -2,7 +2,6 @@ package de.drachenfels.gcontrl
 
 import android.app.Application
 import android.content.SharedPreferences
-import android.location.Location
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
 import androidx.preference.PreferenceManager
@@ -40,9 +39,9 @@ class ControlViewModel(application: Application) : AndroidViewModel(application)
      * location related variables
      */
 
-    var preferenceFragment: PreferencesFragment? = null
+    // var preferenceFragment: PreferencesFragment? = null
 
-    var currentLocation: Location = Location("initial")
+    // var currentLocation: Location = Location("initial")
 
     // distance live data
     private var _distanceToHome = MutableLiveData(0f)

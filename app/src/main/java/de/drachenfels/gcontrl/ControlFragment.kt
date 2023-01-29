@@ -6,7 +6,6 @@ import android.Manifest
 import android.content.*
 import android.content.Context.CONNECTIVITY_SERVICE
 import android.content.pm.PackageManager
-import android.location.Location
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.net.Uri
@@ -22,10 +21,11 @@ import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.google.android.material.snackbar.Snackbar
 import de.drachenfels.gcontrl.databinding.FragmentControlBinding
+import de.drachenfels.gcontrl.modules.SharedLocationResources
 import de.drachenfels.gcontrl.services.ForegroundOnlyLocationService
+
 
 private const val TAG = "ControlFragment"
 private const val REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE = 34
@@ -49,7 +49,7 @@ class ControlFragment : Fragment() {
 
 
     // Listens for location broadcasts from ForegroundOnlyLocationService.
-    private lateinit var foregroundOnlyBroadcastReceiver: ForegroundOnlyBroadcastReceiver
+    //private lateinit var foregroundOnlyBroadcastReceiver: ForegroundOnlyBroadcastReceiver
 
     // Monitors connection to the while-in-use service.
     private val foregroundOnlyServiceConnection = object : ServiceConnection {
@@ -80,7 +80,7 @@ class ControlFragment : Fragment() {
         viewModel.initViewModel() // this is where we get viewModel.sharedPreferences setup
 
         // >>>>>> LOCATION <<<<<<<
-        foregroundOnlyBroadcastReceiver = ForegroundOnlyBroadcastReceiver()
+        //foregroundOnlyBroadcastReceiver = ForegroundOnlyBroadcastReceiver()
         // <<<<<< LOCATION >>>>>>>
     }
 
@@ -109,7 +109,11 @@ class ControlFragment : Fragment() {
         }
 
         // make sure we get location permissions if they are enabled
-        if (viewModel.sharedPreferences.getBoolean(getString(R.string.prf_key_geo_enable_location_features),false))
+        if (viewModel.sharedPreferences.getBoolean(
+                getString(R.string.prf_key_geo_enable_location_features),
+                false
+            )
+        )
             requestForegroundPermissions()
     }
 
@@ -118,33 +122,19 @@ class ControlFragment : Fragment() {
      * the best place to reset the private variables from the preferences
      */
     override fun onStart() {
-        Log.d(
-            TAG,
-            "onStart()".plus("   : loc service preference : ").plus(
-                viewModel.sharedPreferences.getBoolean(
-                    getString(R.string.prf_key_geo_enable_location_features),
-                    false
-                ).toString()
-            )
-        )
+        Log.d(TAG, "onStart()")
         super.onStart()
 
-        // bind the service only if the location preference is enabled
-//        if (viewModel.sharedPreferences.getBoolean(
-//                getString(R.string.prf_key_geo_enable_location_features),
-//                false
-//            )
-//        ) {
-        Log.d(TAG, "onStart() bindService()")
         val serviceIntent = Intent(activity, ForegroundOnlyLocationService::class.java)
 
-        val result: Boolean = requireActivity().bindService(
+        requireActivity().bindService(
             serviceIntent,
             foregroundOnlyServiceConnection,
             Context.BIND_AUTO_CREATE
         )
-        Log.d(TAG, "onStart() bindService() result : ".plus(result))
-        //      }
+
+        // register live data - updated by the service
+        SharedLocationResources.locationUpdate.observe(this) { onLocationUpdate() }
 
         //  Check if Internet connection is available
         //  to remind the user that we'll need an internet connection
@@ -156,6 +146,13 @@ class ControlFragment : Fragment() {
             ).show()
         }
         enableLocationServiceView()
+    }
+
+    private fun onLocationUpdate() {
+        Log.d(TAG, "onLocationUpdate()")
+        // TODO("Not yet implemented")
+//        SharedLocationResources.currentLocation.longitude
+//        SharedLocationResources.currentLocation.latitude
     }
 
     override fun onResume() {
@@ -172,24 +169,24 @@ class ControlFragment : Fragment() {
             ).show()
         }
 
-        activity?.let {
-            LocalBroadcastManager.getInstance(it).registerReceiver(
-                foregroundOnlyBroadcastReceiver,
-                IntentFilter(
-                    ForegroundOnlyLocationService.ACTION_FOREGROUND_ONLY_LOCATION_BROADCAST
-                )
-            )
-        }
+//        activity?.let {
+//            LocalBroadcastManager.getInstance(it).registerReceiver(
+//                foregroundOnlyBroadcastReceiver,
+//                IntentFilter(
+//                    ForegroundOnlyLocationService.ACTION_FOREGROUND_ONLY_LOCATION_BROADCAST
+//                )
+//            )
+//        }
 
     }
 
     override fun onPause() {
-        Log.d(TAG, "onPause()")
-        activity?.let {
-            LocalBroadcastManager.getInstance(it).unregisterReceiver(
-                foregroundOnlyBroadcastReceiver
-            )
-        }
+//        Log.d(TAG, "onPause()")
+//        activity?.let {
+//            LocalBroadcastManager.getInstance(it).unregisterReceiver(
+//                foregroundOnlyBroadcastReceiver
+//            )
+//        }
         super.onPause()
     }
 
@@ -394,22 +391,22 @@ class ControlFragment : Fragment() {
         return result
     }
 
-    /**
-     * Receiver for location broadcasts from [ForegroundOnlyLocationService].
-     * TODO how to get rid of this ??
-     */
-    private inner class ForegroundOnlyBroadcastReceiver : BroadcastReceiver() {
-
-        override fun onReceive(context: Context, intent: Intent) {
-            Log.d(TAG, "inner : onReceive()")
-            val location = intent.getParcelableExtra<Location>(
-                ForegroundOnlyLocationService.EXTRA_LOCATION
-            )
-
-            if (location != null) {
-                viewModel.currentLocation.longitude = location.longitude
-                viewModel.currentLocation.latitude = location.latitude
-            }
-        }
-    }
+//    /**
+//     * Receiver for location broadcasts from [ForegroundOnlyLocationService].
+//     * TODO how to get rid of this ?? I GOT RID OF IT !!!!! YEAAAAA - clean up needed
+//     */
+//    private inner class ForegroundOnlyBroadcastReceiver : BroadcastReceiver() {
+//
+//        override fun onReceive(context: Context, intent: Intent) {
+//            Log.d(TAG, "inner : onReceive()")
+//            val location = intent.getParcelableExtra<Location>(
+//                ForegroundOnlyLocationService.EXTRA_LOCATION
+//            )
+//
+//            if (location != null) {
+//                viewModel.currentLocation.longitude = location.longitude
+//                viewModel.currentLocation.latitude = location.latitude
+//            }
+//        }
+//    }
 }

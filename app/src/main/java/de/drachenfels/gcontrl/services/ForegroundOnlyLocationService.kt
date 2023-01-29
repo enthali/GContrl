@@ -33,7 +33,8 @@ import androidx.preference.PreferenceManager
 import com.google.android.gms.location.*
 import de.drachenfels.gcontrl.MainActivity
 import de.drachenfels.gcontrl.R
-import de.drachenfels.gcontrl.utilities.toText
+import de.drachenfels.gcontrl.modules.SharedLocationResources
+import de.drachenfels.gcontrl.modules.toText
 import java.util.concurrent.TimeUnit
 
 /**
@@ -115,6 +116,12 @@ class ForegroundOnlyLocationService() : Service() {
                 // things a bit and just saving it as a local variable, as we only need it again
                 // if a Notification is created (when the user navigates away from app).
                 currentLocation = locationResult.lastLocation
+                SharedLocationResources.currentLocation = locationResult.lastLocation
+
+                SharedLocationResources.locationUpdate.postValue(
+                    SharedLocationResources.locationUpdate.value?.plus(1)?.mod(16)
+                )
+
 
                 // Notify our Activity that a new location was added. Again, if this was a
                 // production app, the Activity would be listening for changes to a database
