@@ -26,7 +26,7 @@ class PreferencesFragment : PreferenceFragmentCompat() {
          */
 
         // start the location service
-//       val serviceIntent = Intent(activity, ForegroundOnlyLocationService::class.java)
+//       val serviceIntent = Intent(activity, LocationService::class.java)
 //       serviceIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
 //
 
@@ -42,8 +42,8 @@ class PreferencesFragment : PreferenceFragmentCompat() {
 //            // start the service in foreground mode
 //        } else {
 //            // stop the service - he'S not needed anymore
-//            val cancelIntent = Intent(activity, ForegroundOnlyLocationService::class.java)
-//            cancelIntent.putExtra(ForegroundOnlyLocationService.EXTRA_CANCEL_LOCATION_TRACKING_FROM_NOTIFICATION, true)
+//            val cancelIntent = Intent(activity, LocationService::class.java)
+//            cancelIntent.putExtra(LocationService.EXTRA_CANCEL_LOCATION_TRACKING_FROM_NOTIFICATION, true)
 //
 //            val servicePendingIntent = PendingIntent.getService(
 //                activity, 0, cancelIntent, PendingIntent.FLAG_UPDATE_CURRENT
@@ -95,11 +95,11 @@ class PreferencesFragment : PreferenceFragmentCompat() {
         geoSetHomeLocation?.setOnPreferenceClickListener {
             sharedPreferences.edit().putString(
                 getString(R.string.prf_key_geo_latitude),
-                SharedLocationResources.currentLocation?.latitude.toString()
+                SharedLocationResources.currentLocation.latitude.toString()
             ).apply()
             sharedPreferences.edit().putString(
                 getString(R.string.prf_key_geo_longitude),
-                SharedLocationResources.currentLocation?.longitude.toString()
+                SharedLocationResources.currentLocation.longitude.toString()
             ).apply()
             refreshFragment()
         }

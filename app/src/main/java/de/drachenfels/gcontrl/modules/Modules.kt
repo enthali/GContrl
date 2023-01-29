@@ -30,12 +30,19 @@ fun Location?.toText(): String {
     }
 }
 
+
+/**
+ * the application wide shared preferences will be available during ControlFragment onCreate
+ */
 lateinit var sharedPreferences: SharedPreferences
+
+
+/**
+ * The object contains shared resources used between the ControlView and the Location Service
+ */
 internal object SharedLocationResources {
 
     var currentLocation : Location = Location("initialLocation")
-
-
 
     private var privateLocationUpdate = MutableLiveData(0)
     var locationUpdate: MutableLiveData<Int>
@@ -46,47 +53,13 @@ internal object SharedLocationResources {
 
     // distance live data
     private var privateDistanceToHome = MutableLiveData(0f)
+
+    /**
+     * any changes to the calculation of the distance to home can be observed applicatoin wide
+     */
     var distanceToHome: MutableLiveData<Float>
         get() = privateDistanceToHome
         set(value) {
             privateDistanceToHome = value
         }
-
-
-
 }
-/*
-/**
- * Provides access to SharedPreferences for location to Activities and Services.
- */
-
-internal object SharedPreferenceUtil {
-
-    const val KEY_FOREGROUND_ENABLED = "tracking_foreground_location"
-
-
-/**
-     * Returns true if requesting location updates, otherwise returns false.
-     *
-     * @param context The [Context].
-     */
-
-    fun getLocationTrackingPref(context: Context): Boolean =
-        context.getSharedPreferences(
-            context.getString(R.string.preference_file_key), Context.MODE_PRIVATE)
-            .getBoolean(KEY_FOREGROUND_ENABLED, false)
-
-
-/**
-     * Stores the location updates state in SharedPreferences.
-     * @param requestingLocationUpdates The location updates state.
-     */
-
-    fun saveLocationTrackingPref(context: Context, requestingLocationUpdates: Boolean) =
-        context.getSharedPreferences(
-            context.getString(R.string.preference_file_key),
-            Context.MODE_PRIVATE).edit {
-            putBoolean(KEY_FOREGROUND_ENABLED, requestingLocationUpdates)
-        }
-}
-*/

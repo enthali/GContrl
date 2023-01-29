@@ -27,7 +27,7 @@ import com.google.android.material.snackbar.Snackbar
 import de.drachenfels.gcontrl.databinding.FragmentControlBinding
 import de.drachenfels.gcontrl.modules.SharedLocationResources
 import de.drachenfels.gcontrl.modules.sharedPreferences
-import de.drachenfels.gcontrl.services.ForegroundOnlyLocationService
+import de.drachenfels.gcontrl.services.LocationService
 
 
 private const val TAG = "ControlFragment"
@@ -48,10 +48,10 @@ class ControlFragment : Fragment() {
     private var foregroundOnlyLocationServiceBound = false
 
     // Provides location updates for while-in-use feature.
-    private var foregroundOnlyLocationService: ForegroundOnlyLocationService? = null
+    private var locationService: LocationService? = null
 
 
-    // Listens for location broadcasts from ForegroundOnlyLocationService.
+    // Listens for location broadcasts from LocationService.
     // private late init var foregroundOnlyBroadcastReceiver: ForegroundOnlyBroadcastReceiver
 
     // Monitors connection to the while-in-use service.
@@ -59,18 +59,18 @@ class ControlFragment : Fragment() {
 
         override fun onServiceConnected(name: ComponentName, service: IBinder) {
             Log.d(TAG, "onServiceConnected()")
-            val binder = service as ForegroundOnlyLocationService.LocalBinder
-            foregroundOnlyLocationService = binder.service
+            val binder = service as LocationService.LocalBinder
+            locationService = binder.service
             foregroundOnlyLocationServiceBound = true
 
             // enable the location updates
-            foregroundOnlyLocationService?.subscribeToLocationUpdates()
+            locationService?.subscribeToLocationUpdates()
 
         }
 
         override fun onServiceDisconnected(name: ComponentName) {
             Log.d(TAG, "onServiceDisconnected()")
-            foregroundOnlyLocationService = null
+            locationService = null
             foregroundOnlyLocationServiceBound = false
         }
     }
@@ -139,7 +139,7 @@ class ControlFragment : Fragment() {
         Log.d(TAG, "onStart()")
         super.onStart()
 
-        val serviceIntent = Intent(activity, ForegroundOnlyLocationService::class.java)
+        val serviceIntent = Intent(activity, LocationService::class.java)
 
         requireActivity().bindService(
             serviceIntent,
@@ -202,7 +202,7 @@ class ControlFragment : Fragment() {
 //            LocalBroadcastManager.getInstance(it).registerReceiver(
 //                foregroundOnlyBroadcastReceiver,
 //                IntentFilter(
-//                    ForegroundOnlyLocationService.ACTION_FOREGROUND_ONLY_LOCATION_BROADCAST
+//                    LocationService.ACTION_FOREGROUND_ONLY_LOCATION_BROADCAST
 //                )
 //            )
 //        }
@@ -247,19 +247,19 @@ class ControlFragment : Fragment() {
         }
 
         // requestForegroundPermissions()
-        // foregroundOnlyLocationService?.subscribeToLocationUpdates()
+        // locationService?.subscribeToLocationUpdates()
 /*
 
         //  attach / detach location service
         if (!enabled) {
-            foregroundOnlyLocationService?.unsubscribeToLocationUpdates()
+            locationService?.unsubscribeToLocationUpdates()
         } else {
             // TODO: Step 1.0, Review Permissions: Checks and requests if needed.
             if (foregroundPermissionApproved()) {
-                val result = foregroundOnlyLocationService?.subscribeToLocationUpdates()
+                val result = locationService?.subscribeToLocationUpdates()
 
                 Log.d(TAG,
-                    "foregroundOnlyLocationService() value : ".plus(foregroundOnlyLocationService.toString())
+                    "locationService() value : ".plus(locationService.toString())
                         .plus("  result : ").plus(result.toString())
                 )
             } else {
@@ -344,7 +344,7 @@ class ControlFragment : Fragment() {
                     Log.d(TAG, "User interaction was cancelled.")
                 grantResults[0] == PackageManager.PERMISSION_GRANTED ->
                     // Permission was granted.
-                    foregroundOnlyLocationService?.subscribeToLocationUpdates()
+                    locationService?.subscribeToLocationUpdates()
                 else -> {
                     // Permission denied.
                     Snackbar.make(
@@ -421,7 +421,7 @@ class ControlFragment : Fragment() {
     }
 
 //    /**
-//     * Receiver for location broadcasts from [ForegroundOnlyLocationService].
+//     * Receiver for location broadcasts from [LocationService].
 //     * TODO how to get rid of this ?? I GOT RID OF IT !!!!! YEA - clean up needed
 //     */
 //    private inner class ForegroundOnlyBroadcastReceiver : BroadcastReceiver() {
@@ -429,7 +429,7 @@ class ControlFragment : Fragment() {
 //        override fun onReceive(context: Context, intent: Intent) {
 //            Log.d(TAG, "inner : onReceive()")
 //            val location = intent.getParcelableExtra<Location>(
-//                ForegroundOnlyLocationService.EXTRA_LOCATION
+//                LocationService.EXTRA_LOCATION
 //            )
 //
 //            if (location != null) {
