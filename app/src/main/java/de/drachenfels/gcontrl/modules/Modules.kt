@@ -43,13 +43,17 @@ lateinit var sharedPreferences: SharedPreferences
  */
 lateinit var mqttServer: MQTTConnection
 
+
+const val MQTT_STATUS_OK = 0
+const val MQTT_STATUS_CONNECTION_FAILED = 1
+const val MQTT_STATUS_PUBLISH_FAILD = 2
+private var _statusMQTT = MutableLiveData(0)
 /**
  * MQTT status can be observed to provide feedback to users
  * 0 - ok
  * 1 - connection failed
  * 2 - publish failed
  */
-private var _statusMQTT = MutableLiveData(0)
 var statusMQTT: MutableLiveData<Int>
     get() = _statusMQTT
     set(value) {

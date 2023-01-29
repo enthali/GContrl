@@ -77,6 +77,7 @@ class MQTTConnection {
     fun sendMessage(payload: String): Boolean {
         // Now, try to publish a message
         var retVal = false
+        if (statusMQTT.value != MQTT_STATUS_OK) statusMQTT.value = MQTT_STATUS_OK
         if (connect()) {
             try {
                 val message = MqttMessage()
@@ -87,13 +88,11 @@ class MQTTConnection {
                 message.payload = payload.toByteArray()
                 client!!.publish(tp, message)
             } catch (e: MqttException) {
-                // publish failed
-                statusMQTT.value = 2
+                statusMQTT.value = MQTT_STATUS_PUBLISH_FAILD
             }
             retVal = true
         } else {
-            // connection failed
-            statusMQTT.value = 1
+            statusMQTT.value = MQTT_STATUS_CONNECTION_FAILED
         }
         client!!.disconnect()
         return retVal
