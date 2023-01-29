@@ -4,6 +4,14 @@ plugins {
 }
 
 android {
+    signingConfigs {
+        release {
+            storeFile file('C:\\Users\\georg\\OneDrive\\Computer\\Computer\\Google App Keys\\gcontrl\\keystore.jks')
+            storePassword 'gcontrol'
+            keyAlias 'upload'
+            keyPassword 'gcontrol'
+        }
+    }
     namespace 'de.drachenfels.gcontrl'
     compileSdk 33
 
@@ -18,8 +26,10 @@ android {
     }
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled true
+            shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
         }
     }
     compileOptions {
