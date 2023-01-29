@@ -25,30 +25,12 @@ class PreferencesFragment : PreferenceFragmentCompat() {
          * geo services activities on preference switch
          */
 
-        // start the location service
-//       val serviceIntent = Intent(activity, LocationService::class.java)
-//       serviceIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-//
-
-
         // switch view of geo preferences visibility according to Enable location based Features flag
         val enabled =
             sharedPreferences.getBoolean(
                 getString(R.string.prf_key_geo_enable_location_features),
                 false
             )
-
-//        if (enabled) {
-//            // start the service in foreground mode
-//        } else {
-//            // stop the service - he'S not needed anymore
-//            val cancelIntent = Intent(activity, LocationService::class.java)
-//            cancelIntent.putExtra(LocationService.EXTRA_CANCEL_LOCATION_TRACKING_FROM_NOTIFICATION, true)
-//
-//            val servicePendingIntent = PendingIntent.getService(
-//                activity, 0, cancelIntent, PendingIntent.FLAG_UPDATE_CURRENT
-//            )
-//        }
 
         val geoServiceEnabled: SwitchPreference? =
             findPreference(getString(R.string.prf_key_geo_enable_location_features))
