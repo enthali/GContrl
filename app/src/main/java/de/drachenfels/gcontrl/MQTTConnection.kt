@@ -1,8 +1,7 @@
 package de.drachenfels.gcontrl
 
 import android.util.Log
-import de.drachenfels.gcontrl.modules.sharedPreferences
-import de.drachenfels.gcontrl.modules.statusMQTT
+import de.drachenfels.gcontrl.modules.*
 import org.eclipse.paho.client.mqttv3.MqttClient
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions
 import org.eclipse.paho.client.mqttv3.MqttException
@@ -10,6 +9,26 @@ import org.eclipse.paho.client.mqttv3.MqttMessage
 
 
 class MQTTConnection {
+
+    init {
+        // register to the distance update
+        fenceWatcher.observeForever { fenceState ->
+            onFenceStateChange(fenceState)
+        }
+    }
+
+    private fun onFenceStateChange(fenceState: Int?) {
+        // TODO something's wrong here, why is sharedPreferences.... always returning false?
+        val enable = true //sharedPreferences.getBoolean("prf_key_geo_auto_control",false)
+        if (enable) {
+            if (fenceState == HOME_ZONE_ENTERING) {
+                sendMessage("open")
+            }
+            if (fenceState == HOME_ZONE_LEAVING) {
+                sendMessage("close")
+            }
+        }
+    }
 
     // private val viewModel = _viewModel
     private var client: MqttClient? = null

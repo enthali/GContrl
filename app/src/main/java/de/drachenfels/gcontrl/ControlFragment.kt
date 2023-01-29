@@ -23,7 +23,7 @@ import androidx.fragment.app.Fragment
 import androidx.preference.PreferenceManager
 import com.google.android.material.snackbar.Snackbar
 import de.drachenfels.gcontrl.databinding.FragmentControlBinding
-import de.drachenfels.gcontrl.modules.SharedLocationResources
+import de.drachenfels.gcontrl.modules.distanceToHome
 import de.drachenfels.gcontrl.modules.mqttServer
 import de.drachenfels.gcontrl.modules.sharedPreferences
 import de.drachenfels.gcontrl.services.LocationService
@@ -94,7 +94,7 @@ class ControlFragment : Fragment() {
         binding.openbutton.setOnClickListener { manageDoor(1) }
         binding.closebutton.setOnClickListener { manageDoor(0) }
 
-        SharedLocationResources.distanceToHome.observe(
+        distanceToHome.observe(
             viewLifecycleOwner
         ) { newDistance ->
             binding.distanceText.text = newDistance.toString()

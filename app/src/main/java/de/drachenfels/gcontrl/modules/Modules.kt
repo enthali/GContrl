@@ -59,24 +59,39 @@ var statusMQTT: MutableLiveData<Int>
 /**
  * The object contains shared resources used between the ControlView and the Location Service
  */
-internal object SharedLocationResources {
 
-    private var privateCurrentLocation = MutableLiveData<Location>(Location("initLocation"))
-    var currentLocation: MutableLiveData<Location>
-        get() = privateCurrentLocation
-        set(value) {
-            privateCurrentLocation = value
-        }
+private var privateCurrentLocation = MutableLiveData<Location>(Location("initLocation"))
+var currentLocation: MutableLiveData<Location>
+    get() = privateCurrentLocation
+    set(value) {
+        privateCurrentLocation = value
+    }
 
-    // distance live data
-    private var privateDistanceToHome = MutableLiveData(0f)
+// distance live data
+private var privateDistanceToHome = MutableLiveData(0)
 
-    /**
-     * any changes to the calculation of the distance to home can be observed applicatoin wide
-     */
-    var distanceToHome: MutableLiveData<Float>
-        get() = privateDistanceToHome
-        set(value) {
-            privateDistanceToHome = value
-        }
-}
+/**
+ * any changes to the calculation of the distance to home can be observed applicatoin wide
+ */
+var distanceToHome: MutableLiveData<Int>
+    get() = privateDistanceToHome
+    set(value) {
+        privateDistanceToHome = value
+    }
+
+const val HOME_ZONE_INSIDE = 0
+const val HOME_ZONE_LEAVING = 1
+const val HOME_ZONE_ENTERING = 2
+const val HOME_ZONE_OUTSIDE = 4
+const val HOME_ZONE_UNKNOWN = 99
+
+private var privateFenceWatcher = MutableLiveData(HOME_ZONE_UNKNOWN)
+
+/**
+ * any changes to the fence watcher can be observed
+ */
+var fenceWatcher: MutableLiveData<Int>
+    get() = privateFenceWatcher
+    set(value) {
+        privateFenceWatcher = value
+    }

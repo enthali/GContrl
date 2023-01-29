@@ -7,7 +7,7 @@ import androidx.preference.EditTextPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.SwitchPreference
-import de.drachenfels.gcontrl.modules.SharedLocationResources
+import de.drachenfels.gcontrl.modules.currentLocation
 import de.drachenfels.gcontrl.modules.sharedPreferences
 
 
@@ -86,7 +86,6 @@ class PreferencesFragment : PreferenceFragmentCompat() {
             findPreference(getString(R.string.prf_key_geo_auto_control))
         geoAutoControl?.isVisible = enabled
 
-
         /**
          * handle setting the geo home location
          * bind the setCurrentHomeLocation in the GeoService class object to the
@@ -95,11 +94,11 @@ class PreferencesFragment : PreferenceFragmentCompat() {
         geoSetHomeLocation?.setOnPreferenceClickListener {
             sharedPreferences.edit().putString(
                 getString(R.string.prf_key_geo_latitude),
-                SharedLocationResources.currentLocation.value?.latitude.toString()
+                currentLocation.value?.latitude.toString()
             ).apply()
             sharedPreferences.edit().putString(
                 getString(R.string.prf_key_geo_longitude),
-                SharedLocationResources.currentLocation.value?.longitude.toString()
+                currentLocation.value?.longitude.toString()
             ).apply()
             refreshFragment()
         }

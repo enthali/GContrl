@@ -32,9 +32,9 @@ import androidx.preference.PreferenceManager
 import com.google.android.gms.location.*
 import de.drachenfels.gcontrl.MainActivity
 import de.drachenfels.gcontrl.R
-import de.drachenfels.gcontrl.modules.SharedLocationResources
-import de.drachenfels.gcontrl.modules.toText
+import de.drachenfels.gcontrl.modules.*
 import java.util.concurrent.TimeUnit
+import kotlin.math.roundToInt
 
 /**
  * Service tracks location when requested and updates Activity via binding. If Activity is
@@ -67,13 +67,7 @@ class LocationService : Service() {
     // LocationCallback - Called when FusedLocationProviderClient has a new Location.
     private lateinit var locationCallback: LocationCallback
 
-    // Used only for local storage of the last known location. Usually, this would be saved to your
-    // database, but because this is a simplified sample without a full database, we only need the
-    // last location to create a Notification if the user navigates away from the app.
-    private var currentLocation: Location? = null
-
     private lateinit var sharedPreferences: SharedPreferences
-
 
     override fun onCreate() {
         Log.d(TAG, "onCreate()")
@@ -116,31 +110,62 @@ class LocationService : Service() {
             }
         }
     }
-    private fun onLocationUpdate(lastLocation: Location?)  {
+
+    private fun onLocationUpdate(_lastLocation: Location?) {
         Log.d(TAG, "onLocationUpdate()")
 
-        // make the location available for other functions
-        SharedLocationResources.currentLocation.postValue(lastLocation!!)
+        if (_lastLocation != null) {
+            val lastLocation: Location = _lastLocation
 
-        // calculate the distance to home
-        //TODO think about how this could be done only at start and at location change.
-        val homeLocation = Location("homeLocation")
-        homeLocation.latitude =
-            sharedPreferences.getString(
-                getString(R.string.prf_key_geo_latitude),
-                "0.0"
-            ).toString().toDouble()
-        homeLocation.longitude =
-            sharedPreferences.getString(
-                getString(R.string.prf_key_geo_longitude),
-                "0.0"
-            ).toString().toDouble()
+            // calculate the distance to home
+            //TODO think about how this could be done only at start and at home location change.
+            val homeLocation = Location("homeLocation")
+            homeLocation.latitude =
+                sharedPreferences.getString(
+                    getString(R.string.prf_key_geo_latitude),
+                    "0.0"
+                ).toString().toDouble()
+            homeLocation.longitude =
+                sharedPreferences.getString(
+                    getString(R.string.prf_key_geo_longitude),
+                    "0.0"
+                ).toString().toDouble()
 
-        SharedLocationResources.distanceToHome.postValue(
-            SharedLocationResources.currentLocation.value!!.distanceTo(
-                homeLocation
-            )
-        )
+            // home location doesn't store the altitude for distance calculation use current altitude
+            homeLocation.altitude = lastLocation.altitude
+
+            val newDistance = lastLocation.distanceTo(homeLocation).roundToInt()
+            val oldDistance = distanceToHome.value!!
+            val fence =
+                sharedPreferences.getString(getString(R.string.prf_key_geo_fence_size), "1")
+                    .toString()
+                    .toInt()
+
+            // check if the distance just got bigger then the fence -> leaving home 1
+            if ((oldDistance > fence) && (newDistance < fence)) {
+                if (fenceWatcher.value != HOME_ZONE_ENTERING)
+                    fenceWatcher.postValue(HOME_ZONE_ENTERING)
+            }
+            if ((oldDistance > fence) && (newDistance > fence)) {
+                if (fenceWatcher.value != HOME_ZONE_OUTSIDE)
+                    fenceWatcher.postValue(HOME_ZONE_OUTSIDE)
+            }
+            if ((oldDistance < fence) && (newDistance < fence)) {
+                if (fenceWatcher.value != HOME_ZONE_INSIDE)
+                    fenceWatcher.postValue(HOME_ZONE_INSIDE)
+            }
+            if ((oldDistance < fence) && (newDistance > fence)) {
+                if (fenceWatcher.value != HOME_ZONE_LEAVING)
+                    fenceWatcher.postValue(HOME_ZONE_LEAVING)
+            }
+
+            if (newDistance != oldDistance) {
+                // post the new distance
+                distanceToHome.postValue(newDistance)
+                // post the location available for other functions
+                currentLocation.postValue(lastLocation)
+            }
+        }
     }
 
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
@@ -192,7 +217,7 @@ class LocationService : Service() {
             )
         ) {
             Log.d(TAG, "Start foreground service")
-            val notification = generateNotification(currentLocation)
+            val notification = generateNotification(currentLocation.value)
             startForeground(NOTIFICATION_ID, notification)
             serviceRunningInForeground = true
         }
