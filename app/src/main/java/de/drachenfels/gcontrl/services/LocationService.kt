@@ -28,7 +28,6 @@ import android.os.IBinder
 import android.os.Looper
 import android.util.Log
 import androidx.core.app.NotificationCompat
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.preference.PreferenceManager
 import com.google.android.gms.location.*
 import de.drachenfels.gcontrl.MainActivity
@@ -108,39 +107,40 @@ class LocationService : Service() {
             priority = LocationRequest.PRIORITY_HIGH_ACCURACY
         }
 
+        // register a location callback
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(locationResult: LocationResult) {
                 super.onLocationResult(locationResult)
-
-                // Normally, you want to save a new location to a database. We are simplifying
-                // things a bit and just saving it as a local variable, as we only need it again
-                // if a Notification is created (when the user navigates away from app).
-                currentLocation = locationResult.lastLocation
-                SharedLocationResources.currentLocation = locationResult.lastLocation!!
-
-                SharedLocationResources.locationUpdate.postValue(
-                    SharedLocationResources.locationUpdate.value?.plus(1)?.mod(16)
-                )
-
-
-                // Notify our Activity that a new location was added. Again, if this was a
-                // production app, the Activity would be listening for changes to a database
-                // with new locations, but we are simplifying things a bit to focus on just
-                // learning the location side of things.
-                val intent = Intent(ACTION_FOREGROUND_ONLY_LOCATION_BROADCAST)
-                intent.putExtra(EXTRA_LOCATION, currentLocation)
-                LocalBroadcastManager.getInstance(applicationContext).sendBroadcast(intent)
-
-                // Updates notification content if this service is running as a foreground
-                // service.
-                if (serviceRunningInForeground) {
-                    notificationManager.notify(
-                        NOTIFICATION_ID,
-                        generateNotification(currentLocation)
-                    )
-                }
+                // call the local onLocationUpdate member function
+                onLocationUpdate(locationResult.lastLocation)
             }
         }
+    }
+    private fun onLocationUpdate(lastLocation: Location?)  {
+        Log.d(TAG, "onLocationUpdate()")
+
+        // make the location available for other functions
+        SharedLocationResources.currentLocation.postValue(lastLocation!!)
+
+        // calculate the distance to home
+        //TODO think about how this could be done only at start and at location change.
+        val homeLocation = Location("homeLocation")
+        homeLocation.latitude =
+            sharedPreferences.getString(
+                getString(R.string.prf_key_geo_latitude),
+                "0.0"
+            ).toString().toDouble()
+        homeLocation.longitude =
+            sharedPreferences.getString(
+                getString(R.string.prf_key_geo_longitude),
+                "0.0"
+            ).toString().toDouble()
+
+        SharedLocationResources.distanceToHome.postValue(
+            SharedLocationResources.currentLocation.value!!.distanceTo(
+                homeLocation
+            )
+        )
     }
 
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
@@ -348,11 +348,6 @@ class LocationService : Service() {
         private const val TAG = "GeoLocationService"
 
         private const val PACKAGE_NAME = "de.drachenfels.gcontrol"
-
-        internal const val ACTION_FOREGROUND_ONLY_LOCATION_BROADCAST =
-            "$PACKAGE_NAME.action.FOREGROUND_ONLY_LOCATION_BROADCAST"
-
-        internal const val EXTRA_LOCATION = "$PACKAGE_NAME.extra.LOCATION"
 
         const val EXTRA_CANCEL_LOCATION_TRACKING_FROM_NOTIFICATION =
             "$PACKAGE_NAME.extra.CANCEL_LOCATION_TRACKING_FROM_NOTIFICATION"

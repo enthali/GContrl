@@ -6,7 +6,6 @@ import android.Manifest
 import android.content.*
 import android.content.Context.CONNECTIVITY_SERVICE
 import android.content.pm.PackageManager
-import android.location.Location
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.net.Uri
@@ -21,11 +20,11 @@ import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.activityViewModels
 import androidx.preference.PreferenceManager
 import com.google.android.material.snackbar.Snackbar
 import de.drachenfels.gcontrl.databinding.FragmentControlBinding
 import de.drachenfels.gcontrl.modules.SharedLocationResources
+import de.drachenfels.gcontrl.modules.mqttServer
 import de.drachenfels.gcontrl.modules.sharedPreferences
 import de.drachenfels.gcontrl.services.LocationService
 
@@ -41,18 +40,11 @@ class ControlFragment : Fragment() {
     private var _binding: FragmentControlBinding? = null
     private val binding get() = _binding!!
 
-    //
-    private val viewModel: ControlViewModel by activityViewModels()
-
-    // >>>>>> LOCATION <<<<<<
+     // >>>>>> LOCATION <<<<<<
     private var foregroundOnlyLocationServiceBound = false
 
     // Provides location updates for while-in-use feature.
     private var locationService: LocationService? = null
-
-
-    // Listens for location broadcasts from LocationService.
-    // private late init var foregroundOnlyBroadcastReceiver: ForegroundOnlyBroadcastReceiver
 
     // Monitors connection to the while-in-use service.
     private val foregroundOnlyServiceConnection = object : ServiceConnection {
@@ -81,12 +73,7 @@ class ControlFragment : Fragment() {
         super.onCreate(savedInstanceState)
 
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(requireActivity())
-
-        viewModel.initViewModel() // this is where we get viewModel.sharedPreferences setup
-
-        // >>>>>> LOCATION <<<<<<<
-        //foregroundOnlyBroadcastReceiver = ForegroundOnlyBroadcastReceiver()
-        // <<<<<< LOCATION >>>>>>>
+        mqttServer = MQTTConnection()
     }
 
     override fun onCreateView(
@@ -117,11 +104,6 @@ class ControlFragment : Fragment() {
                     .toString().toInt()
         }
 
-        SharedLocationResources.locationUpdate.observe(
-            viewLifecycleOwner
-        ) {
-        }
-
         // make sure we get location permissions if they are enabled
         if (sharedPreferences.getBoolean(
                 getString(R.string.prf_key_geo_enable_location_features),
@@ -148,7 +130,7 @@ class ControlFragment : Fragment() {
         )
 
         // register live data - updated by the service
-        SharedLocationResources.locationUpdate.observe(this) { onLocationUpdate() }
+        // SharedLocationResources.currentLocation.observe(this) { onLocationUpdate() }
 
         //  Check if Internet connection is available
         //  to remind the user that we'll need an internet connection
@@ -160,28 +142,6 @@ class ControlFragment : Fragment() {
             ).show()
         }
         enableLocationServiceView()
-    }
-
-    private fun onLocationUpdate() {
-        Log.d(TAG, "onLocationUpdate()")
-        // TODO("Not yet implemented")
-
-        val homeLocation = Location("homeLocation")
-        
-        homeLocation.latitude =
-            sharedPreferences.getString(getString(R.string.prf_key_geo_latitude), "0.0")
-                ?.toDouble()!!
-
-        homeLocation.longitude =
-            sharedPreferences.getString(getString(R.string.prf_key_geo_longitude), "0.0")
-                ?.toDouble()!!
-
-        SharedLocationResources.distanceToHome.postValue(
-            SharedLocationResources.currentLocation.distanceTo(
-                homeLocation
-            )
-        )
-
     }
 
     override fun onResume() {
@@ -197,25 +157,10 @@ class ControlFragment : Fragment() {
                 Toast.LENGTH_LONG
             ).show()
         }
-
-//        activity?.let {
-//            LocalBroadcastManager.getInstance(it).registerReceiver(
-//                foregroundOnlyBroadcastReceiver,
-//                IntentFilter(
-//                    LocationService.ACTION_FOREGROUND_ONLY_LOCATION_BROADCAST
-//                )
-//            )
-//        }
-
     }
 
     override fun onPause() {
-//        Log.d(TAG, "onPause()")
-//        activity?.let {
-//            LocalBroadcastManager.getInstance(it).unregisterReceiver(
-//                foregroundOnlyBroadcastReceiver
-//            )
-//        }
+        Log.d(TAG, "onPause()")
         super.onPause()
     }
 
@@ -245,29 +190,7 @@ class ControlFragment : Fragment() {
         } else {
             (binding.controlTableLayout.layoutParams as LinearLayout.LayoutParams).weight = 0.0f
         }
-
-        // requestForegroundPermissions()
-        // locationService?.subscribeToLocationUpdates()
-/*
-
-        //  attach / detach location service
-        if (!enabled) {
-            locationService?.unsubscribeToLocationUpdates()
-        } else {
-            // TODO: Step 1.0, Review Permissions: Checks and requests if needed.
-            if (foregroundPermissionApproved()) {
-                val result = locationService?.subscribeToLocationUpdates()
-
-                Log.d(TAG,
-                    "locationService() value : ".plus(locationService.toString())
-                        .plus("  result : ").plus(result.toString())
-                )
-            } else {
-                requestForegroundPermissions()
-            }
-        }
-*/
-    }
+     }
 
     /**
      *  Review Permissions: Method checks if permissions approved.
@@ -383,8 +306,7 @@ class ControlFragment : Fragment() {
             else -> "status"
         }
         if (isConnected()) {
-
-            if (viewModel.mqttServer.sendMessage(cmdString)) {
+            if (mqttServer.sendMessage(cmdString)) {
                 Toast.makeText(
                     activity?.applicationContext,
                     cmdString.plus(" the door"),
@@ -419,23 +341,4 @@ class ControlFragment : Fragment() {
         }
         return result
     }
-
-//    /**
-//     * Receiver for location broadcasts from [LocationService].
-//     * TODO how to get rid of this ?? I GOT RID OF IT !!!!! YEA - clean up needed
-//     */
-//    private inner class ForegroundOnlyBroadcastReceiver : BroadcastReceiver() {
-//
-//        override fun onReceive(context: Context, intent: Intent) {
-//            Log.d(TAG, "inner : onReceive()")
-//            val location = intent.getParcelableExtra<Location>(
-//                LocationService.EXTRA_LOCATION
-//            )
-//
-//            if (location != null) {
-//                viewModel.currentLocation.longitude = location.longitude
-//                viewModel.currentLocation.latitude = location.latitude
-//            }
-//        }
-//    }
 }

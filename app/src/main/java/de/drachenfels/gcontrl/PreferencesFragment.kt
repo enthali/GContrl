@@ -95,11 +95,11 @@ class PreferencesFragment : PreferenceFragmentCompat() {
         geoSetHomeLocation?.setOnPreferenceClickListener {
             sharedPreferences.edit().putString(
                 getString(R.string.prf_key_geo_latitude),
-                SharedLocationResources.currentLocation.latitude.toString()
+                SharedLocationResources.currentLocation.value?.latitude.toString()
             ).apply()
             sharedPreferences.edit().putString(
                 getString(R.string.prf_key_geo_longitude),
-                SharedLocationResources.currentLocation.longitude.toString()
+                SharedLocationResources.currentLocation.value?.longitude.toString()
             ).apply()
             refreshFragment()
         }

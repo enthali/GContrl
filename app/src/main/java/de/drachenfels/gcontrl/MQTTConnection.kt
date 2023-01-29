@@ -2,16 +2,16 @@ package de.drachenfels.gcontrl
 
 import android.util.Log
 import de.drachenfels.gcontrl.modules.sharedPreferences
+import de.drachenfels.gcontrl.modules.statusMQTT
 import org.eclipse.paho.client.mqttv3.MqttClient
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions
 import org.eclipse.paho.client.mqttv3.MqttException
 import org.eclipse.paho.client.mqttv3.MqttMessage
 
 
-class MQTTConnection(_viewModel: ControlViewModel) {
+class MQTTConnection {
 
-    private val viewModel = _viewModel
-
+    // private val viewModel = _viewModel
     private var client: MqttClient? = null
 
     private fun connect(): Boolean {
@@ -55,7 +55,7 @@ class MQTTConnection(_viewModel: ControlViewModel) {
             .plus(sharedPreferences.getString("mqtt_port", "").toString())
     }
 
-     fun sendMessage(payload: String): Boolean {
+    fun sendMessage(payload: String): Boolean {
         // Now, try to publish a message
         var retVal = false
         if (connect()) {
@@ -69,30 +69,14 @@ class MQTTConnection(_viewModel: ControlViewModel) {
                 client!!.publish(tp, message)
             } catch (e: MqttException) {
                 // publish failed
-                viewModel.statusMQTT.value = 2
+                statusMQTT.value = 2
             }
             retVal = true
         } else {
             // connection failed
-            viewModel.statusMQTT.value = 1
+            statusMQTT.value = 1
         }
         client!!.disconnect()
         return retVal
     }
-/*
-At this point mqtt call back function are not needed for this app
-
-    fun connectionLost(cause: Throwable) {
-        Log.d("MQTT", "MQTT Server connection lost" + cause.message)
-    }
-
-    fun messageArrived(topic: String, message: MqttMessage) {
-        Log.d("MQTT", "Message arrived:$topic:$message")
-    }
-
-    fun deliveryComplete(token: IMqttDeliveryToken?) {
-        Log.d("MQTT", "Delivery complete")
-    }
-    */
-
 }
