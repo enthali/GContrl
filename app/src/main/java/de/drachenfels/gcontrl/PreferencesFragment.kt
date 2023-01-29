@@ -2,18 +2,16 @@ package de.drachenfels.gcontrl
 
 import android.os.Bundle
 import android.text.InputType
-import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
 import androidx.preference.EditTextPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.SwitchPreference
 import de.drachenfels.gcontrl.modules.SharedLocationResources
+import de.drachenfels.gcontrl.modules.sharedPreferences
 
 
 class PreferencesFragment : PreferenceFragmentCompat() {
-
-    private val viewModel: ControlViewModel by activityViewModels()
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         setPreferencesFromResource(R.xml.preferences, rootKey)
@@ -35,7 +33,7 @@ class PreferencesFragment : PreferenceFragmentCompat() {
 
         // switch view of geo preferences visibility according to Enable location based Features flag
         val enabled =
-            viewModel.sharedPreferences.getBoolean(
+            sharedPreferences.getBoolean(
                 getString(R.string.prf_key_geo_enable_location_features),
                 false
             )
@@ -63,14 +61,14 @@ class PreferencesFragment : PreferenceFragmentCompat() {
             .plus("\nCurrent Home Location : ")
             .plus("\nLat : ")
             .plus(
-                viewModel.sharedPreferences.getString(
+                sharedPreferences.getString(
                     getString(R.string.prf_key_geo_latitude),
                     "null"
                 ).toString()
             )
             .plus("\nLon :")
             .plus(
-                viewModel.sharedPreferences.getString(
+                sharedPreferences.getString(
                     getString(R.string.prf_key_geo_longitude),
                     "null"
                 ).toString()
@@ -95,11 +93,11 @@ class PreferencesFragment : PreferenceFragmentCompat() {
          * preferences on click Listener
          */
         geoSetHomeLocation?.setOnPreferenceClickListener {
-            viewModel.sharedPreferences.edit().putString(
+            sharedPreferences.edit().putString(
                 getString(R.string.prf_key_geo_latitude),
                 SharedLocationResources.currentLocation?.latitude.toString()
             ).apply()
-            viewModel.sharedPreferences.edit().putString(
+            sharedPreferences.edit().putString(
                 getString(R.string.prf_key_geo_longitude),
                 SharedLocationResources.currentLocation?.longitude.toString()
             ).apply()

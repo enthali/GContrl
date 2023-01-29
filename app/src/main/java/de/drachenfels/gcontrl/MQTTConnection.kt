@@ -1,6 +1,7 @@
 package de.drachenfels.gcontrl
 
 import android.util.Log
+import de.drachenfels.gcontrl.modules.sharedPreferences
 import org.eclipse.paho.client.mqttv3.MqttClient
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions
 import org.eclipse.paho.client.mqttv3.MqttException
@@ -17,7 +18,7 @@ class MQTTConnection(_viewModel: ControlViewModel) {
         try {
             client = MqttClient(
                 getUriFromPreferences(),
-                viewModel.sharedPreferences.getString("mqtt_clientId", ""),
+                sharedPreferences.getString("mqtt_clientId", ""),
                 null
             )
             client!!.setCallback(null)
@@ -28,8 +29,8 @@ class MQTTConnection(_viewModel: ControlViewModel) {
         // set default option
         val options = MqttConnectOptions()
         // set application specific options
-        options.userName = viewModel.sharedPreferences.getString("mqtt_user", "").toString()
-        options.password = viewModel.sharedPreferences.getString("mqtt_password", "").toString().toCharArray()
+        options.userName = sharedPreferences.getString("mqtt_user", "").toString()
+        options.password = sharedPreferences.getString("mqtt_password", "").toString().toCharArray()
         options.isHttpsHostnameVerificationEnabled = false
 
         try {
@@ -45,13 +46,13 @@ class MQTTConnection(_viewModel: ControlViewModel) {
     }
 
     private fun getUriFromPreferences(): String {
-        return if (viewModel.sharedPreferences.getBoolean("mqtt_ssl", false) == true) {
+        return if (sharedPreferences.getBoolean("mqtt_ssl", false)) {
             "ssl://"
         } else {
             "tcp://"
-        }.plus(viewModel.sharedPreferences.getString("mqtt_uri", "").toString())
+        }.plus(sharedPreferences.getString("mqtt_uri", "").toString())
             .plus(":")
-            .plus(viewModel.sharedPreferences.getString("mqtt_port", "").toString())
+            .plus(sharedPreferences.getString("mqtt_port", "").toString())
     }
 
      fun sendMessage(payload: String): Boolean {
@@ -62,7 +63,7 @@ class MQTTConnection(_viewModel: ControlViewModel) {
                 val message = MqttMessage()
                 val tp = client!!.clientId
                     .plus("/")
-                    .plus(viewModel.sharedPreferences.getString("mqtt_topic", "").toString())
+                    .plus(sharedPreferences.getString("mqtt_topic", "").toString())
                 message.qos = 1
                 message.payload = payload.toByteArray()
                 client!!.publish(tp, message)

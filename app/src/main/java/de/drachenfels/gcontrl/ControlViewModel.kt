@@ -1,7 +1,6 @@
 package de.drachenfels.gcontrl
 
 import android.app.Application
-import android.content.SharedPreferences
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
 
@@ -11,7 +10,7 @@ class ControlViewModel(application: Application) : AndroidViewModel(application)
     /**
      * shared preferences - store user preferences persitemt
      */
-    lateinit var sharedPreferences: SharedPreferences // TODO investigate = PreferenceManager.getDefaultSharedPreferences(getApplication())
+    //lateinit var sharedPreferences: SharedPreferences // TODO investigate = PreferenceManager.getDefaultSharedPreferences(getApplication())
 
 
     /**
@@ -51,7 +50,7 @@ class ControlViewModel(application: Application) : AndroidViewModel(application)
         }
 
     fun initViewModel() {
-        sharedPreferences = de.drachenfels.gcontrl.modules.sharedPreferences
+        //sharedPreferences = de.drachenfels.gcontrl.modules.sharedPreferences
         // geoService = GeoServices(this)
         mqttServer = MQTTConnection(this)
 

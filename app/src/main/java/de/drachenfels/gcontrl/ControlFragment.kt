@@ -51,7 +51,7 @@ class ControlFragment : Fragment() {
 
 
     // Listens for location broadcasts from ForegroundOnlyLocationService.
-    //private lateinit var foregroundOnlyBroadcastReceiver: ForegroundOnlyBroadcastReceiver
+    // private late init var foregroundOnlyBroadcastReceiver: ForegroundOnlyBroadcastReceiver
 
     // Monitors connection to the while-in-use service.
     private val foregroundOnlyServiceConnection = object : ServiceConnection {
@@ -118,7 +118,7 @@ class ControlFragment : Fragment() {
         }
 
         // make sure we get location permissions if they are enabled
-        if (viewModel.sharedPreferences.getBoolean(
+        if (sharedPreferences.getBoolean(
                 getString(R.string.prf_key_geo_enable_location_features),
                 false
             )
@@ -215,7 +215,7 @@ class ControlFragment : Fragment() {
      */
     private fun enableLocationServiceView() {
         Log.d(TAG, "enableLocationServiceView()")
-        val enabled = viewModel.sharedPreferences.getBoolean(
+        val enabled = sharedPreferences.getBoolean(
             getString(R.string.prf_key_geo_enable_location_features),
             false
         )
@@ -404,7 +404,7 @@ class ControlFragment : Fragment() {
 
 //    /**
 //     * Receiver for location broadcasts from [ForegroundOnlyLocationService].
-//     * TODO how to get rid of this ?? I GOT RID OF IT !!!!! YEAAAAA - clean up needed
+//     * TODO how to get rid of this ?? I GOT RID OF IT !!!!! YEA - clean up needed
 //     */
 //    private inner class ForegroundOnlyBroadcastReceiver : BroadcastReceiver() {
 //

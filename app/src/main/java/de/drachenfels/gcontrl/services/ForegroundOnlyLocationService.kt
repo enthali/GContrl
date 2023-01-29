@@ -45,7 +45,7 @@ import java.util.concurrent.TimeUnit
  * For apps running in the background on O+ devices, location is computed much less than previous
  * versions. Please reference documentation for details.
  */
-class ForegroundOnlyLocationService() : Service() {
+class ForegroundOnlyLocationService : Service() {
     /*
      * Checks whether the bound activity has really gone away (foreground service with notification
      * created) or simply orientation change (no-op).
@@ -234,7 +234,7 @@ class ForegroundOnlyLocationService() : Service() {
         }
     }
 
-    fun unsubscribeToLocationUpdates() {
+    private fun unsubscribeToLocationUpdates() {
         Log.d(TAG, "unsubscribeToLocationUpdates()")
 
         try {
@@ -347,7 +347,7 @@ class ForegroundOnlyLocationService() : Service() {
     companion object {
         private const val TAG = "GeoLocationService"
 
-        private const val PACKAGE_NAME = "com.example.android.whileinuselocation"
+        private const val PACKAGE_NAME = "de.drachenfels.gcontrol"
 
         internal const val ACTION_FOREGROUND_ONLY_LOCATION_BROADCAST =
             "$PACKAGE_NAME.action.FOREGROUND_ONLY_LOCATION_BROADCAST"
