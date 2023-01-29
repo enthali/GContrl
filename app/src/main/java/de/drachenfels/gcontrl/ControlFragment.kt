@@ -6,6 +6,7 @@ import android.Manifest
 import android.content.*
 import android.content.Context.CONNECTIVITY_SERVICE
 import android.content.pm.PackageManager
+import android.location.Location
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.net.Uri
@@ -110,6 +111,10 @@ class ControlFragment : Fragment() {
             viewLifecycleOwner
         ) { newDistance ->
             binding.distanceText.text = newDistance.toString()
+            binding.distanceBar.max = newDistance.toInt()
+            binding.distanceBar.progress =
+                sharedPreferences.getString(getString(R.string.prf_key_geo_fence_size), "0")
+                    .toString().toInt()
         }
 
         SharedLocationResources.locationUpdate.observe(
@@ -160,9 +165,22 @@ class ControlFragment : Fragment() {
     private fun onLocationUpdate() {
         Log.d(TAG, "onLocationUpdate()")
         // TODO("Not yet implemented")
-//        SharedLocationResources.currentLocation.longitude
-//        SharedLocationResources.currentLocation.latitude
 
+        val homeLocation = Location("homeLocation")
+        
+        homeLocation.latitude =
+            sharedPreferences.getString(getString(R.string.prf_key_geo_latitude), "0.0")
+                ?.toDouble()!!
+
+        homeLocation.longitude =
+            sharedPreferences.getString(getString(R.string.prf_key_geo_longitude), "0.0")
+                ?.toDouble()!!
+
+        SharedLocationResources.distanceToHome.postValue(
+            SharedLocationResources.currentLocation.distanceTo(
+                homeLocation
+            )
+        )
 
     }
 

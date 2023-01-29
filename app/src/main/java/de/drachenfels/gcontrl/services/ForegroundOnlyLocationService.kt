@@ -116,7 +116,7 @@ class ForegroundOnlyLocationService : Service() {
                 // things a bit and just saving it as a local variable, as we only need it again
                 // if a Notification is created (when the user navigates away from app).
                 currentLocation = locationResult.lastLocation
-                SharedLocationResources.currentLocation = locationResult.lastLocation
+                SharedLocationResources.currentLocation = locationResult.lastLocation!!
 
                 SharedLocationResources.locationUpdate.postValue(
                     SharedLocationResources.locationUpdate.value?.plus(1)?.mod(16)

@@ -33,7 +33,7 @@ fun Location?.toText(): String {
 lateinit var sharedPreferences: SharedPreferences
 internal object SharedLocationResources {
 
-    var currentLocation : Location? = null
+    var currentLocation : Location = Location("initialLocation")
 
 
 
@@ -45,11 +45,11 @@ internal object SharedLocationResources {
         }
 
     // distance live data
-    private var privatedistanceToHome = MutableLiveData(0f)
+    private var privateDistanceToHome = MutableLiveData(0f)
     var distanceToHome: MutableLiveData<Float>
-        get() = privatedistanceToHome
+        get() = privateDistanceToHome
         set(value) {
-            privatedistanceToHome = value
+            privateDistanceToHome = value
         }
 
 
