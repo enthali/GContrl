@@ -7,28 +7,28 @@
 
         <SwitchPreference
             android:defaultValue="false"
-            android:key="geo_enable_location_features"
+            android:key="@string/prf_key_geo_enable_location_features"
             android:title="@string/prf_geo_en_loc_features" />
         <EditTextPreference
             android:defaultValue="50"
-            android:key="geo_fence_size"
+            android:key="@string/prf_key_geo_fence_size"
             android:selectAllOnFocus="true"
             android:singleLine="true"
             android:title="Geofence size"
             app:summary="A circle around the home location that defines the area in which the automatic door control and direct control buttons will be functional. A reasonable value is between 50 and 200 m" />
         <Preference
             android:title="@string/prf_geo_setHomeLocation"
-            android:key="geo_setHomeLocation"
+            android:key="@string/prf_key_geo_set_home_location"
             app:summary="@string/geo_setHomeLocationSummary"
             />
         <SwitchPreference
             android:defaultValue="true"
-            android:key="geo_enable_protect"
+            android:key="@string/prf_key_geo_enable_protect"
             android:title="Geofence direct control"
             app:summary="Activates the direct control buttons only when you are at home." />
         <SwitchPreference
             android:defaultValue="true"
-            android:key="geo_autoControl"
+            android:key="@string/prf_key_geo_auto_control"
             android:title="Automatic Door Control"
             app:summary="Activates the automatic opening of the garage door when you come home, and close when you leave" />
     </PreferenceCategory>

@@ -21,4 +21,10 @@
 #-renamesourcefileattribute SourceFile
 
 #disable Android logging
--assumenosideeffects class android.util.Log {*;}
+# -assumenosideeffects class android.util.Log {*;}
+-assumenosideeffects class android.util.Log {
+    public static *** v(...);
+    public static *** d(...);
+    public static *** i(...);
+}
+
