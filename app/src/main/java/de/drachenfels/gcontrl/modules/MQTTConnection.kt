@@ -1,11 +1,27 @@
 package de.drachenfels.gcontrl.modules
 
+import androidx.lifecycle.MutableLiveData
 import org.eclipse.paho.client.mqttv3.MqttClient
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions
 import org.eclipse.paho.client.mqttv3.MqttException
 import org.eclipse.paho.client.mqttv3.MqttMessage
 
+const val MQTT_STATUS_OK = 0
+const val MQTT_STATUS_CONNECTION_FAILED = 1
+const val MQTT_STATUS_PUBLISH_FAILD = 2
+private var _statusMQTT = MutableLiveData(0)
 
+/**
+ * MQTT status can be observed to provide feedback to users
+ * 0 - ok
+ * 1 - connection failed
+ * 2 - publish failed
+ */
+var statusMQTT: MutableLiveData<Int>
+    get() = _statusMQTT
+    set(value) {
+        _statusMQTT = value
+    }
 var enableAutoDoorControl = false
 
 fun onFenceStateChange(fenceState: Int?) {

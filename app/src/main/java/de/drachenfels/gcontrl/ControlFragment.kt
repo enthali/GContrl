@@ -38,7 +38,7 @@ class ControlFragment : Fragment() {
     private var _binding: FragmentControlBinding? = null
     private val binding get() = _binding!!
 
-     // >>>>>> LOCATION <<<<<<
+    // >>>>>> LOCATION <<<<<<
     private var foregroundOnlyLocationServiceBound = false
 
     // Provides location updates for while-in-use feature.
@@ -95,7 +95,7 @@ class ControlFragment : Fragment() {
         distanceToHome.observe(
             viewLifecycleOwner
         ) { newDistance ->
-            binding.distanceText.text = newDistance.toString()
+            binding.distanceText.text = distanceToText(newDistance)
             binding.distanceBar.max = newDistance.toInt()
             binding.distanceBar.progress =
                 sharedPreferences.getString(getString(R.string.prf_key_geo_fence_size), "0")
@@ -188,7 +188,7 @@ class ControlFragment : Fragment() {
         } else {
             (binding.controlTableLayout.layoutParams as LinearLayout.LayoutParams).weight = 0.0f
         }
-     }
+    }
 
     /**
      *  Review Permissions: Method checks if permissions approved.
@@ -304,13 +304,31 @@ class ControlFragment : Fragment() {
             else -> "status"
         }
         if (isConnected()) {
-            if (mqttSendMessage(cmdString)) {
-                Toast.makeText(
-                    activity?.applicationContext,
-                    cmdString.plus(" the door"),
-                    Toast.LENGTH_LONG
-                ).show()
+
+            val enableButtons: Boolean
+
+            if (sharedPreferences.getBoolean(
+                    getString(R.string.prf_key_geo_enable_location_features),
+                    false
+                )
+                && sharedPreferences.getBoolean(
+                    getString(R.string.prf_key_geo_enable_protect),
+                    false
+                )
+            ) {
+                enableButtons = fenceWatcher.value == HOME_ZONE_INSIDE
+            } else {
+                enableButtons = true
             }
+
+            if (enableButtons)
+                if (mqttSendMessage(cmdString)) {
+                    Toast.makeText(
+                        activity?.applicationContext,
+                        cmdString.plus(" the door"),
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
         }
     }
 

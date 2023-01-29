@@ -176,6 +176,15 @@ class LocationService : Service() {
                 currentLocation.postValue(lastLocation)
             }
 
+
+            // Updates notification content if this service is running as a foreground
+            // service.
+            if (serviceRunningInForeground) {
+                notificationManager.notify(
+                    NOTIFICATION_ID,
+                    generateNotification())
+            }
+
 //            fenceWatcher.observeForever { fenceState ->
 //                onFenceStateChange(fenceState)
 //            }
@@ -231,7 +240,7 @@ class LocationService : Service() {
             )
         ) {
             Log.d(TAG, "Start foreground service")
-            val notification = generateNotification(currentLocation.value)
+            val notification = generateNotification()
             startForeground(NOTIFICATION_ID, notification)
             serviceRunningInForeground = true
         }
@@ -297,7 +306,7 @@ class LocationService : Service() {
      * Generates a BIG_TEXT_STYLE Notification that represent latest location.
      */
     @SuppressLint("UnspecifiedImmutableFlag")
-    private fun generateNotification(location: Location?): Notification {
+    private fun generateNotification(): Notification {
         Log.d(TAG, "generateNotification()")
 
         // Main steps for building a BIG_TEXT_STYLE notification:
@@ -308,7 +317,9 @@ class LocationService : Service() {
         //      4. Build and issue the notification
 
         // 0. Get data
-        val mainNotificationText = location?.toText() ?: getString(R.string.no_location_text)
+        val mainNotificationText = distanceToText(distanceToHome.value!!)
+
+        //val mainNotificationText = location?.toText() ?: getString(R.string.no_location_text)
         val titleText = getString(R.string.app_name)
 
         // 1. Create Notification Channel for O+ and beyond devices (26+).
@@ -330,7 +341,6 @@ class LocationService : Service() {
             .setBigContentTitle(titleText)
 
         // 3. Set up main Intent/Pending Intents for notification.
-        // TODO - do we have the problem here?
         val launchActivityIntent = Intent(this, MainActivity::class.java)
 
         val cancelIntent = Intent(this, LocationService::class.java)
@@ -349,7 +359,7 @@ class LocationService : Service() {
         val notificationCompatBuilder =
             NotificationCompat.Builder(applicationContext, NOTIFICATION_CHANNEL_ID)
 
-        val result = notificationCompatBuilder
+        return notificationCompatBuilder
             .setStyle(bigTextStyle)
             .setContentTitle(titleText)
             .setContentText(mainNotificationText)
@@ -358,20 +368,16 @@ class LocationService : Service() {
             .setOngoing(true)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .addAction(
-                /* icon = */ R.drawable.ic_launcher_gc_foreground,
+                /* icon = */ R.mipmap.ic_launcher_gc,
                 /* title = */ getString(R.string.launch_activity),
                 /* intent = */ activityPendingIntent
             )
             .addAction(
-                /* icon = */ R.drawable.ic_launcher_gc_foreground,
+                /* icon = */ R.mipmap.ic_launcher_gc,
                 /* title = */ getString(R.string.stop_location_service_notification_text),
                 /* intent = */ servicePendingIntent
             )
             .build()
-
-        Log.d(TAG, "generateNotification() result : ".plus(result.toString()))
-
-        return result
     }
 
     /**
@@ -393,6 +399,6 @@ class LocationService : Service() {
 
         private const val NOTIFICATION_ID = 12345678
 
-        private const val NOTIFICATION_CHANNEL_ID = "while_in_use_channel_01"
+        private const val NOTIFICATION_CHANNEL_ID = "channel_01"
     }
 }

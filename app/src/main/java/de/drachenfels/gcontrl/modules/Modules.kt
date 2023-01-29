@@ -19,45 +19,11 @@ import android.content.SharedPreferences
 import android.location.Location
 import androidx.lifecycle.MutableLiveData
 
-/**
- * Returns the `location` object as a human readable string.
- */
-fun Location?.toText(): String {
-    return if (this != null) {
-        "($latitude, $longitude)"
-    } else {
-        "Unknown location"
-    }
-}
 
 /**
  * the application wide shared preferences will be available during ControlFragment onCreate
  */
 lateinit var sharedPreferences: SharedPreferences
-
-
-/**
- * the mqtt server is initialized in ControlFragment onCreate and application wide
- * available afterwards
- */
-//lateinit var mqttServer: MQTTConnection
-
-
-const val MQTT_STATUS_OK = 0
-const val MQTT_STATUS_CONNECTION_FAILED = 1
-const val MQTT_STATUS_PUBLISH_FAILD = 2
-private var _statusMQTT = MutableLiveData(0)
-/**
- * MQTT status can be observed to provide feedback to users
- * 0 - ok
- * 1 - connection failed
- * 2 - publish failed
- */
-var statusMQTT: MutableLiveData<Int>
-    get() = _statusMQTT
-    set(value) {
-        _statusMQTT = value
-    }
 
 /**
  * The object contains shared resources used between the ControlView and the Location Service
@@ -81,6 +47,14 @@ var distanceToHome: MutableLiveData<Int>
     set(value) {
         privateDistanceToHome = value
     }
+
+/**
+ * Returns the compiled distance to home string
+ */
+fun distanceToText(distance:Int): String {
+    return "distance to home : ".plus(distance).plus("m")
+}
+
 
 const val HOME_ZONE_INSIDE = 0
 const val HOME_ZONE_LEAVING = 1
