@@ -125,6 +125,7 @@ class ControlFragment : Fragment() {
      */
     private fun onMqttStatusChange(status: Int?) {
         when (status) {
+
             MQTT_DOOR_CLOSE, MQTT_DOOR_OPEN -> {
                 Toast.makeText(
                     activity?.applicationContext,
@@ -149,13 +150,7 @@ class ControlFragment : Fragment() {
                 ).show()
             }
 
-            else -> {
-                Toast.makeText(
-                    activity?.applicationContext,
-                    "unknown server response",
-                    Toast.LENGTH_LONG
-                ).show()
-            }
+            else -> {}
         }
     }
 
