@@ -7,9 +7,7 @@ import androidx.preference.EditTextPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.SwitchPreference
-import de.drachenfels.gcontrl.modules.currentLocation
-import de.drachenfels.gcontrl.modules.sharedPreferences
-
+import de.drachenfels.gcontrl.modules.*
 
 class PreferencesFragment : PreferenceFragmentCompat() {
 
