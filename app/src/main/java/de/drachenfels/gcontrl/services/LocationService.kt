@@ -118,7 +118,6 @@ class LocationService : Service() {
             val lastLocation: Location = _lastLocation
 
             // calculate the distance to home
-            //TODO think about how this could be done only at start and at home location change.
             val homeLocation = Location("homeLocation")
             homeLocation.latitude =
                 sharedPreferences.getString(
@@ -131,15 +130,14 @@ class LocationService : Service() {
                     "0.0"
                 ).toString().toDouble()
 
-            // check preferences on auto door control
+            // home location doesn't store the altitude for distance calculation use current altitude
+            homeLocation.altitude = lastLocation.altitude
+
+            // check preferences on auto door control before updating LiveData
             enableAutoDoorControl = de.drachenfels.gcontrl.modules.sharedPreferences.getBoolean(
                 getString(R.string.prf_key_geo_auto_control),
                 false
             )
-
-            // home location doesn't store the altitude for distance calculation use current altitude
-            homeLocation.altitude = lastLocation.altitude
-
             val newDistance = lastLocation.distanceTo(homeLocation).roundToInt()
             val oldDistance = distanceToHome.value!!
             val fence =
@@ -177,16 +175,13 @@ class LocationService : Service() {
             }
 
 
-            // Updates notification content if this service is running as a foreground
-            // service.
-            if (serviceRunningInForeground) {
-                notificationManager.notify(
-                    NOTIFICATION_ID,
-                    generateNotification())
-            }
-
-//            fenceWatcher.observeForever { fenceState ->
-//                onFenceStateChange(fenceState)
+            // Updates notification content
+//            // if this service is running as a foreground  service.
+//            if (serviceRunningInForeground) {
+            notificationManager.notify(
+                NOTIFICATION_ID,
+                generateNotification()
+            )
 //            }
         }
     }
@@ -271,7 +266,6 @@ class LocationService : Service() {
         startService(Intent(applicationContext, LocationService::class.java))
 
         try {
-            // TODO: Step 1.5, Subscribe to location changes.
             fusedLocationProviderClient.requestLocationUpdates(
                 locationRequest, locationCallback, Looper.getMainLooper()
             )
