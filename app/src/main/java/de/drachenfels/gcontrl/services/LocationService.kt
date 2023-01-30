@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Google LLC
+ * Copyright 2023 Georg Doll
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@file:Suppress("DEPRECATION")
 
 package de.drachenfels.gcontrl.services
 
@@ -22,12 +21,10 @@ import android.app.*
 import android.content.*
 import android.content.res.Configuration
 import android.location.Location
-import android.os.Binder
-import android.os.Build
-import android.os.IBinder
-import android.os.Looper
+import android.os.*
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import androidx.preference.PreferenceManager
 import com.google.android.gms.location.*
 import com.google.android.gms.location.Priority.*
@@ -46,6 +43,8 @@ import kotlin.math.roundToInt
  * versions. Please reference documentation for details.
  */
 class LocationService : Service() {
+
+
     /*
      * Checks whether the bound activity has really gone away (foreground service with notification
      * created) or simply orientation change (no-op).
@@ -71,8 +70,48 @@ class LocationService : Service() {
     private lateinit var sharedPreferences: SharedPreferences
 
     // dismiss the fence checking for the first couple of locations
-    private /*const*/ val DISMISS_LOCATIONS = 8
     private var locationCount = 0
+
+
+    private lateinit var timerHandler: Handler
+    private var notificationCounter = 0
+
+    private val updateNotificationTask = object : Runnable {
+        override fun run() {
+            updateNotification()
+            timerHandler.postDelayed(this, TIMER_HANDLER_DELAY_MILLIS)
+        }
+    }
+    private fun updateNotification() {
+        Log.d("TIMER_TASK","updateNotification()")
+        //       if (notificationsEnabled && appPreferences.notifications) {
+        with(NotificationManagerCompat.from(this)) {
+
+            notificationCounter++
+
+  //          val message = notificationCounter.toString()
+
+            notificationManager.notify(
+                NOTIFICATION_ID,
+                generateNotification()
+            )
+//            statsNotification.setContentText(message)
+//            foregroundServiceNotification.setContentText(message)
+//            notify(STATS_NOTIFICATION_ID, statsNotification.build())
+//            notify(FOREGROUND_NOTIFICATION_ID, foregroundServiceNotification.build())
+        }
+//        } else if (notificationsEnabled && !appPreferences.notifications) {
+//            notificationsEnabled = false
+//            with(NotificationManagerCompat.from(this)) {
+//                cancel(STATS_NOTIFICATION_ID)
+//            }
+//            foregroundServiceNotification.setContentText(getString(R.string.foreground_service_info))
+//            NotificationManagerCompat.from(this).notify(FOREGROUND_NOTIFICATION_ID, foregroundServiceNotification.build())
+//        } else if (!notificationsEnabled && appPreferences.notifications) {
+//            notificationsEnabled = true
+//        }
+    }
+
 
     override fun onCreate() {
         Log.d(TAG, "onCreate()")
@@ -89,33 +128,11 @@ class LocationService : Service() {
                     setMinUpdateDistanceMeters(2F)
                     setGranularity(Granularity.GRANULARITY_PERMISSION_LEVEL)
                     setWaitForAccurateLocation(true)
+                    setMaxUpdates(1)
                 }
                 .build()
 
-        /*locationRequest = LocationRequest.create().apply {
-            // Sets the desired interval for active location updates. This interval is inexact. You
-            // may not receive updates at all if no location sources are available, or you may
-            // receive them less frequently than requested. You may also receive updates more
-            // frequently than requested if other applications are requesting location at a more
-            // frequent interval.
-            //
-            // IMPORTANT NOTE: Apps running on Android 8.0 and higher devices (regardless of
-            // targetSdkVersion) may receive updates less frequently than this interval when the app
-            // is no longer in the foreground.
-            interval = TimeUnit.SECONDS.toMillis(10)
 
-            // Sets the fastest rate for active location updates. This interval is exact, and your
-            // application will never receive updates more frequently than this value.
-            fastestInterval = TimeUnit.SECONDS.toMillis(1)
-
-            // Sets the maximum time when batched location updates are delivered. Updates may be
-            // delivered sooner than this interval.
-            maxWaitTime = TimeUnit.SECONDS.toMillis(20)
-
-            priority = LocationRequest.PRIORITY_HIGH_ACCURACY
-
-    }
-    */
         // register a location callback
         locationCallback =
             object : LocationCallback() {
@@ -125,6 +142,9 @@ class LocationService : Service() {
                     onLocationUpdate(locationResult.lastLocation)
                 }
             }
+
+        timerHandler = Handler(Looper.getMainLooper())
+        timerHandler.post(updateNotificationTask)
     }
 
     private fun onLocationUpdate(_lastLocation: Location?) {
@@ -161,7 +181,7 @@ class LocationService : Service() {
                     .toString()
                     .toInt()
 
-            if(locationCount > DISMISS_LOCATIONS) {
+            if (locationCount > DISMISS_LOCATIONS) {
 
                 // check if the distance just got bigger then the fence -> leaving home 1
                 if ((oldDistance > fence) && (newDistance < fence)) {
@@ -185,7 +205,7 @@ class LocationService : Service() {
                     }
                 }
 
-            }else{
+            } else {
                 locationCount++
             }
             if (newDistance != oldDistance) {
@@ -205,8 +225,8 @@ class LocationService : Service() {
             )
 //            }
         } else
-            // reset the location counter - something's wrong and we want at least
-            // DISMISS_LOCATIONS before we trigger any door action
+        // reset the location counter - something's wrong and we want at least
+        // DISMISS_LOCATIONS before we trigger any door action
             locationCount = 0
     }
 
@@ -231,7 +251,12 @@ class LocationService : Service() {
 
         // MainActivity (client) comes into foreground and binds to service, so the service can
         // become a background services.
-        stopForeground(true)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            stopForeground(STOP_FOREGROUND_REMOVE)
+        } else {
+            @Suppress("DEPRECATION")
+            stopForeground(true)
+        }
         serviceRunningInForeground = false
         configurationChange = false
         return localBinder
@@ -242,7 +267,12 @@ class LocationService : Service() {
 
         // MainActivity (client) returns to the foreground and rebinds to service, so the service
         // can become a background services.
-        stopForeground(true)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            stopForeground(STOP_FOREGROUND_REMOVE)
+        } else {
+            @Suppress("DEPRECATION")
+            stopForeground(true)
+        }
         serviceRunningInForeground = false
         configurationChange = false
         super.onRebind(intent)
@@ -283,9 +313,6 @@ class LocationService : Service() {
     fun subscribeToLocationUpdates() {
         Log.d(TAG, "subscribeToLocationUpdates()")
 
-        // not needed will be handled from preference fragment
-        // SharedPreferenceUtil.saveLocationTrackingPref(this, true)
-
         // Binding to this service doesn't actually trigger onStartCommand(). That is needed to
         // ensure this Service can be promoted to a foreground service, i.e., the service needs to
         // be officially started (which we do here).
@@ -301,6 +328,8 @@ class LocationService : Service() {
             Log.e(TAG, "Lost location permissions. Couldn't remove updates. $unlikely")
         }
     }
+
+
 
     private fun unsubscribeToLocationUpdates() {
         Log.d(TAG, "unsubscribeToLocationUpdates()")
@@ -420,5 +449,8 @@ class LocationService : Service() {
         private const val NOTIFICATION_ID = 12345678
 
         private const val NOTIFICATION_CHANNEL_ID = "channel_01"
+
+        private const val TIMER_HANDLER_DELAY_MILLIS = 2000L
+
     }
 }
