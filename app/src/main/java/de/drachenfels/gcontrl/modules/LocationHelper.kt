@@ -52,7 +52,11 @@ var distanceToHome: MutableLiveData<Int>
  * Returns the compiled distance to home string
  */
 fun distanceToText(distance:Int): String {
-    return "distance to home : ".plus(distance).plus("m")
+    return if (distance < 1000) {
+        "distance to home : ".plus(distance).plus("m")
+    } else {
+        "distance to home : ".plus(distance/1000).plus("km")
+    }
 }
 
 
