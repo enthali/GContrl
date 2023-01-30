@@ -30,6 +30,7 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.preference.PreferenceManager
 import com.google.android.gms.location.*
+import com.google.android.gms.location.Priority.*
 import de.drachenfels.gcontrl.MainActivity
 import de.drachenfels.gcontrl.R
 import de.drachenfels.gcontrl.modules.*
@@ -78,7 +79,16 @@ class LocationService : Service() {
 
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
 
-        locationRequest = LocationRequest.create().apply {
+        locationRequest =
+            LocationRequest.Builder(PRIORITY_HIGH_ACCURACY, TimeUnit.SECONDS.toMillis(2))
+                .apply {
+                    // setMinUpdateDistanceMeters(1f)
+                    setGranularity(Granularity.GRANULARITY_PERMISSION_LEVEL)
+                    setWaitForAccurateLocation(true)
+                }
+                .build()
+
+        /*locationRequest = LocationRequest.create().apply {
             // Sets the desired interval for active location updates. This interval is inexact. You
             // may not receive updates at all if no location sources are available, or you may
             // receive them less frequently than requested. You may also receive updates more
@@ -99,16 +109,18 @@ class LocationService : Service() {
             maxWaitTime = TimeUnit.SECONDS.toMillis(20)
 
             priority = LocationRequest.PRIORITY_HIGH_ACCURACY
-        }
 
+    }
+    */
         // register a location callback
-        locationCallback = object : LocationCallback() {
-            override fun onLocationResult(locationResult: LocationResult) {
-                super.onLocationResult(locationResult)
-                // call the local onLocationUpdate member function
-                onLocationUpdate(locationResult.lastLocation)
+        locationCallback =
+            object : LocationCallback() {
+                override fun onLocationResult(locationResult: LocationResult) {
+                    super.onLocationResult(locationResult)
+                    // call the local onLocationUpdate member function
+                    onLocationUpdate(locationResult.lastLocation)
+                }
             }
-        }
     }
 
     private fun onLocationUpdate(_lastLocation: Location?) {
@@ -197,7 +209,9 @@ class LocationService : Service() {
             stopSelf()
         }
         // Tells the system not to recreate the service after it's been killed.
-        return START_NOT_STICKY
+        // return START_NOT_STICKY
+        // Try if this works better
+        return START_STICKY
     }
 
     override fun onBind(intent: Intent): IBinder {
