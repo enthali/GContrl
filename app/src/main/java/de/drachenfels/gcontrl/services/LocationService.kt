@@ -70,6 +70,10 @@ class LocationService : Service() {
 
     private lateinit var sharedPreferences: SharedPreferences
 
+    // dismiss the fence checking for the first couple of locations
+    private /*const*/ val DISMISS_LOCATIONS = 8
+    private var locationCount = 0
+
     override fun onCreate() {
         Log.d(TAG, "onCreate()")
 
@@ -82,7 +86,7 @@ class LocationService : Service() {
         locationRequest =
             LocationRequest.Builder(PRIORITY_HIGH_ACCURACY, TimeUnit.SECONDS.toMillis(2))
                 .apply {
-                    // setMinUpdateDistanceMeters(1f)
+                    setMinUpdateDistanceMeters(2F)
                     setGranularity(Granularity.GRANULARITY_PERMISSION_LEVEL)
                     setWaitForAccurateLocation(true)
                 }
@@ -157,28 +161,33 @@ class LocationService : Service() {
                     .toString()
                     .toInt()
 
-            // check if the distance just got bigger then the fence -> leaving home 1
-            if ((oldDistance > fence) && (newDistance < fence)) {
-                if (fenceWatcher.value != HOME_ZONE_ENTERING) {
-                    fenceWatcher.postValue(HOME_ZONE_ENTERING)
-                    onFenceStateChange(HOME_ZONE_ENTERING)
-                }
-            }
-            if ((oldDistance > fence) && (newDistance > fence)) {
-                if (fenceWatcher.value != HOME_ZONE_OUTSIDE)
-                    fenceWatcher.postValue(HOME_ZONE_OUTSIDE)
-            }
-            if ((oldDistance < fence) && (newDistance < fence)) {
-                if (fenceWatcher.value != HOME_ZONE_INSIDE)
-                    fenceWatcher.postValue(HOME_ZONE_INSIDE)
-            }
-            if ((oldDistance < fence) && (newDistance > fence)) {
-                if (fenceWatcher.value != HOME_ZONE_LEAVING) {
-                    fenceWatcher.postValue(HOME_ZONE_LEAVING)
-                    onFenceStateChange(HOME_ZONE_LEAVING)
-                }
-            }
+            if(locationCount > DISMISS_LOCATIONS) {
 
+                // check if the distance just got bigger then the fence -> leaving home 1
+                if ((oldDistance > fence) && (newDistance < fence)) {
+                    if (fenceWatcher.value != HOME_ZONE_ENTERING) {
+                        fenceWatcher.postValue(HOME_ZONE_ENTERING)
+                        onFenceStateChange(HOME_ZONE_ENTERING)
+                    }
+                }
+                if ((oldDistance > fence) && (newDistance > fence)) {
+                    if (fenceWatcher.value != HOME_ZONE_OUTSIDE)
+                        fenceWatcher.postValue(HOME_ZONE_OUTSIDE)
+                }
+                if ((oldDistance < fence) && (newDistance < fence)) {
+                    if (fenceWatcher.value != HOME_ZONE_INSIDE)
+                        fenceWatcher.postValue(HOME_ZONE_INSIDE)
+                }
+                if ((oldDistance < fence) && (newDistance > fence)) {
+                    if (fenceWatcher.value != HOME_ZONE_LEAVING) {
+                        fenceWatcher.postValue(HOME_ZONE_LEAVING)
+                        onFenceStateChange(HOME_ZONE_LEAVING)
+                    }
+                }
+
+            }else{
+                locationCount++
+            }
             if (newDistance != oldDistance) {
                 // post the new distance
                 distanceToHome.postValue(newDistance)
@@ -195,7 +204,10 @@ class LocationService : Service() {
                 generateNotification()
             )
 //            }
-        }
+        } else
+            // reset the location counter - something's wrong and we want at least
+            // DISMISS_LOCATIONS before we trigger any door action
+            locationCount = 0
     }
 
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
