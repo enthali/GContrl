@@ -92,14 +92,12 @@ class ControlFragment : Fragment() {
         binding.openbutton.setOnClickListener { manageDoor(1) }
         binding.closebutton.setOnClickListener { manageDoor(0) }
 
-        distanceToHome.observe(
-            viewLifecycleOwner
-        ) { newDistance ->
-            binding.distanceText.text = distanceToText(newDistance)
-            binding.distanceBar.max = newDistance.toInt()
-            binding.distanceBar.progress =
-                sharedPreferences.getString(getString(R.string.prf_key_geo_fence_size), "0")
-                    .toString().toInt()
+        distanceToHome.observe(viewLifecycleOwner) { newDistance ->
+            onDistanceChange(newDistance)
+        }
+
+        statusMQTT.observe(viewLifecycleOwner) { newStatus ->
+            onMqttStatusChange(newStatus)
         }
 
         // make sure we get location permissions if they are enabled
@@ -109,6 +107,56 @@ class ControlFragment : Fragment() {
             )
         )
             requestForegroundPermissions()
+    }
+
+    /**
+     * update the UI with the new distance
+     */
+    private fun onDistanceChange(distance: Int) {
+        binding.distanceText.text = distanceToText(distance)
+        binding.distanceBar.max = distance
+        binding.distanceBar.progress =
+            sharedPreferences.getString(getString(R.string.prf_key_geo_fence_size), "0")
+                .toString().toInt()
+    }
+
+    /**
+     * toast the server status to the UI
+     */
+    private fun onMqttStatusChange(status: Int?) {
+        when (status) {
+            MQTT_DOOR_CLOSE, MQTT_DOOR_OPEN -> {
+                Toast.makeText(
+                    activity?.applicationContext,
+                    (if (status == MQTT_DOOR_OPEN) "open" else "close").plus(" the door"),
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+
+            MQTT_STATUS_CONNECTION_FAILED -> {
+                Toast.makeText(
+                    activity?.applicationContext,
+                    "connection to server failed",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+
+            MQTT_STATUS_PUBLISH_FAILD -> {
+                Toast.makeText(
+                    activity?.applicationContext,
+                    "door command send failed",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+
+            else -> {
+                Toast.makeText(
+                    activity?.applicationContext,
+                    "unknown server response",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
     }
 
     /**
@@ -321,14 +369,7 @@ class ControlFragment : Fragment() {
                 enableButtons = true
             }
 
-            if (enableButtons)
-                if (mqttSendMessage(cmdString)) {
-                    Toast.makeText(
-                        activity?.applicationContext,
-                        cmdString.plus(" the door"),
-                        Toast.LENGTH_LONG
-                    ).show()
-                }
+            if (enableButtons) mqttSendMessage(cmdString)
         }
     }
 

@@ -7,10 +7,11 @@ import org.eclipse.paho.client.mqttv3.MqttException
 import org.eclipse.paho.client.mqttv3.MqttMessage
 
 const val MQTT_STATUS_OK = 0
-const val MQTT_STATUS_CONNECTION_FAILED = 1
-const val MQTT_STATUS_PUBLISH_FAILD = 2
+const val MQTT_DOOR_OPEN = 1
+const val MQTT_DOOR_CLOSE = 2
+const val MQTT_STATUS_CONNECTION_FAILED = 16
+const val MQTT_STATUS_PUBLISH_FAILD = 32
 private var _statusMQTT = MutableLiveData(0)
-
 /**
  * MQTT status can be observed to provide feedback to users
  * 0 - ok
@@ -93,6 +94,15 @@ fun mqttSendMessage(payload: String): Boolean {
             message.qos = 1
             message.payload = payload.toByteArray()
             client!!.publish(tp, message)
+            // there's no feedback from the door, but at least there's feedback from the MQTT Server
+            // which is currently used to represent the door status
+            // the command chain past the MQTT server is not transparent to the app
+            if (payload == "open") {
+                statusMQTT.postValue(MQTT_DOOR_OPEN)
+            } else
+            {
+                statusMQTT.postValue(MQTT_DOOR_CLOSE)
+            }
         } catch (e: MqttException) {
             statusMQTT.value = MQTT_STATUS_PUBLISH_FAILD
         }
