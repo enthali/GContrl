@@ -78,18 +78,22 @@ class LocationService : Service() {
 
     private val updateNotificationTask = object : Runnable {
         override fun run() {
-            updateNotification()
+            initiateLocationRequest()
+            if (serviceRunningInForeground) {
+                updateNotification()
+            }
             timerHandler.postDelayed(this, TIMER_HANDLER_DELAY_MILLIS)
         }
     }
+
     private fun updateNotification() {
-        Log.d("TIMER_TASK","updateNotification()")
+        Log.d(TAG, "Timer Task : updateNotification()")
         //       if (notificationsEnabled && appPreferences.notifications) {
         with(NotificationManagerCompat.from(this)) {
 
             notificationCounter++
 
-  //          val message = notificationCounter.toString()
+            //          val message = notificationCounter.toString()
 
             notificationManager.notify(
                 NOTIFICATION_ID,
@@ -116,6 +120,8 @@ class LocationService : Service() {
     override fun onCreate() {
         Log.d(TAG, "onCreate()")
 
+        locationCount = 0
+
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(application)
 
         notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -128,7 +134,7 @@ class LocationService : Service() {
                     setMinUpdateDistanceMeters(2F)
                     setGranularity(Granularity.GRANULARITY_PERMISSION_LEVEL)
                     setWaitForAccurateLocation(true)
-                    setMaxUpdates(1)
+                    setMaxUpdates(10)
                 }
                 .build()
 
@@ -137,14 +143,14 @@ class LocationService : Service() {
         locationCallback =
             object : LocationCallback() {
                 override fun onLocationResult(locationResult: LocationResult) {
+                    onLocationUpdate(locationResult.lastLocation)
                     super.onLocationResult(locationResult)
                     // call the local onLocationUpdate member function
-                    onLocationUpdate(locationResult.lastLocation)
+
                 }
             }
 
-        timerHandler = Handler(Looper.getMainLooper())
-        timerHandler.post(updateNotificationTask)
+
     }
 
     private fun onLocationUpdate(_lastLocation: Location?) {
@@ -218,12 +224,12 @@ class LocationService : Service() {
 
             // Updates notification content
 //            // if this service is running as a foreground  service.
-//            if (serviceRunningInForeground) {
-            notificationManager.notify(
-                NOTIFICATION_ID,
-                generateNotification()
-            )
-//            }
+            if (serviceRunningInForeground) {
+                notificationManager.notify(
+                    NOTIFICATION_ID,
+                    generateNotification()
+                )
+            }
         } else
         // reset the location counter - something's wrong and we want at least
         // DISMISS_LOCATIONS before we trigger any door action
@@ -232,6 +238,8 @@ class LocationService : Service() {
 
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
         Log.d(TAG, "onStartCommand()")
+
+        locationCount = 0
 
         val cancelLocationTrackingFromNotification =
             intent.getBooleanExtra(EXTRA_CANCEL_LOCATION_TRACKING_FROM_NOTIFICATION, false)
@@ -318,6 +326,13 @@ class LocationService : Service() {
         // be officially started (which we do here).
         startService(Intent(applicationContext, LocationService::class.java))
 
+        initiateLocationRequest()
+
+        timerHandler = Handler(Looper.getMainLooper())
+        timerHandler.post(updateNotificationTask)
+    }
+
+    private fun initiateLocationRequest() {
         try {
             fusedLocationProviderClient.requestLocationUpdates(
                 locationRequest, locationCallback, Looper.getMainLooper()
@@ -328,7 +343,6 @@ class LocationService : Service() {
             Log.e(TAG, "Lost location permissions. Couldn't remove updates. $unlikely")
         }
     }
-
 
 
     private fun unsubscribeToLocationUpdates() {
@@ -396,11 +410,12 @@ class LocationService : Service() {
         cancelIntent.putExtra(EXTRA_CANCEL_LOCATION_TRACKING_FROM_NOTIFICATION, true)
 
         val servicePendingIntent = PendingIntent.getService(
-            this, 0, cancelIntent, PendingIntent.FLAG_UPDATE_CURRENT
+            this, 0, cancelIntent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+            //this, 0, cancelIntent, PendingIntent.FLAG_UPDATE_CURRENT,
         )
 
         val activityPendingIntent = PendingIntent.getActivity(
-            this, 0, launchActivityIntent, 0
+            this, 0, launchActivityIntent, PendingIntent.FLAG_IMMUTABLE
         )
 
         // 4. Build and issue the notification.
@@ -450,7 +465,7 @@ class LocationService : Service() {
 
         private const val NOTIFICATION_CHANNEL_ID = "channel_01"
 
-        private const val TIMER_HANDLER_DELAY_MILLIS = 2000L
+        private const val TIMER_HANDLER_DELAY_MILLIS = 5000L
 
     }
 }

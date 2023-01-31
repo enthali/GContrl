@@ -60,7 +60,7 @@ fun distanceToText(distance:Int): String {
 }
 
 // dismiss some locations at startup else the app fires a fence transition w/o reason
-const val DISMISS_LOCATIONS = 4
+const val DISMISS_LOCATIONS = 2
 
 const val HOME_ZONE_INSIDE = 0
 const val HOME_ZONE_LEAVING = 1
