@@ -51,12 +51,22 @@ var distanceToHome: MutableLiveData<Int>
 /**
  * Returns the compiled distance to home string
  */
-fun distanceToText(distance:Int): String {
-    return if (distance < 1000) {
-        "distance to home : ".plus(distance).plus("m")
-    } else {
-        "distance to home : ".plus(distance/1000).plus("km")
-    }
+fun distanceToText(distance: Int): String {
+    return "distance to home : ".plus(
+        when (distance) {
+            in 0..999 ->
+                (distance.toString())
+                    .plus("m")
+            in 1000..9999 ->
+                (distance / 1000).toString()
+                    .plus(".")
+                    .plus((distance %1000).div(100))
+                    .plus("km")
+            else ->
+                (distance / 1000).toString()
+                    .plus("km")
+        }
+    )
 }
 
 // dismiss some locations at startup else the app fires a fence transition w/o reason
