@@ -69,10 +69,6 @@ class LocationService : Service() {
 
     private lateinit var sharedPreferences: SharedPreferences
 
-    // dismiss the fence checking for the first couple of locations
-    private var locationCount = 0
-
-
     private lateinit var timerHandler: Handler
     private var notificationCounter = 0
 
@@ -131,7 +127,7 @@ class LocationService : Service() {
         locationRequest =
             LocationRequest.Builder(PRIORITY_HIGH_ACCURACY, TimeUnit.SECONDS.toMillis(2))
                 .apply {
-                    setMinUpdateDistanceMeters(2F)
+                    //setMinUpdateDistanceMeters(2F)
                     setGranularity(Granularity.GRANULARITY_PERMISSION_LEVEL)
                     setWaitForAccurateLocation(true)
                     setMaxUpdates(10)

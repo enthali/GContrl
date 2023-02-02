@@ -1,17 +1,16 @@
-@file:Suppress("DEPRECATION")
-
 package de.drachenfels.gcontrl
 
 import android.Manifest
-import android.content.*
+import android.content.ComponentName
+import android.content.Context
 import android.content.Context.CONNECTIVITY_SERVICE
+import android.content.Intent
+import android.content.ServiceConnection
 import android.content.pm.PackageManager
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
-import android.net.Uri
 import android.os.Bundle
 import android.os.IBinder
-import android.provider.Settings
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -21,7 +20,6 @@ import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
 import androidx.preference.PreferenceManager
-import com.google.android.material.snackbar.Snackbar
 import de.drachenfels.gcontrl.databinding.FragmentControlBinding
 import de.drachenfels.gcontrl.modules.*
 import de.drachenfels.gcontrl.services.LocationService
@@ -258,27 +256,26 @@ class ControlFragment : Fragment() {
         // If the user denied a previous request, but didn't check "Don't ask again", provide
         // additional rationale.
         if (provideRationale) {
-            Snackbar.make(
-                requireView(),
-                //findViewById(R.id.directControl),
-                R.string.permission_rationale,
-                Snackbar.LENGTH_LONG
-            )
+//            Snackbar.make(
+//                requireView(),
+//                //findViewById(R.id.directControl),
+//                R.string.permission_rationale,
+//                Snackbar.LENGTH_LONG
+//            )
                 // TOTO does the .let call work ??
-                .setAction(R.string.ok) {
-                    // Request permission
-                    activity?.let { it1 ->
-                        ActivityCompat.requestPermissions(
-                            it1,
-                            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
-                            REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE
-                        )
-                    }
-                }
-                .show()
+//                .setAction(R.string.ok) {
+//                    // Request permission
+//                    activity?.let { it1 ->
+//                        ActivityCompat.requestPermissions(
+//                            it1,
+//                            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+//                            REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE
+//                        )
+//                    }
+//                }
+//                .show()
         } else {
             Log.d(TAG, "Request foreground only permission")
-            // TODO check if this .let call works ??
             activity?.let {
                 ActivityCompat.requestPermissions(
                     it,
@@ -289,51 +286,51 @@ class ControlFragment : Fragment() {
         }
     }
 
-
-    // TODO work out on how to handle depreciated call
-    @Deprecated("Deprecated in Java")
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<String>,
-        grantResults: IntArray
-    ) {
-        Log.d(TAG, "onRequestPermissionResult()")
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-
-        when (requestCode) {
-            REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE -> when {
-                grantResults.isEmpty() ->
-                    // If user interaction was interrupted, the permission request
-                    // is cancelled and you receive empty arrays.
-                    Log.d(TAG, "User interaction was cancelled.")
-                grantResults[0] == PackageManager.PERMISSION_GRANTED ->
-                    // Permission was granted.
-                    locationService?.subscribeToLocationUpdates()
-                else -> {
-                    // Permission denied.
-                    Snackbar.make(
-                        requireView(),
-                        R.string.permission_denied_explanation,
-                        Snackbar.LENGTH_LONG
-                    )
-                        .setAction("settings") {
-                            // Build intent that displays the App settings screen.
-                            val intent = Intent()
-                            intent.action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
-                            val uri = Uri.fromParts(
-                                "package",
-                                BuildConfig.APPLICATION_ID,
-                                null
-                            )
-                            intent.data = uri
-                            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                            startActivity(intent)
-                        }
-                        .show()
-                }
-            }
-        }
-    }
+//
+//    // TODO work out on how to handle depreciated call
+//    @Deprecated("Deprecated in Java")
+//    override fun onRequestPermissionsResult(
+//        requestCode: Int,
+//        permissions: Array<String>,
+//        grantResults: IntArray
+//    ) {
+//        Log.d(TAG, "onRequestPermissionResult()")
+//        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+//
+//        when (requestCode) {
+//            REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE -> when {
+//                grantResults.isEmpty() ->
+//                    // If user interaction was interrupted, the permission request
+//                    // is cancelled and you receive empty arrays.
+//                    Log.d(TAG, "User interaction was cancelled.")
+//                grantResults[0] == PackageManager.PERMISSION_GRANTED ->
+//                    // Permission was granted.
+//                    locationService?.subscribeToLocationUpdates()
+//                else -> {
+//                    // Permission denied.
+//                    Snackbar.make(
+//                        requireView(),
+//                        R.string.permission_denied_explanation,
+//                        Snackbar.LENGTH_LONG
+//                    )
+//                        .setAction("settings") {
+//                            // Build intent that displays the App settings screen.
+//                            val intent = Intent()
+//                            intent.action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
+//                            val uri = Uri.fromParts(
+//                                "package",
+//                                BuildConfig.APPLICATION_ID,
+//                                null
+//                            )
+//                            intent.data = uri
+//                            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+//                            startActivity(intent)
+//                        }
+//                        .show()
+//                }
+//            }
+//        }
+//    }
 
 
     /**
@@ -348,9 +345,7 @@ class ControlFragment : Fragment() {
         }
         if (isConnected()) {
 
-            val enableButtons: Boolean
-
-            if (sharedPreferences.getBoolean(
+            val enableButtons: Boolean = if (sharedPreferences.getBoolean(
                     getString(R.string.prf_key_geo_enable_location_features),
                     false
                 )
@@ -359,9 +354,9 @@ class ControlFragment : Fragment() {
                     false
                 )
             ) {
-                enableButtons = fenceWatcher.value == HOME_ZONE_INSIDE
+                fenceWatcher.value == HOME_ZONE_INSIDE
             } else {
-                enableButtons = true
+                true
             }
 
             if (enableButtons) mqttSendMessage(cmdString)

@@ -57,7 +57,7 @@ fun distanceToText(distance: Int): String {
             in 0..999 ->
                 (distance.toString())
                     .plus("m")
-            in 1000..9999 ->
+            in 1000..49999 ->
                 (distance / 1000).toString()
                     .plus(".")
                     .plus((distance %1000).div(100))
@@ -71,6 +71,8 @@ fun distanceToText(distance: Int): String {
 
 // dismiss some locations at startup else the app fires a fence transition w/o reason
 const val DISMISS_LOCATIONS = 2
+// dismiss the fence checking for the first couple of locations
+var locationCount = 0
 
 const val HOME_ZONE_INSIDE = 0
 const val HOME_ZONE_LEAVING = 1

@@ -19,8 +19,8 @@ android {
         applicationId "de.drachenfels.gcontrl"
         minSdk 23
         targetSdk 33
-        versionCode 16
-        versionName 'better distance'
+        versionCode 17
+        versionName 'less depreciated code'
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }

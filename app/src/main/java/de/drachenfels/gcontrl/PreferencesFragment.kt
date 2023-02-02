@@ -7,7 +7,9 @@ import androidx.preference.EditTextPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.SwitchPreference
-import de.drachenfels.gcontrl.modules.*
+import de.drachenfels.gcontrl.modules.currentLocation
+import de.drachenfels.gcontrl.modules.locationCount
+import de.drachenfels.gcontrl.modules.sharedPreferences
 
 class PreferencesFragment : PreferenceFragmentCompat() {
 
@@ -72,6 +74,12 @@ class PreferencesFragment : PreferenceFragmentCompat() {
          * preferences on click Listener
          */
         geoSetHomeLocation?.setOnPreferenceClickListener {
+
+            // prevent the location state machine to detect a fence change
+            // by ignoring the next 2 location updates
+            locationCount = 0
+
+            // publish the new locations
             sharedPreferences.edit().putString(
                 getString(R.string.prf_key_geo_latitude),
                 currentLocation.value?.latitude.toString()
