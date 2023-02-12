@@ -23,6 +23,7 @@ import androidx.preference.PreferenceManager
 import de.drachenfels.gcontrl.databinding.FragmentControlBinding
 import de.drachenfels.gcontrl.modules.*
 import de.drachenfels.gcontrl.services.LocationService
+import de.drachenfels.gcontrl.services.LocationServiceOld
 
 
 private const val TAG = "ControlFragment"
@@ -40,25 +41,25 @@ class ControlFragment : Fragment() {
     private var foregroundOnlyLocationServiceBound = false
 
     // Provides location updates for while-in-use feature.
-    private var locationService: LocationService? = null
+    private var locationServiceOld: LocationServiceOld? = null
 
     // Monitors connection to the while-in-use service.
     private val foregroundOnlyServiceConnection = object : ServiceConnection {
 
         override fun onServiceConnected(name: ComponentName, service: IBinder) {
             Log.d(TAG, "onServiceConnected()")
-            val binder = service as LocationService.LocalBinder
-            locationService = binder.service
+            val binder = service as LocationServiceOld.LocalBinder
+            locationServiceOld = binder.service
             foregroundOnlyLocationServiceBound = true
 
             // enable the location updates
-            locationService?.subscribeToLocationUpdates()
+            locationServiceOld?.subscribeToLocationUpdates()
 
         }
 
         override fun onServiceDisconnected(name: ComponentName) {
             Log.d(TAG, "onServiceDisconnected()")
-            locationService = null
+            locationServiceOld = null
             foregroundOnlyLocationServiceBound = false
         }
     }

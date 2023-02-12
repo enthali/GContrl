@@ -53,7 +53,22 @@
             android:name=".services.LocationService"
             android:enabled="true"
             android:exported="false"
-            android:foregroundServiceType="location" />
+            android:foregroundServiceType="location"/>
+
+        <service
+            android:name=".services.LocationServiceOld"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="location"/>
+
+        <receiver
+            android:name=".receiver.RestartBackgroundService"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="restartservice" />
+            </intent-filter>
+        </receiver>
 
     </application>
 
