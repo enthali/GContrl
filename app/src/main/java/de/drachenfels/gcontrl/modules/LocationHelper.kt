@@ -15,8 +15,12 @@
  */
 package de.drachenfels.gcontrl.modules
 
+import android.app.Activity
+import android.app.ActivityManager
+import android.content.Context
 import android.content.SharedPreferences
 import android.location.Location
+import android.util.Log
 import androidx.lifecycle.MutableLiveData
 
 
@@ -90,3 +94,19 @@ var fenceWatcher: MutableLiveData<Int>
     set(value) {
         privateFenceWatcher = value
     }
+
+
+object LocationHelper {
+    fun locationServiceActive(serviceClass: Class<*>, mActivity: Activity): Boolean {
+        val manager: ActivityManager =
+            mActivity.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+        for (service in manager.getRunningServices(Int.MAX_VALUE)) {
+            if (serviceClass.name == service.service.getClassName()) {
+                Log.i("Service status", "Running")
+                return true
+            }
+        }
+        Log.i("Service status", "Not running")
+        return false
+    }
+}
