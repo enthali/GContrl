@@ -15,7 +15,6 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
@@ -181,7 +180,7 @@ class ControlFragment : Fragment() {
                 Toast.LENGTH_LONG
             ).show()
         }
-        enableLocationServiceView()
+//        enableLocationServiceView()
     }
 
     override fun onResume() {
@@ -189,7 +188,7 @@ class ControlFragment : Fragment() {
         super.onResume()
         //  Check if Internet connection is available
         //  to remind the user that we'll need an internet connection
-        enableLocationServiceView()
+//        enableLocationServiceView()
         if (!isConnected()) {
             Toast.makeText(
                 activity?.applicationContext,
@@ -213,24 +212,24 @@ class ControlFragment : Fragment() {
         super.onStop()
     }
 
-    /**
-     * switch view of location services view according to 'Enable location based Features' flag
-     */
-    private fun enableLocationServiceView() {
-        Log.d(TAG, "enableLocationServiceView()")
-        val enabled = sharedPreferences.getBoolean(
-            getString(R.string.prf_key_geo_enable_location_features),
-            false
-        )
-        // hide the location related information on the screen
-        // if location services are disabled in the preferences
-        // adopt the layout if geo-services are enabled or not
-        if (enabled) {
-            (binding.controlTableLayout.layoutParams as LinearLayout.LayoutParams).weight = 1.0f
-        } else {
-            (binding.controlTableLayout.layoutParams as LinearLayout.LayoutParams).weight = 0.0f
-        }
-    }
+//    /**
+//     * switch view of location services view according to 'Enable location based Features' flag
+//     */
+//    private fun enableLocationServiceView() {
+//        Log.d(TAG, "enableLocationServiceView()")
+//        val enabled = sharedPreferences.getBoolean(
+//            getString(R.string.prf_key_geo_enable_location_features),
+//            false
+//        )
+//        // hide the location related information on the screen
+//        // if location services are disabled in the preferences
+//        // adopt the layout if geo-services are enabled or not
+//        if (enabled) {
+//            (binding.controlTableLayout.layoutParams as LinearLayout.LayoutParams).weight = 1.0f
+//        } else {
+//            (binding.controlTableLayout.layoutParams as LinearLayout.LayoutParams).weight = 0.0f
+//        }
+//    }
 
     /**
      *  Review Permissions: Method checks if permissions approved.

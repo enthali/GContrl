@@ -1,12 +1,8 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <PreferenceCategory android:title="Geo Location Servicess">
+    <PreferenceCategory android:title="Geo Location Services">
 
-        <SwitchPreference
-            android:defaultValue="false"
-            android:key="@string/prf_key_geo_enable_location_features"
-            android:title="@string/prf_geo_en_loc_features" />
         <EditTextPreference
             android:defaultValue="50"
             android:key="@string/prf_key_geo_fence_size"
@@ -41,14 +37,14 @@
         <EditTextPreference
             app:defaultValue="8883"
             app:key="mqtt_port"
-            app:summary="The port address under which the MQTT server can be reachetd. The default ports are 8883 for SSL connections and 1833 for non secured connections (your setting might differ)"
+            app:summary="The port address under which the MQTT server can be reached. The default ports are 8883 for SSL connections and 1833 for non secured connections (your setting might differ)"
             app:title="@string/prf_mqtt_port"
             app:useSimpleSummaryProvider="false" />
 
         <SwitchPreference
             app:defaultValue="true"
             app:key="mqtt_ssl"
-            app:summary="MQTT can use secure socket layer communications. Enabling encrypts the MQTT messages over the public internet. If the server side supports SSL it's recomeded to turn this feature on"
+            app:summary="MQTT can use secure socket layer communications. Enabling encrypts the MQTT messages over the public internet. If the server side supports SSL it's recorded to turn this feature on"
             app:title="@string/prf_mqtt_use_ssl" />
     </PreferenceCategory>
 

@@ -26,11 +26,11 @@ class PreferencesFragment : PreferenceFragmentCompat() {
          */
 
         // switch view of geo preferences visibility according to Enable location based Features flag
-        val enabled =
-            sharedPreferences.getBoolean(
-                getString(R.string.prf_key_geo_enable_location_features),
-                false
-            )
+//        val enabled =
+//            sharedPreferences.getBoolean(
+//                getString(R.string.prf_key_geo_enable_location_features),
+//                false
+//            )
 
         val geoServiceEnabled: SwitchPreference? =
             findPreference(getString(R.string.prf_key_geo_enable_location_features))
@@ -38,7 +38,7 @@ class PreferencesFragment : PreferenceFragmentCompat() {
 
         val geoSetHomeLocation: Preference? =
             findPreference(getString(R.string.prf_key_geo_set_home_location))
-        geoSetHomeLocation?.isVisible = enabled
+//        geoSetHomeLocation?.isVisible = enabled
         geoSetHomeLocation?.summary = getString(R.string.geo_setHomeLocationSummary)
             .plus("\nCurrent Home Location : ")
             .plus("\nLat : ")
@@ -56,17 +56,17 @@ class PreferencesFragment : PreferenceFragmentCompat() {
                 ).toString()
             )
 
-        val geoFenceSize: EditTextPreference? =
-            findPreference(getString(R.string.prf_key_geo_fence_size))
-        geoFenceSize?.isVisible = enabled
-
-        val geoEnableProtect: SwitchPreference? =
-            findPreference(getString(R.string.prf_key_geo_enable_protect))
-        geoEnableProtect?.isVisible = enabled
-
-        val geoAutoControl: SwitchPreference? =
-            findPreference(getString(R.string.prf_key_geo_auto_control))
-        geoAutoControl?.isVisible = enabled
+//        val geoFenceSize: EditTextPreference? =
+//            findPreference(getString(R.string.prf_key_geo_fence_size))
+//        geoFenceSize?.isVisible = enabled
+//
+//        val geoEnableProtect: SwitchPreference? =
+//            findPreference(getString(R.string.prf_key_geo_enable_protect))
+//        geoEnableProtect?.isVisible = enabled
+//
+//        val geoAutoControl: SwitchPreference? =
+//            findPreference(getString(R.string.prf_key_geo_auto_control))
+//        geoAutoControl?.isVisible = enabled
 
         /**
          * handle setting the geo home location
