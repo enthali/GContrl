@@ -417,7 +417,7 @@ class LocationService : Service() {
         // 4. Build and issue the notification.
         // Notification Channel Id is ignored for Android pre O (26).
         val notificationCompatBuilder =
-            NotificationCompat.Builder(applicationContext, NOTIFICATION_CHANNEL_ID)
+            NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
 
         return notificationCompatBuilder
             .setStyle(bigTextStyle)
