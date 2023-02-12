@@ -86,13 +86,13 @@ class LocationServiceOld : Service() {
         with(NotificationManagerCompat.from(this)) {
 
             notificationCounter++
-
+//
             //          val message = notificationCounter.toString()
 
-            notificationManager.notify(
-                NOTIFICATION_ID,
-                generateNotification()
-            )
+//            notificationManager.notify(
+//                NOTIFICATION_ID,
+//                generateNotification()
+//            )
 //            statsNotification.setContentText(message)
 //            foregroundServiceNotification.setContentText(message)
 //            notify(STATS_NOTIFICATION_ID, statsNotification.build())
