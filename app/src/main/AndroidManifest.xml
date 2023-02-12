@@ -58,7 +58,7 @@
         <service
             android:name=".services.LocationServiceOld"
             android:enabled="true"
-            android:exported="false"
+            android:exported="true"
             android:foregroundServiceType="location"/>
 
         <receiver
