@@ -17,8 +17,10 @@ import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.google.android.gms.location.*
+import com.google.android.gms.location.Priority.PRIORITY_HIGH_ACCURACY
 import de.drachenfels.gcontrl.receiver.RestartBackgroundService
 import java.util.*
+import java.util.concurrent.TimeUnit
 
 
 class LocationService : Service() {
@@ -82,7 +84,7 @@ class LocationService : Service() {
         timer = Timer()
         timerTask = object : TimerTask() {
             override fun run() {
-                var count = counter++
+                val count = counter++
                 if (latitude != 0.0 && longitude != 0.0) {
                     Log.d(
                         "Location::",
@@ -112,10 +114,21 @@ class LocationService : Service() {
     }
 
     private fun requestLocationUpdates() {
-        val request = LocationRequest()
-        request.setInterval(10000)
-        request.setFastestInterval(5000)
-        request.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
+
+
+        val locationRequest =
+            LocationRequest.Builder(PRIORITY_HIGH_ACCURACY, TimeUnit.SECONDS.toMillis(2))
+                .apply {
+//                    setMinUpdateDistanceMeters(2F)
+//                    setGranularity(Granularity.GRANULARITY_PERMISSION_LEVEL)
+//                    setWaitForAccurateLocation(true)
+//                    setMaxUpdates(10)
+                }.build()
+//        val request = LocationRequest()
+//        request.setInterval(10000)
+//        request.setFastestInterval(5000)
+//        request.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
+
         val client: FusedLocationProviderClient =
             LocationServices.getFusedLocationProviderClient(this)
 
@@ -125,7 +138,8 @@ class LocationService : Service() {
         )
         if (permission == PackageManager.PERMISSION_GRANTED) { // Request location updates and when an update is
             // received, store the location in Firebase
-            client.requestLocationUpdates(request, object : LocationCallback() {
+            // client.requestLocationUpdates(request, object : LocationCallback() {
+            client.requestLocationUpdates(locationRequest, object : LocationCallback() {
                 override fun onLocationResult(locationResult: LocationResult) {
                     val location: Location? = locationResult.lastLocation
                     if (location != null) {
