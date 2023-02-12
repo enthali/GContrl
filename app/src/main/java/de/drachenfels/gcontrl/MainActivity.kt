@@ -11,7 +11,6 @@ import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupActionBarWithNavController
 import de.drachenfels.gcontrl.databinding.ActivityMainBinding
-import de.drachenfels.gcontrl.modules.LocationHelper
 import de.drachenfels.gcontrl.services.LocationService
 
 class MainActivity : AppCompatActivity() {
@@ -55,8 +54,8 @@ class MainActivity : AppCompatActivity() {
         // configure the start intent
         mServiceIntent = Intent(this,mLocationService.javaClass)
 
-        // start the service if it isn't running already - it should always run
-        if (!LocationHelper.locationServiceActive(mLocationService.javaClass,mActivity)) startService(mServiceIntent)
+        // start the service  - it should always run
+        startService(mServiceIntent)
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
