@@ -18,9 +18,12 @@ import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.google.android.gms.location.*
 import com.google.android.gms.location.Priority.PRIORITY_HIGH_ACCURACY
+import de.drachenfels.gcontrl.R
+import de.drachenfels.gcontrl.modules.*
 import de.drachenfels.gcontrl.receiver.RestartBackgroundService
 import java.util.*
 import java.util.concurrent.TimeUnit
+import kotlin.math.roundToInt
 
 
 class LocationService : Service() {
@@ -146,9 +149,77 @@ class LocationService : Service() {
                         latitude = location.latitude
                         longitude = location.longitude
                         Log.d("Location Service", "location update $location")
+                        if (latitude != 0.0 && longitude != 0.0) onLocationUpdate(location)
                     }
                 }
             }, null)
         }
+    }
+
+    private fun onLocationUpdate(lastLocation: Location) {
+        Log.d(TAG, "onLocationUpdate()")
+
+        // calculate the distance to home
+        val homeLocation = Location("homeLocation")
+        homeLocation.latitude =
+            sharedPreferences.getString(
+                getString(R.string.prf_key_geo_latitude),
+                "0.0"
+            ).toString().toDouble()
+        homeLocation.longitude =
+            sharedPreferences.getString(
+                getString(R.string.prf_key_geo_longitude),
+                "0.0"
+            ).toString().toDouble()
+
+        // home location doesn't store the altitude for distance calculation use current altitude
+        homeLocation.altitude = lastLocation.altitude
+
+        // check preferences on auto door control before updating LiveData
+        enableAutoDoorControl = sharedPreferences.getBoolean(
+            getString(R.string.prf_key_geo_auto_control),
+            false
+        )
+        val newDistance = lastLocation.distanceTo(homeLocation).roundToInt()
+        val oldDistance = distanceToHome.value!!
+        val fence =
+            sharedPreferences.getString(getString(R.string.prf_key_geo_fence_size), "1")
+                .toString()
+                .toInt()
+
+        // check if the distance just got bigger then the fence -> leaving home 1
+        if ((oldDistance > fence) && (newDistance < fence)) {
+            if (fenceWatcher.value != HOME_ZONE_ENTERING) {
+                fenceWatcher.postValue(HOME_ZONE_ENTERING)
+                onFenceStateChange(HOME_ZONE_ENTERING)
+            }
+        }
+        if ((oldDistance > fence) && (newDistance > fence)) {
+            if (fenceWatcher.value != HOME_ZONE_OUTSIDE)
+                fenceWatcher.postValue(HOME_ZONE_OUTSIDE)
+        }
+        if ((oldDistance < fence) && (newDistance < fence)) {
+            if (fenceWatcher.value != HOME_ZONE_INSIDE)
+                fenceWatcher.postValue(HOME_ZONE_INSIDE)
+        }
+        if ((oldDistance < fence) && (newDistance > fence)) {
+            if (fenceWatcher.value != HOME_ZONE_LEAVING) {
+                fenceWatcher.postValue(HOME_ZONE_LEAVING)
+                onFenceStateChange(HOME_ZONE_LEAVING)
+            }
+        }
+
+        if (newDistance != oldDistance) {
+            // post the new distance
+            distanceToHome.postValue(newDistance)
+            // post the location available for other functions
+            currentLocation.postValue(lastLocation)
+        }
+
+        // Updates notification content
+//            notificationManager.notify(
+//                LocationServiceOld.NOTIFICATION_ID,
+//                generateNotification()
+//            )
     }
 }
