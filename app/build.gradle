@@ -65,7 +65,7 @@ dependencies {
     implementation 'org.eclipse.paho:org.eclipse.paho.android.service:1.1.1'
 
     // gms google-play location services
-    implementation  'com.google.android.gms:play-services-location:17.0.0'
+    implementation  'com.google.android.gms:play-services-location:21.0.1'
 
     testImplementation 'junit:junit:4.13.2'
 

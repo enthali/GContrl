@@ -68,7 +68,7 @@ class LocationService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
-        stoptimertask()
+        stopTimerTask()
         val broadcastIntent = Intent()
         broadcastIntent.action = "restartservice"
         broadcastIntent.setClass(this, RestartBackgroundService::class.java)
@@ -78,6 +78,7 @@ class LocationService : Service() {
     private var timer: Timer? = null
     private var timerTask: TimerTask? = null
     fun startTimer() {
+        Log.d(TAG, "startTimer()")
         timer = Timer()
         timerTask = object : TimerTask() {
             override fun run() {
@@ -98,7 +99,8 @@ class LocationService : Service() {
         ) //1 * 60 * 1000 1 minute
     }
 
-    fun stoptimertask() {
+    fun stopTimerTask() {
+        Log.d(TAG, "stopTimerTask()")
         if (timer != null) {
             timer!!.cancel()
             timer = null
@@ -125,7 +127,7 @@ class LocationService : Service() {
             // received, store the location in Firebase
             client.requestLocationUpdates(request, object : LocationCallback() {
                 override fun onLocationResult(locationResult: LocationResult) {
-                    val location: Location = locationResult.lastLocation
+                    val location: Location? = locationResult.lastLocation
                     if (location != null) {
                         latitude = location.latitude
                         longitude = location.longitude
