@@ -15,8 +15,10 @@ private var _statusMQTT = MutableLiveData(0)
 /**
  * MQTT status can be observed to provide feedback to users
  * 0 - ok
- * 1 - open door
- * 2 - close door
+ * 1 - error
+ * 2 - door open
+ * 4 - door close
+ * 8 - ***
  * 16 - connection failed
  * 32 - publish failed
  */
@@ -65,10 +67,6 @@ private fun mqttConnect(): Boolean {
         client!!.connect(options)
     } catch (e: MqttException) {
         statusMQTT.postValue(MQTT_STATUS_CONNECTION_FAILED)
-//            Log.d(
-//                javaClass.canonicalName,
-//                "Connection attempt failed with reason code = " + e.reasonCode + ":" + e.cause
-//            )
         return false
     }
     return true
