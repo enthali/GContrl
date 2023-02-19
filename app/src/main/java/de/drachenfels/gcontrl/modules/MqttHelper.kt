@@ -15,14 +15,17 @@ private var _statusMQTT = MutableLiveData(0)
 /**
  * MQTT status can be observed to provide feedback to users
  * 0 - ok
- * 1 - connection failed
- * 2 - publish failed
+ * 1 - open door
+ * 2 - close door
+ * 16 - connection failed
+ * 32 - publish failed
  */
 var statusMQTT: MutableLiveData<Int>
     get() = _statusMQTT
     set(value) {
         _statusMQTT = value
     }
+
 var enableAutoDoorControl = false
 
 fun onFenceStateChange(fenceState: Int?) {
