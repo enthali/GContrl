@@ -1,16 +1,11 @@
 package de.drachenfels.gcontrl
 
 import android.Manifest
-import android.content.ComponentName
-import android.content.Context
 import android.content.Context.CONNECTIVITY_SERVICE
-import android.content.Intent
-import android.content.ServiceConnection
 import android.content.pm.PackageManager
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.Bundle
-import android.os.IBinder
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -21,9 +16,6 @@ import androidx.fragment.app.Fragment
 import androidx.preference.PreferenceManager
 import de.drachenfels.gcontrl.databinding.FragmentControlBinding
 import de.drachenfels.gcontrl.modules.*
-import de.drachenfels.gcontrl.services.LocationService
-import de.drachenfels.gcontrl.services.LocationServiceOld
-
 
 private const val TAG = "ControlFragment"
 private const val REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE = 34
@@ -36,13 +28,15 @@ class ControlFragment : Fragment() {
     private var _binding: FragmentControlBinding? = null
     private val binding get() = _binding!!
 
-    // >>>>>> LOCATION <<<<<<
+ /*   // >>>>>> LOCATION <<<<<<
     private var foregroundOnlyLocationServiceBound = false
-
+*/
+/*
     // Provides location updates for while-in-use feature.
     private var locationServiceOld: LocationServiceOld? = null
+*/
 
-    // Monitors connection to the while-in-use service.
+ /*   // Monitors connection to the while-in-use service.
     private val foregroundOnlyServiceConnection = object : ServiceConnection {
 
         override fun onServiceConnected(name: ComponentName, service: IBinder) {
@@ -63,7 +57,7 @@ class ControlFragment : Fragment() {
         }
     }
     // <<<<<< LOCATION >>>>>>
-
+*/
     override fun onCreate(savedInstanceState: Bundle?) {
         Log.d(TAG, "onCreate()")
         super.onCreate(savedInstanceState)
@@ -127,9 +121,11 @@ class ControlFragment : Fragment() {
             MQTT_DOOR_CLOSE, MQTT_DOOR_OPEN -> {
                 Toast.makeText(
                     activity?.applicationContext,
-                    (if (status == MQTT_DOOR_OPEN) "open" else "close").plus(" the door"),
+                    "The door is ".plus(if (status == MQTT_DOOR_OPEN) "open" else "close"),
                     Toast.LENGTH_LONG
                 ).show()
+                // reset the MQTT to status Ok
+                statusMQTT.postValue(MQTT_STATUS_OK)
             }
 
             MQTT_STATUS_CONNECTION_FAILED -> {
@@ -160,13 +156,15 @@ class ControlFragment : Fragment() {
         Log.d(TAG, "onStart()")
         super.onStart()
 
+/*
         val serviceIntent = Intent(activity, LocationService::class.java)
+*/
 
-        requireActivity().bindService(
+/*        requireActivity().bindService(
             serviceIntent,
             foregroundOnlyServiceConnection,
             Context.BIND_AUTO_CREATE
-        )
+        )*/
 
         // register live data - updated by the service
         // SharedLocationResources.currentLocation.observe(this) { onLocationUpdate() }
@@ -205,10 +203,10 @@ class ControlFragment : Fragment() {
 
     override fun onStop() {
         Log.d(TAG, "onStop()")
-        if (foregroundOnlyLocationServiceBound) {
+/*        if (foregroundOnlyLocationServiceBound) {
             activity?.unbindService(foregroundOnlyServiceConnection)
             foregroundOnlyLocationServiceBound = false
-        }
+        }*/
         super.onStop()
     }
 
