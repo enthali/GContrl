@@ -27,9 +27,7 @@ import kotlin.math.roundToInt
 
 
 class LocationService : Service() {
-    var counter = 0
-    var latitude: Double = 0.0
-    var longitude: Double = 0.0
+
     private val TAG = "LocationService"
 
     override fun onCreate() {
@@ -58,7 +56,7 @@ class LocationService : Service() {
         manager.createNotificationChannel(chan)
         val notificationBuilder = NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
         val notification: Notification = notificationBuilder.setOngoing(true)
-            .setContentTitle("App is running count::" + counter)
+            .setContentTitle("App is running ")
             .setPriority(NotificationManager.IMPORTANCE_MIN)
             .setCategory(Notification.CATEGORY_SERVICE)
             .build()
@@ -82,19 +80,18 @@ class LocationService : Service() {
 
     private var timer: Timer? = null
     private var timerTask: TimerTask? = null
-    fun startTimer() {
+    private fun startTimer() {
         Log.d(TAG, "startTimer()")
         timer = Timer()
         timerTask = object : TimerTask() {
             override fun run() {
-                val count = counter++
-                if (latitude != 0.0 && longitude != 0.0) {
-                    Log.d(
-                        "Location::",
-                        latitude.toString() + ":::" + longitude.toString() + "Count" +
-                                count.toString()
+                Log.d(
+                    "TimerTask", currentLocation.value.toString().plus(
+                        " Distance to home : ".plus(
+                            distanceToHome.value.toString()
+                        )
                     )
-                }
+                )
             }
         }
         timer!!.schedule(
@@ -104,7 +101,7 @@ class LocationService : Service() {
         ) //1 * 60 * 1000 1 minute
     }
 
-    fun stopTimerTask() {
+    private fun stopTimerTask() {
         Log.d(TAG, "stopTimerTask()")
         if (timer != null) {
             timer!!.cancel()
@@ -122,15 +119,10 @@ class LocationService : Service() {
         val locationRequest =
             LocationRequest.Builder(PRIORITY_HIGH_ACCURACY, TimeUnit.SECONDS.toMillis(2))
                 .apply {
-//                    setMinUpdateDistanceMeters(2F)
-//                    setGranularity(Granularity.GRANULARITY_PERMISSION_LEVEL)
-//                    setWaitForAccurateLocation(true)
-//                    setMaxUpdates(10)
+                    // here's where specific parameters can be set -
+                    // https://developers.google.com/android/reference/com/google/android/gms/location/LocationRequest
+                    setWaitForAccurateLocation(true)
                 }.build()
-//        val request = LocationRequest()
-//        request.setInterval(10000)
-//        request.setFastestInterval(5000)
-//        request.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
 
         val client: FusedLocationProviderClient =
             LocationServices.getFusedLocationProviderClient(this)
@@ -139,17 +131,15 @@ class LocationService : Service() {
             this,
             Manifest.permission.ACCESS_FINE_LOCATION
         )
-        if (permission == PackageManager.PERMISSION_GRANTED) { // Request location updates and when an update is
-            // received, store the location in Firebase
-            // client.requestLocationUpdates(request, object : LocationCallback() {
+        if (permission == PackageManager.PERMISSION_GRANTED) { // Request location updates
             client.requestLocationUpdates(locationRequest, object : LocationCallback() {
                 override fun onLocationResult(locationResult: LocationResult) {
                     val location: Location? = locationResult.lastLocation
                     if (location != null) {
-                        latitude = location.latitude
-                        longitude = location.longitude
                         Log.d("Location Service", "location update $location")
-                        if (latitude != 0.0 && longitude != 0.0) onLocationUpdate(location)
+                        if ((location.latitude != 0.0) && (location.longitude != 0.0)) onLocationUpdate(
+                            location
+                        )
                     }
                 }
             }, null)
@@ -188,37 +178,44 @@ class LocationService : Service() {
                 .toString()
                 .toInt()
 
-        // at startup old distance is not initialised so it will be 0 and we get a departure signal - which is wrong
+        // at startup old distance is not initialised so it will be 0
+        // this would trigger a departure signal - which is wrong -> skip the state machine update
         if (oldDistance != 0) {
 
-            // check if the distance just got bigger then the fence -> leaving home 1
-            if ((oldDistance > fence) && (newDistance < fence)) {
-                if (fenceWatcher.value != HOME_ZONE_ENTERING) {
-                    fenceWatcher.postValue(HOME_ZONE_ENTERING)
-                    onFenceStateChange(HOME_ZONE_ENTERING)
+            // if the new distance is 0 most likely the home location was set
+            // however this should not trigger an arrival signal -> skip the state machine update
+            if (newDistance != 0) {
+
+                // check if the distance just got bigger then the fence -> leaving home 1
+                if ((oldDistance > fence) && (newDistance < fence)) {
+                    if (fenceWatcher.value != HOME_ZONE_ENTERING) {
+                        fenceWatcher.postValue(HOME_ZONE_ENTERING)
+                        Log.d(TAG, "OPEN THE DOOR")
+                        onFenceStateChange(HOME_ZONE_ENTERING)
+                    }
+                }
+
+                // check if the new distance and old distance are outside -> we are outside
+                if ((oldDistance > fence) && (newDistance > fence)) {
+                    if (fenceWatcher.value != HOME_ZONE_OUTSIDE)
+                        fenceWatcher.postValue(HOME_ZONE_OUTSIDE)
+                }
+
+                // check if the new distance and the old distance are inside the fence -> still at home
+                if ((oldDistance < fence) && (newDistance < fence)) {
+                    if (fenceWatcher.value != HOME_ZONE_INSIDE)
+                        fenceWatcher.postValue(HOME_ZONE_INSIDE)
+                }
+
+                // check if the old distance is inside but the new distance is outside the fence -> we are leaving
+                if ((oldDistance < fence) && (newDistance > fence)) {
+                    if (fenceWatcher.value != HOME_ZONE_LEAVING) {
+                        fenceWatcher.postValue(HOME_ZONE_LEAVING)
+                        Log.d(TAG, "CLOSE THE DOOR")
+                        onFenceStateChange(HOME_ZONE_LEAVING)
+                    }
                 }
             }
-
-            // check if the new distance and old distance are outside -> we are outside
-            if ((oldDistance > fence) && (newDistance > fence)) {
-                if (fenceWatcher.value != HOME_ZONE_OUTSIDE)
-                    fenceWatcher.postValue(HOME_ZONE_OUTSIDE)
-            }
-
-            // check if the new distance and the old distance are inside the fence -> still at home
-            if ((oldDistance < fence) && (newDistance < fence)) {
-                if (fenceWatcher.value != HOME_ZONE_INSIDE)
-                    fenceWatcher.postValue(HOME_ZONE_INSIDE)
-            }
-
-            // check if the old distance is inside but the new distance is outside the fence -> we are leaving
-            if ((oldDistance < fence) && (newDistance > fence)) {
-                if (fenceWatcher.value != HOME_ZONE_LEAVING) {
-                    fenceWatcher.postValue(HOME_ZONE_LEAVING)
-                    onFenceStateChange(HOME_ZONE_LEAVING)
-                }
-            }
-
         }
 
         // update the new distance to home live data
