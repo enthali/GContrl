@@ -32,13 +32,10 @@ class LocationService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.O) createNotificationChanel() else startForeground(
-            1,
-            Notification()
-        )
+        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.O) createNotificationChanel()
+        else startForeground(1, Notification())
         requestLocationUpdates()
     }
-
 
     @RequiresApi(Build.VERSION_CODES.O)
     private fun createNotificationChanel() {
@@ -114,7 +111,6 @@ class LocationService : Service() {
     }
 
     private fun requestLocationUpdates() {
-
 
         val locationRequest =
             LocationRequest.Builder(PRIORITY_HIGH_ACCURACY, TimeUnit.SECONDS.toMillis(2))
