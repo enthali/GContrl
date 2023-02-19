@@ -29,7 +29,7 @@ lateinit var sharedPreferences: SharedPreferences
  * The object contains shared resources used between the ControlView and the Location Service
  */
 
-private var privateCurrentLocation = MutableLiveData<Location>(Location("initLocation"))
+private var privateCurrentLocation = MutableLiveData(Location("initLocation"))
 var currentLocation: MutableLiveData<Location>
     get() = privateCurrentLocation
     set(value) {
@@ -40,7 +40,7 @@ var currentLocation: MutableLiveData<Location>
 private var privateDistanceToHome = MutableLiveData(0)
 
 /**
- * any changes to the calculation of the distance to home can be observed applicatoin wide
+ * any changes to the calculation of the distance to home can be observed application wide
  */
 var distanceToHome: MutableLiveData<Int>
     get() = privateDistanceToHome
@@ -90,3 +90,5 @@ var fenceWatcher: MutableLiveData<Int>
     set(value) {
         privateFenceWatcher = value
     }
+
+

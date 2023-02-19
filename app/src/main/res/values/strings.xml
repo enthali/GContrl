@@ -36,8 +36,13 @@
     <string name="prf_key_geo_enable_protect">geo_enable_protect</string>
     <string name="prf_key_geo_auto_control">geo_auto_control</string>
 
+    <!-- show the current build version in the preferences -->
+    <string name="prf_title_Version">Version</string>
+    <string name="prf_key_version">version_Key</string>
+    <string name="prf_summary_version">version summary</string>
 
     <string name="stop_location_service_notification_text">Stop location services</string>
+
 
 
 </resources>

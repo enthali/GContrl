@@ -1,5 +1,7 @@
 package de.drachenfels.gcontrl
 
+import android.app.Activity
+import android.content.Intent
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
@@ -9,8 +11,13 @@ import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupActionBarWithNavController
 import de.drachenfels.gcontrl.databinding.ActivityMainBinding
+import de.drachenfels.gcontrl.services.LocationService
 
 class MainActivity : AppCompatActivity() {
+
+    var mLocationService: LocationService = LocationService()
+    lateinit var mServiceIntent: Intent
+    lateinit var mActivity: Activity
 
     private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var navController: NavController
@@ -38,6 +45,17 @@ class MainActivity : AppCompatActivity() {
         // get the appBar up and running
         setupActionBarWithNavController(navController, appBarConfiguration)
 
+        // get the activity
+        mActivity = this@MainActivity
+
+        // create the location service object
+        mLocationService = LocationService()
+
+        // configure the start intent
+        mServiceIntent = Intent(this,mLocationService.javaClass)
+
+        // start the service  - it should always run
+        startService(mServiceIntent)
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -70,4 +88,10 @@ class MainActivity : AppCompatActivity() {
         return navController.navigateUp() || super.onSupportNavigateUp()
     }
 
+    override fun onDestroy() {
+        if (::mServiceIntent.isInitialized) {
+            stopService(mServiceIntent)
+        }
+        super.onDestroy()
+    }
 }

@@ -19,8 +19,8 @@ android {
         applicationId "de.drachenfels.gcontrl"
         minSdk 23
         targetSdk 33
-        versionCode 18
-        versionName 'improved Notification'
+        versionCode 19
+        versionName 'new location service'
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -64,8 +64,8 @@ dependencies {
     implementation 'org.eclipse.paho:org.eclipse.paho.client.mqttv3:1.2.5'
     implementation 'org.eclipse.paho:org.eclipse.paho.android.service:1.1.1'
 
-    implementation 'androidx.localbroadcastmanager:localbroadcastmanager:1.1.0'
-    implementation 'com.google.android.gms:play-services-location:21.0.1'
+    // gms google-play location services
+    implementation  'com.google.android.gms:play-services-location:21.0.1'
 
     testImplementation 'junit:junit:4.13.2'
 

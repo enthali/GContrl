@@ -1,12 +1,8 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <PreferenceCategory android:title="Geo Location Servicess">
+    <PreferenceCategory android:title="Geo Location Services">
 
-        <SwitchPreference
-            android:defaultValue="false"
-            android:key="@string/prf_key_geo_enable_location_features"
-            android:title="@string/prf_geo_en_loc_features" />
         <EditTextPreference
             android:defaultValue="50"
             android:key="@string/prf_key_geo_fence_size"
@@ -15,10 +11,9 @@
             android:title="Geofence size"
             app:summary="A circle around the home location that defines the area in which the automatic door control and direct control buttons will be functional. A reasonable value is between 50 and 200 m" />
         <Preference
-            android:title="@string/prf_geo_setHomeLocation"
             android:key="@string/prf_key_geo_set_home_location"
-            app:summary="@string/geo_setHomeLocationSummary"
-            />
+            android:title="@string/prf_geo_setHomeLocation"
+            app:summary="@string/geo_setHomeLocationSummary" />
         <SwitchPreference
             android:defaultValue="true"
             android:key="@string/prf_key_geo_enable_protect"
@@ -41,14 +36,14 @@
         <EditTextPreference
             app:defaultValue="8883"
             app:key="mqtt_port"
-            app:summary="The port address under which the MQTT server can be reachetd. The default ports are 8883 for SSL connections and 1833 for non secured connections (your setting might differ)"
+            app:summary="The port address under which the MQTT server can be reached. The default ports are 8883 for SSL connections and 1833 for non secured connections (your setting might differ)"
             app:title="@string/prf_mqtt_port"
             app:useSimpleSummaryProvider="false" />
 
         <SwitchPreference
             app:defaultValue="true"
             app:key="mqtt_ssl"
-            app:summary="MQTT can use secure socket layer communications. Enabling encrypts the MQTT messages over the public internet. If the server side supports SSL it's recomeded to turn this feature on"
+            app:summary="MQTT can use secure socket layer communications. Enabling encrypts the MQTT messages over the public internet. If the server side supports SSL it's recorded to turn this feature on"
             app:title="@string/prf_mqtt_use_ssl" />
     </PreferenceCategory>
 
@@ -83,4 +78,10 @@
 
     </PreferenceCategory>
 
+    <PreferenceCategory android:title="Build version information">
+        <Preference
+            android:key="@string/prf_key_version"
+            android:title="@string/prf_title_Version"
+            app:summary="@string/prf_summary_version" />
+    </PreferenceCategory>
 </PreferenceScreen>

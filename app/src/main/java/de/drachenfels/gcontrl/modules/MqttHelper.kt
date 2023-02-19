@@ -15,14 +15,19 @@ private var _statusMQTT = MutableLiveData(0)
 /**
  * MQTT status can be observed to provide feedback to users
  * 0 - ok
- * 1 - connection failed
- * 2 - publish failed
+ * 1 - error
+ * 2 - door open
+ * 4 - door close
+ * 8 - ***
+ * 16 - connection failed
+ * 32 - publish failed
  */
 var statusMQTT: MutableLiveData<Int>
     get() = _statusMQTT
     set(value) {
         _statusMQTT = value
     }
+
 var enableAutoDoorControl = false
 
 fun onFenceStateChange(fenceState: Int?) {
@@ -62,10 +67,6 @@ private fun mqttConnect(): Boolean {
         client!!.connect(options)
     } catch (e: MqttException) {
         statusMQTT.postValue(MQTT_STATUS_CONNECTION_FAILED)
-//            Log.d(
-//                javaClass.canonicalName,
-//                "Connection attempt failed with reason code = " + e.reasonCode + ":" + e.cause
-//            )
         return false
     }
     return true
