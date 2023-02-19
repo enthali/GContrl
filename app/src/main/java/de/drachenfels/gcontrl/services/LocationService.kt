@@ -182,33 +182,46 @@ class LocationService : Service() {
         )
         val newDistance = lastLocation.distanceTo(homeLocation).roundToInt()
         val oldDistance = distanceToHome.value!!
+
         val fence =
             sharedPreferences.getString(getString(R.string.prf_key_geo_fence_size), "1")
                 .toString()
                 .toInt()
 
-        // check if the distance just got bigger then the fence -> leaving home 1
-        if ((oldDistance > fence) && (newDistance < fence)) {
-            if (fenceWatcher.value != HOME_ZONE_ENTERING) {
-                fenceWatcher.postValue(HOME_ZONE_ENTERING)
-                onFenceStateChange(HOME_ZONE_ENTERING)
+        // at startup old distance is not initialised so it will be 0 and we get a departure signal - which is wrong
+        if (oldDistance != 0) {
+
+            // check if the distance just got bigger then the fence -> leaving home 1
+            if ((oldDistance > fence) && (newDistance < fence)) {
+                if (fenceWatcher.value != HOME_ZONE_ENTERING) {
+                    fenceWatcher.postValue(HOME_ZONE_ENTERING)
+                    onFenceStateChange(HOME_ZONE_ENTERING)
+                }
             }
-        }
-        if ((oldDistance > fence) && (newDistance > fence)) {
-            if (fenceWatcher.value != HOME_ZONE_OUTSIDE)
-                fenceWatcher.postValue(HOME_ZONE_OUTSIDE)
-        }
-        if ((oldDistance < fence) && (newDistance < fence)) {
-            if (fenceWatcher.value != HOME_ZONE_INSIDE)
-                fenceWatcher.postValue(HOME_ZONE_INSIDE)
-        }
-        if ((oldDistance < fence) && (newDistance > fence)) {
-            if (fenceWatcher.value != HOME_ZONE_LEAVING) {
-                fenceWatcher.postValue(HOME_ZONE_LEAVING)
-                onFenceStateChange(HOME_ZONE_LEAVING)
+
+            // check if the new distance and old distance are outside -> we are outside
+            if ((oldDistance > fence) && (newDistance > fence)) {
+                if (fenceWatcher.value != HOME_ZONE_OUTSIDE)
+                    fenceWatcher.postValue(HOME_ZONE_OUTSIDE)
             }
+
+            // check if the new distance and the old distance are inside the fence -> still at home
+            if ((oldDistance < fence) && (newDistance < fence)) {
+                if (fenceWatcher.value != HOME_ZONE_INSIDE)
+                    fenceWatcher.postValue(HOME_ZONE_INSIDE)
+            }
+
+            // check if the old distance is inside but the new distance is outside the fence -> we are leaving
+            if ((oldDistance < fence) && (newDistance > fence)) {
+                if (fenceWatcher.value != HOME_ZONE_LEAVING) {
+                    fenceWatcher.postValue(HOME_ZONE_LEAVING)
+                    onFenceStateChange(HOME_ZONE_LEAVING)
+                }
+            }
+
         }
 
+        // update the new distance to home live data
         if (newDistance != oldDistance) {
             // post the new distance
             distanceToHome.postValue(newDistance)
@@ -217,9 +230,7 @@ class LocationService : Service() {
         }
 
         // Updates notification content
-//            notificationManager.notify(
-//                LocationServiceOld.NOTIFICATION_ID,
-//                generateNotification()
-//            )
+        // TODO, here's where the notification should be updated to show the current distance to home
+
     }
 }
