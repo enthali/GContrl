@@ -16,6 +16,14 @@ class PreferencesFragment : PreferenceFragmentCompat() {
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         setPreferencesFromResource(R.xml.preferences, rootKey)
 
+        /**
+         * show the current build version and text in the preferences
+         */
+        val versionPref: Preference? = findPreference(getString(R.string.prf_key_version))
+        val versionCode: Int = BuildConfig.VERSION_CODE
+        versionPref?.title = "Version ".plus(versionCode.toString())
+        versionPref?.summary = BuildConfig.VERSION_NAME
+
         val portPreference: EditTextPreference? = findPreference("port")
         portPreference?.setOnBindEditTextListener { editText ->
             editText.inputType = InputType.TYPE_CLASS_NUMBER

@@ -11,10 +11,9 @@
             android:title="Geofence size"
             app:summary="A circle around the home location that defines the area in which the automatic door control and direct control buttons will be functional. A reasonable value is between 50 and 200 m" />
         <Preference
-            android:title="@string/prf_geo_setHomeLocation"
             android:key="@string/prf_key_geo_set_home_location"
-            app:summary="@string/geo_setHomeLocationSummary"
-            />
+            android:title="@string/prf_geo_setHomeLocation"
+            app:summary="@string/geo_setHomeLocationSummary" />
         <SwitchPreference
             android:defaultValue="true"
             android:key="@string/prf_key_geo_enable_protect"
@@ -79,4 +78,10 @@
 
     </PreferenceCategory>
 
+    <PreferenceCategory android:title="Build version information">
+        <Preference
+            android:key="@string/prf_key_version"
+            android:title="@string/prf_title_Version"
+            app:summary="@string/prf_summary_version" />
+    </PreferenceCategory>
 </PreferenceScreen>
