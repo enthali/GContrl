@@ -52,7 +52,8 @@ var distanceToHome: MutableLiveData<Int>
  * Returns the compiled distance to home string
  */
 fun distanceToText(distance: Int): String {
-    return "distance to home : ".plus(
+    return "Distance to home : "
+        .plus(
         when (distance) {
             in 0..999 ->
                 (distance.toString())
@@ -69,8 +70,6 @@ fun distanceToText(distance: Int): String {
     )
 }
 
-// dismiss some locations at startup else the app fires a fence transition w/o reason
-const val DISMISS_LOCATIONS = 2
 // dismiss the fence checking for the first couple of locations
 var locationCount = 0
 

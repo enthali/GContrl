@@ -1,18 +1,12 @@
 package de.drachenfels.gcontrl.services
 
 import android.Manifest
-import android.app.Notification
-import android.app.NotificationChannel
-import android.app.NotificationManager
 import android.app.Service
-import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.Color
 import android.location.Location
 import android.os.IBinder
 import android.util.Log
-import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.google.android.gms.location.*
 import com.google.android.gms.location.Priority.PRIORITY_HIGH_ACCURACY
@@ -30,30 +24,20 @@ class LocationService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        createNotificationChanel()
-        requestLocationUpdates()
-    }
-
-    private fun createNotificationChanel() {
-        val NOTIFICATION_CHANNEL_ID = "de.drachenfels.gcontrol"
-        val channelName = "Location Service"
-        val chan = NotificationChannel(
-            NOTIFICATION_CHANNEL_ID,
-            channelName,
-            NotificationManager.IMPORTANCE_NONE
+        Notifications.createChannel(
+            context = applicationContext,
+            channelName = R.string.app_name,
+            channelDescription = R.string.app_name
         )
-        chan.lightColor = Color.BLUE
-        chan.lockscreenVisibility = Notification.VISIBILITY_PRIVATE
-        val manager =
-            (getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager)
-        manager.createNotificationChannel(chan)
-        val notificationBuilder = NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
-        val notification: Notification = notificationBuilder.setOngoing(true)
-            .setContentTitle("App is running ")
-            .setPriority(NotificationManager.IMPORTANCE_MIN)
-            .setCategory(Notification.CATEGORY_SERVICE)
-            .build()
-        startForeground(2, notification)
+        startForeground(
+            Notifications.id,
+            Notifications.create(
+                context = applicationContext,
+                title = getString(R.string.app_name),
+                content = getString(R.string.notification_content)
+            )
+        )
+        requestLocationUpdates()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -219,7 +203,10 @@ class LocationService : Service() {
         }
 
         // Updates notification content
-        // TODO, here's where the notification should be updated to show the current distance to home
-
+        Notifications.update(
+            applicationContext,
+            getString(R.string.app_name),
+            distanceToText(newDistance)
+        )
     }
 }
