@@ -12,6 +12,7 @@ const val MQTT_DOOR_CLOSE = 2
 const val MQTT_STATUS_CONNECTION_FAILED = 16
 const val MQTT_STATUS_PUBLISH_FAILD = 32
 private var _statusMQTT = MutableLiveData(0)
+
 /**
  * MQTT status can be observed to provide feedback to users
  * 0 - ok
@@ -100,16 +101,15 @@ fun mqttSendMessage(payload: String): Boolean {
             // the command chain past the MQTT server is not transparent to the app
             if (payload == "open") {
                 statusMQTT.postValue(MQTT_DOOR_OPEN)
-            } else
-            {
+            } else {
                 statusMQTT.postValue(MQTT_DOOR_CLOSE)
             }
         } catch (e: MqttException) {
-            statusMQTT.value = MQTT_STATUS_PUBLISH_FAILD
+            statusMQTT.postValue(MQTT_STATUS_PUBLISH_FAILD)
         }
         retVal = true
     } else {
-        statusMQTT.value = MQTT_STATUS_CONNECTION_FAILED
+        statusMQTT.postValue(MQTT_STATUS_CONNECTION_FAILED)
     }
     client!!.disconnect()
     return retVal
