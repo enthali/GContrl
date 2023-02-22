@@ -19,8 +19,8 @@ android {
         applicationId "de.drachenfels.gcontrl"
         minSdk 26
         targetSdk 33
-        versionCode 19
-        versionName 'new location service'
+        versionCode 20
+        versionName 'notification updates'
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
