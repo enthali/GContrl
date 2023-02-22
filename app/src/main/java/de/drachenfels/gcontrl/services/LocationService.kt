@@ -21,6 +21,7 @@ import kotlin.math.roundToInt
 class LocationService : Service() {
 
     private val TAG = "LocationService"
+    private val timePeriode: Long = 1500
 
     override fun onCreate() {
         super.onCreate()
@@ -69,12 +70,21 @@ class LocationService : Service() {
                         )
                     )
                 )
+                // Updates notification content with every time event
+                // more frequent could cause android to drop notifications
+                if (distanceToHome.value != null) {
+                    Notifications.update(
+                        applicationContext,
+                        getString(R.string.app_name),
+                        distanceToText(distanceToHome.value!!)
+                    )
+                }
             }
         }
         timer!!.schedule(
             timerTask,
             0,
-            1000
+            timePeriode
         ) //1 * 60 * 1000 1 minute
     }
 
@@ -202,11 +212,5 @@ class LocationService : Service() {
             currentLocation.postValue(lastLocation)
         }
 
-        // Updates notification content
-        Notifications.update(
-            applicationContext,
-            getString(R.string.app_name),
-            distanceToText(newDistance)
-        )
     }
 }
