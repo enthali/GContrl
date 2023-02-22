@@ -10,10 +10,8 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.location.Location
-import android.os.Build
 import android.os.IBinder
 import android.util.Log
-import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.google.android.gms.location.*
@@ -32,12 +30,10 @@ class LocationService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.O) createNotificationChanel()
-        else startForeground(1, Notification())
+        createNotificationChanel()
         requestLocationUpdates()
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     private fun createNotificationChanel() {
         val NOTIFICATION_CHANNEL_ID = "de.drachenfels.gcontrol"
         val channelName = "Location Service"
