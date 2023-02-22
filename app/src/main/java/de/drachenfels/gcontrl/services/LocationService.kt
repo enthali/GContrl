@@ -35,7 +35,7 @@ class LocationService : Service() {
             Notifications.create(
                 context = applicationContext,
                 title = getString(R.string.app_name),
-                content = getString(R.string.notification_content)
+                content = getString(R.string.distance_to_home_text)
             )
         )
         requestLocationUpdates()
@@ -76,7 +76,7 @@ class LocationService : Service() {
                     Notifications.update(
                         applicationContext,
                         getString(R.string.app_name),
-                        distanceToText(distanceToHome.value!!)
+                        distanceToText(applicationContext,distanceToHome.value!!)
                     )
                 }
             }

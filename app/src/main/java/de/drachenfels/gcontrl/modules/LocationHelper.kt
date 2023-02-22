@@ -15,9 +15,11 @@
  */
 package de.drachenfels.gcontrl.modules
 
+import android.content.Context
 import android.content.SharedPreferences
 import android.location.Location
 import androidx.lifecycle.MutableLiveData
+import de.drachenfels.gcontrl.R
 
 
 /**
@@ -51,23 +53,23 @@ var distanceToHome: MutableLiveData<Int>
 /**
  * Returns the compiled distance to home string
  */
-fun distanceToText(distance: Int): String {
-    return "Distance to home : "
+fun distanceToText(context: Context, distance: Int): String {
+    return context.getString(R.string.distance_to_home_text)
         .plus(
-        when (distance) {
-            in 0..999 ->
-                (distance.toString())
-                    .plus("m")
-            in 1000..49999 ->
-                (distance / 1000).toString()
-                    .plus(".")
-                    .plus((distance %1000).div(100))
-                    .plus("km")
-            else ->
-                (distance / 1000).toString()
-                    .plus("km")
-        }
-    )
+            when (distance) {
+                in 0..999 ->
+                    (distance.toString())
+                        .plus("m")
+                in 1000..49999 ->
+                    (distance / 1000).toString()
+                        .plus(".")
+                        .plus((distance % 1000).div(100))
+                        .plus("km")
+                else ->
+                    (distance / 1000).toString()
+                        .plus("km")
+            }
+        )
 }
 
 // dismiss the fence checking for the first couple of locations

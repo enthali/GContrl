@@ -5,7 +5,6 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
-import androidx.annotation.StringRes
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import de.drachenfels.gcontrl.R
@@ -15,13 +14,12 @@ object Notifications {
 
     val id: Int = UUID.randomUUID().hashCode()
     private lateinit var notification: Notification
-    private val CHANNEL_ID = "CHANNEL_ID"
 
     fun createChannel(
         context: Context,
-        channelId: String = CHANNEL_ID,
-        @StringRes channelName: Int,
-        @StringRes channelDescription: Int,
+        channelId: String = context.getString(R.string.app_name),
+        channelName: Int,
+        channelDescription: Int,
         importanceLevel: Int = NotificationManager.IMPORTANCE_HIGH
     ) {
         val channel = NotificationChannel(
@@ -42,7 +40,7 @@ object Notifications {
         title: String,
         content: String,
     ): Notification {
-        val builder = NotificationCompat.Builder(context, CHANNEL_ID)
+        val builder = NotificationCompat.Builder(context, context.getString(R.string.app_name))
         notification = builder
             .setOngoing(true)
             .setContentTitle(title)

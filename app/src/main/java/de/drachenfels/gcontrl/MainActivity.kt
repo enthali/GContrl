@@ -15,9 +15,9 @@ import de.drachenfels.gcontrl.services.LocationService
 
 class MainActivity : AppCompatActivity() {
 
-    var mLocationService: LocationService = LocationService()
-    lateinit var mServiceIntent: Intent
-    lateinit var mActivity: Activity
+    private var mLocationService: LocationService = LocationService()
+    private lateinit var mServiceIntent: Intent
+    private lateinit var mActivity: Activity
 
     private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var navController: NavController

@@ -71,7 +71,7 @@ class ControlFragment : Fragment() {
      * update the UI with the new distance
      */
     private fun onDistanceChange(distance: Int) {
-        binding.distanceText.text = distanceToText(distance)
+        binding.distanceText.text = distanceToText(requireContext(),distance)
         binding.distanceBar.max = distance
         binding.distanceBar.progress =
             sharedPreferences.getString(getString(R.string.prf_key_geo_fence_size), "0").toString()
