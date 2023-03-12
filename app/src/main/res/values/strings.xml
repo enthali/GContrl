@@ -45,5 +45,6 @@
 
     <!-- notification related strings -->
     <string name="distance_to_home_text">Distance to home :\u0020</string>
+    <string name="notification_button_text">Start Remote Control</string>
 
 </resources>

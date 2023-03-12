@@ -22,21 +22,15 @@ class LocationService : Service() {
 
     private val TAG = "LocationService"
     private val timePeriode: Long = 1500
+    private lateinit var notificationHelper : NotificationHelper
 
     override fun onCreate() {
         super.onCreate()
-        Notifications.createChannel(
-            context = applicationContext,
-            channelName = R.string.app_name,
-            channelDescription = R.string.app_name
-        )
+        notificationHelper = NotificationHelper(applicationContext)
+
         startForeground(
-            Notifications.id,
-            Notifications.create(
-                context = applicationContext,
-                title = getString(R.string.app_name),
-                content = getString(R.string.distance_to_home_text)
-            )
+            1,
+            notificationHelper.createNotification("Notification Title", "Notification Message")
         )
         requestLocationUpdates()
     }
@@ -73,18 +67,16 @@ class LocationService : Service() {
                 // Updates notification content with every time event
                 // more frequent could cause android to drop notifications
                 if (distanceToHome.value != null) {
-                    Notifications.update(
-                        applicationContext,
+                    notificationHelper.showNotification(
                         getString(R.string.app_name),
-                        distanceToText(applicationContext,distanceToHome.value!!)
+                        distanceToText(applicationContext, distanceToHome.value!!),
+                        1
                     )
                 }
             }
         }
         timer!!.schedule(
-            timerTask,
-            0,
-            timePeriode
+            timerTask, 0, timePeriode
         ) //1 * 60 * 1000 1 minute
     }
 
@@ -103,8 +95,7 @@ class LocationService : Service() {
     private fun requestLocationUpdates() {
 
         val locationRequest =
-            LocationRequest.Builder(PRIORITY_HIGH_ACCURACY, TimeUnit.SECONDS.toMillis(2))
-                .apply {
+            LocationRequest.Builder(PRIORITY_HIGH_ACCURACY, TimeUnit.SECONDS.toMillis(2)).apply {
                     // here's where specific parameters can be set -
                     // https://developers.google.com/android/reference/com/google/android/gms/location/LocationRequest
                     setWaitForAccurateLocation(true)
@@ -114,8 +105,7 @@ class LocationService : Service() {
             LocationServices.getFusedLocationProviderClient(this)
 
         val permission = ContextCompat.checkSelfPermission(
-            this,
-            Manifest.permission.ACCESS_FINE_LOCATION
+            this, Manifest.permission.ACCESS_FINE_LOCATION
         )
         if (permission == PackageManager.PERMISSION_GRANTED) { // Request location updates
             client.requestLocationUpdates(locationRequest, object : LocationCallback() {
@@ -137,31 +127,25 @@ class LocationService : Service() {
 
         // calculate the distance to home
         val homeLocation = Location("homeLocation")
-        homeLocation.latitude =
-            sharedPreferences.getString(
-                getString(R.string.prf_key_geo_latitude),
-                "0.0"
-            ).toString().toDouble()
-        homeLocation.longitude =
-            sharedPreferences.getString(
-                getString(R.string.prf_key_geo_longitude),
-                "0.0"
-            ).toString().toDouble()
+        homeLocation.latitude = sharedPreferences.getString(
+            getString(R.string.prf_key_geo_latitude), "0.0"
+        ).toString().toDouble()
+        homeLocation.longitude = sharedPreferences.getString(
+            getString(R.string.prf_key_geo_longitude), "0.0"
+        ).toString().toDouble()
 
         // home location doesn't store the altitude for distance calculation use current altitude
         homeLocation.altitude = lastLocation.altitude
 
         // check preferences on auto door control before updating LiveData
         enableAutoDoorControl = sharedPreferences.getBoolean(
-            getString(R.string.prf_key_geo_auto_control),
-            false
+            getString(R.string.prf_key_geo_auto_control), false
         )
         val newDistance = lastLocation.distanceTo(homeLocation).roundToInt()
         val oldDistance = distanceToHome.value!!
 
         val fence =
-            sharedPreferences.getString(getString(R.string.prf_key_geo_fence_size), "1")
-                .toString()
+            sharedPreferences.getString(getString(R.string.prf_key_geo_fence_size), "1").toString()
                 .toInt()
 
         // at startup old distance is not initialised so it will be 0
@@ -183,14 +167,16 @@ class LocationService : Service() {
 
                 // check if the new distance and old distance are outside -> we are outside
                 if ((oldDistance > fence) && (newDistance > fence)) {
-                    if (fenceWatcher.value != HOME_ZONE_OUTSIDE)
-                        fenceWatcher.postValue(HOME_ZONE_OUTSIDE)
+                    if (fenceWatcher.value != HOME_ZONE_OUTSIDE) fenceWatcher.postValue(
+                        HOME_ZONE_OUTSIDE
+                    )
                 }
 
                 // check if the new distance and the old distance are inside the fence -> still at home
                 if ((oldDistance < fence) && (newDistance < fence)) {
-                    if (fenceWatcher.value != HOME_ZONE_INSIDE)
-                        fenceWatcher.postValue(HOME_ZONE_INSIDE)
+                    if (fenceWatcher.value != HOME_ZONE_INSIDE) fenceWatcher.postValue(
+                        HOME_ZONE_INSIDE
+                    )
                 }
 
                 // check if the old distance is inside but the new distance is outside the fence -> we are leaving
