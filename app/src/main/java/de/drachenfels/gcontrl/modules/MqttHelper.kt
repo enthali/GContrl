@@ -108,9 +108,9 @@ fun mqttSendMessage(payload: String): Boolean {
             statusMQTT.postValue(MQTT_STATUS_PUBLISH_FAILD)
         }
         retVal = true
+        client!!.disconnect()
     } else {
         statusMQTT.postValue(MQTT_STATUS_CONNECTION_FAILED)
     }
-    client!!.disconnect()
     return retVal
 }
