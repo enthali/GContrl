@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Google LLC
+ * Copyright 2023 Georg Doll
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,16 +21,17 @@ import android.location.Location
 import androidx.lifecycle.MutableLiveData
 import de.drachenfels.gcontrl.R
 
-
 /**
- * the application wide shared preferences will be available during ControlFragment onCreate
+ * Declare a global variable to hold the application-wide SharedPreferences object.
+ * The `lateinit` modifier indicates that this variable will be initialized later.
  */
 lateinit var sharedPreferences: SharedPreferences
 
 /**
- * The object contains shared resources used between the ControlView and the Location Service
+ * Declare a global variable to hold the current location, as a MutableLiveData<Location>.
+ * The `private` modifier indicates that this variable can only be accessed within this module.
+ * The `lateinit` modifier indicates that this variable will be initialized later.
  */
-
 private var privateCurrentLocation = MutableLiveData(Location("initLocation"))
 var currentLocation: MutableLiveData<Location>
     get() = privateCurrentLocation
@@ -38,11 +39,16 @@ var currentLocation: MutableLiveData<Location>
         privateCurrentLocation = value
     }
 
-// distance live data
+/**
+ * Declare a global variable to hold the distance to home, as a MutableLiveData<Int>.
+ * The `private` modifier indicates that this variable can only be accessed within this module.
+ * The initial value of this variable is 0.
+ */
 private var privateDistanceToHome = MutableLiveData(0)
 
 /**
- * any changes to the calculation of the distance to home can be observed application wide
+ * Declare a global variable to hold the distance to home, as a MutableLiveData<Int>.
+ * This variable is public and can be accessed from other modules.
  */
 var distanceToHome: MutableLiveData<Int>
     get() = privateDistanceToHome
@@ -51,7 +57,8 @@ var distanceToHome: MutableLiveData<Int>
     }
 
 /**
- * Returns the compiled distance to home string
+ * This function takes a distance value and returns a compiled distance to home string.
+ * The distance string is constructed based on the input distance value.
  */
 fun distanceToText(context: Context, distance: Int): String {
     return context.getString(R.string.distance_to_home_text)
@@ -72,16 +79,29 @@ fun distanceToText(context: Context, distance: Int): String {
         )
 }
 
-// dismiss the fence checking for the first couple of locations
+/**
+ * Declare a global variable to count the number of locations that have been checked.
+ * This variable is initialized to 0.
+ */
 var locationCount = 0
 
+/**
+ * Declare a set of constants that define the different states of the home fence.
+ * These constants can be accessed from other modules.
+ */
 const val HOME_ZONE_INSIDE = 0
 const val HOME_ZONE_LEAVING = 1
 const val HOME_ZONE_ENTERING = 2
 const val HOME_ZONE_OUTSIDE = 4
 const val HOME_ZONE_UNKNOWN = 99
 
+/**
+ * Declare a global variable to hold the fence watcher, as a MutableLiveData<Int>.
+ * The `private` modifier indicates that this variable can only be accessed within this module.
+ * The initial value of this variable is HOME_ZONE_UNKNOWN.
+ */
 private var privateFenceWatcher = MutableLiveData(HOME_ZONE_UNKNOWN)
+
 
 /**
  * any changes to the fence watcher can be observed

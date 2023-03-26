@@ -1,3 +1,18 @@
+/*
+ * Copyright 2023 Georg Doll
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package de.drachenfels.gcontrl.modules
 
 import android.app.Notification
@@ -17,6 +32,7 @@ import de.drachenfels.gcontrl.R
  * @property context The context to use for creating the notifications.
  */
 class NotificationHelper(private val context: Context) {
+    // Declare constants used by the NotificationHelper
     companion object {
         private const val NOTIFICATION_CHANNEL_ID = "de.drachenfels.gcontrl.notification_channel"
         private const val NOTIFICATION_CHANNEL_NAME = "GContrL Notification Channel"
@@ -24,6 +40,7 @@ class NotificationHelper(private val context: Context) {
         private const val NOTIFICATION_ID = 1
     }
 
+    // Declare notification manager variable
     private val notificationManager = getSystemService(context, NotificationManager::class.java)!!
 
     /**
@@ -53,20 +70,20 @@ class NotificationHelper(private val context: Context) {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         return NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_ID)
-            .setOngoing(true)
-            .setCategory(Notification.CATEGORY_SERVICE)
-            .setPriority(NotificationManager.IMPORTANCE_MIN)
-            .setOnlyAlertOnce(true)
-            .setContentTitle(title)
-            .setContentText(message)
-            .setSmallIcon(android.R.drawable.ic_menu_compass)
-            .setAutoCancel(true)
+            .setOngoing(true) // Notification cannot be dismissed by the user
+            .setCategory(Notification.CATEGORY_SERVICE) // Notification category
+            .setPriority(NotificationManager.IMPORTANCE_MIN) // Notification priority
+            .setOnlyAlertOnce(true) // Only alert the user once
+            .setContentTitle(title) // Notification title
+            .setContentText(message) // Notification message
+            .setSmallIcon(android.R.drawable.ic_menu_compass) // Notification icon
+            .setAutoCancel(true) // Remove notification when clicked
             .addAction(
-                android.R.drawable.ic_dialog_info,
-                context.getString(R.string.notification_button_text),
-                pendingIntent
+                android.R.drawable.ic_dialog_info, // Icon for the notification action
+                context.getString(R.string.notification_button_text), // Text for the notification action
+                pendingIntent // Intent to launch when the notification action is clicked
             )
-            .setContentIntent(pendingIntent)
+            .setContentIntent(pendingIntent) // Intent to launch when the notification is clicked
             .build()
     }
 
@@ -85,7 +102,6 @@ class NotificationHelper(private val context: Context) {
 
         // Check if the notification with the given ID is already being displayed
         val activeNotifications = notificationManager.activeNotifications
-
         activeNotifications.forEach {
             if (it.id == notificationId) {
                 // If an existing notification is found, update it with the new information
@@ -97,4 +113,5 @@ class NotificationHelper(private val context: Context) {
         // Otherwise, display the new notification as usual
         notificationManager.notify(notificationId, notification)
     }
+
 }
