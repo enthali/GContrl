@@ -142,8 +142,8 @@
                 android:progress="200"
                 android:scaleY="8"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toStartOf="@+id/imageCar"
-                app:layout_constraintStart_toEndOf="@+id/imageHome"
+                app:layout_constraintEnd_toStartOf="@+id/imageHome"
+                app:layout_constraintStart_toEndOf="@+id/imageCar"
                 app:layout_constraintTop_toTopOf="parent" />
 
             <ImageView
