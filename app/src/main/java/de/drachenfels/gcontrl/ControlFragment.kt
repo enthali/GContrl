@@ -13,6 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*
+
+ControlFragment.kt
+This file contains the code for the ControlFragment class.
+The ControlFragment class is a fragment that allows the user to control the garage door directly.
+The class contains methods to check for an internet connection, listen for changes to the distance to home,
+and listen for changes to the status of the MQTT connection.
+The class also contains methods to update the UI with the latest information.
+Comments
+The TAG constant is used to identify the class in the logcat.
+The sharedPreferences variable is used to access the shared preferences.
+The distanceToHome and statusMQTT variables are LiveData objects that are used to listen for changes to the distance to home and the status of the MQTT connection.
+The onDistanceChange() and onMqttStatusChange() methods are called when the distanceToHome and statusMQTT variables change.
+The manageDoor() method is used to send a command to the garage door.
+The isConnected() method is used to check if there is an internet connection. */
+
 package de.drachenfels.gcontrl
 
 import android.content.Context.CONNECTIVITY_SERVICE
@@ -192,12 +208,7 @@ class ControlFragment : Fragment() {
         val cm = activity?.getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
         val capabilities = cm.getNetworkCapabilities(cm.activeNetwork)
         if (capabilities != null) {
-            result = when {
-                capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) || capabilities.hasTransport(
-                    NetworkCapabilities.TRANSPORT_CELLULAR
-                ) || capabilities.hasTransport(NetworkCapabilities.TRANSPORT_VPN) -> true
-                else -> false
-            }
+            result = capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
         }
         if (!result) {
             Toast.makeText(
