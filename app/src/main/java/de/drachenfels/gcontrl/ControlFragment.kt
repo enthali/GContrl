@@ -15,9 +15,7 @@
  */
 package de.drachenfels.gcontrl
 
-import android.Manifest
 import android.content.Context.CONNECTIVITY_SERVICE
-import android.content.pm.PackageManager
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.Bundle
@@ -26,14 +24,23 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
 import androidx.preference.PreferenceManager
 import de.drachenfels.gcontrl.databinding.FragmentControlBinding
-import de.drachenfels.gcontrl.modules.*
+import de.drachenfels.gcontrl.modules.HOME_ZONE_INSIDE
+import de.drachenfels.gcontrl.modules.MQTT_DOOR_CLOSE
+import de.drachenfels.gcontrl.modules.MQTT_DOOR_OPEN
+import de.drachenfels.gcontrl.modules.MQTT_STATUS_CONNECTION_FAILED
+import de.drachenfels.gcontrl.modules.MQTT_STATUS_OK
+import de.drachenfels.gcontrl.modules.MQTT_STATUS_PUBLISH_FAILD
+import de.drachenfels.gcontrl.modules.distanceToHome
+import de.drachenfels.gcontrl.modules.distanceToText
+import de.drachenfels.gcontrl.modules.fenceWatcher
+import de.drachenfels.gcontrl.modules.mqttSendMessage
+import de.drachenfels.gcontrl.modules.sharedPreferences
+import de.drachenfels.gcontrl.modules.statusMQTT
 
 private const val TAG = "ControlFragment"
-private const val REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE = 34
 
 /**
  * a fragment to control the garage door directly though two buttons "open" and "close"
@@ -74,12 +81,6 @@ class ControlFragment : Fragment() {
         statusMQTT.observe(viewLifecycleOwner) { newStatus ->
             onMqttStatusChange(newStatus)
         }
-
-        // make sure we get location permissions if they are enabled
-        if (sharedPreferences.getBoolean(
-                getString(R.string.prf_key_geo_enable_location_features), false
-            )
-        ) requestForegroundPermissions()
     }
 
     /**
@@ -140,7 +141,6 @@ class ControlFragment : Fragment() {
                 activity?.applicationContext, "Network connection required !!", Toast.LENGTH_LONG
             ).show()
         }
-//        enableLocationServiceView()
     }
 
     override fun onResume() {
@@ -148,7 +148,6 @@ class ControlFragment : Fragment() {
         super.onResume()
         //  Check if Internet connection is available
         //  to remind the user that we'll need an internet connection
-//        enableLocationServiceView()
         if (!isConnected()) {
             Toast.makeText(
                 activity?.applicationContext, "Network connection required !!", Toast.LENGTH_LONG
@@ -156,78 +155,6 @@ class ControlFragment : Fragment() {
         }
     }
 
-
-//    /**
-//     * switch view of location services view according to 'Enable location based Features' flag
-//     */
-//    private fun enableLocationServiceView() {
-//        Log.d(TAG, "enableLocationServiceView()")
-//        val enabled = sharedPreferences.getBoolean(
-//            getString(R.string.prf_key_geo_enable_location_features),
-//            false
-//        )
-//        // hide the location related information on the screen
-//        // if location services are disabled in the preferences
-//        // adopt the layout if geo-services are enabled or not
-//        if (enabled) {
-//            (binding.controlTableLayout.layoutParams as LinearLayout.LayoutParams).weight = 1.0f
-//        } else {
-//            (binding.controlTableLayout.layoutParams as LinearLayout.LayoutParams).weight = 0.0f
-//        }
-//    }
-
-    /**
-     *  Review Permissions: Method checks if permissions approved.
-     */
-    private fun foregroundPermissionApproved(): Boolean {
-        Log.d(TAG, "foregroundPermissionApproved()")
-
-        val result = PackageManager.PERMISSION_GRANTED == activity?.let {
-            ActivityCompat.checkSelfPermission(
-                it, Manifest.permission.ACCESS_FINE_LOCATION
-            )
-        }
-        Log.d(TAG, "foregroundPermissionApproved() result : ".plus(result.toString()))
-        return result
-    }
-
-    /**
-     * Review Permissions: Method requests permissions.
-     */
-    private fun requestForegroundPermissions() {
-        Log.d(TAG, "requestForegroundPermission()")
-        val provideRationale = foregroundPermissionApproved()
-        // If the user denied a previous request, but didn't check "Don't ask again", provide
-        // additional rationale.
-        if (provideRationale) {
-//            Snackbar.make(
-//                requireView(),
-//                //findViewById(R.id.directControl),
-//                R.string.permission_rationale,
-//                Snackbar.LENGTH_LONG
-//            )
-//                .setAction(R.string.ok) {
-//                    // Request permission
-//                    activity?.let { it1 ->
-//                        ActivityCompat.requestPermissions(
-//                            it1,
-//                            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
-//                            REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE
-//                        )
-//                    }
-//                }
-//                .show()
-        } else {
-            Log.d(TAG, "Request foreground only permission")
-            activity?.let {
-                ActivityCompat.requestPermissions(
-                    it,
-                    arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
-                    REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE
-                )
-            }
-        }
-    }
 
     /**
      * door handling

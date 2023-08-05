@@ -15,12 +15,13 @@
  */
 package de.drachenfels.gcontrl
 
-import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
+import android.content.pm.PackageManager
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.AppBarConfiguration
@@ -28,49 +29,76 @@ import androidx.navigation.ui.setupActionBarWithNavController
 import de.drachenfels.gcontrl.databinding.ActivityMainBinding
 import de.drachenfels.gcontrl.services.LocationService
 
+/**
+ * This is the main activity of the app.
+ *
+ * It starts the location service and handles navigation.
+ */
 class MainActivity : AppCompatActivity() {
 
-    private var mLocationService: LocationService = LocationService()
-    private lateinit var mServiceIntent: Intent
-    private lateinit var mActivity: Activity
+    private lateinit var locationServiceIntent: Intent
 
+    /**
+     * This is the app bar configuration.
+     */
     private lateinit var appBarConfiguration: AppBarConfiguration
+
+    /**
+     * This is the navigation controller.
+     */
     private lateinit var navController: NavController
 
-    //    private late init var appBarConfiguration: AppBarConfiguration
-    private lateinit var binding: ActivityMainBinding
-
     override fun onCreate(savedInstanceState: Bundle?) {
-
         super.onCreate(savedInstanceState)
-        // bind the activity main
-        binding = ActivityMainBinding.inflate(layoutInflater)
+
+        // Bind the activity main
+        val binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        // activate the action bar
+
+        // Activate the action bar
         setSupportActionBar(binding.toolbar)
 
-        // get the nav host running
+        // Get the nav host running
         val navHostController = supportFragmentManager
             .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
 
-        // set the variables for navController and appBarConfiguration
+        // Set the variables for navController and appBarConfiguration
         navController = navHostController.navController
         appBarConfiguration = AppBarConfiguration(navController.graph)
 
-        // get the appBar up and running
+        // Get the appBar up and running
         setupActionBarWithNavController(navController, appBarConfiguration)
 
-        // get the activity
-        mActivity = this@MainActivity
+        // Check if the app has location permissions
+        var locationPermission =
+            ActivityCompat.checkSelfPermission(this, "android.permission.ACCESS_FINE_LOCATION")
 
-        // create the location service object
-        mLocationService = LocationService()
+        // If the app doesn't have location permissions, prompt the user to grant them
+        if (locationPermission != PackageManager.PERMISSION_GRANTED) {
+            // This line of code prompts the user to grant the location permissions
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf("android.permission.ACCESS_FINE_LOCATION"),
+                1
+            )
 
-        // configure the start intent
-        mServiceIntent = Intent(this,mLocationService.javaClass)
+            // This line of code re-checks the location permissions after the user has been prompted
+            locationPermission =
+                ActivityCompat.checkSelfPermission(this, "android.permission.ACCESS_FINE_LOCATION")
 
-        // start the service  - it should always run
-        startService(mServiceIntent)
+            // If the user has granted the location permissions, restart the app
+            if (locationPermission == PackageManager.PERMISSION_GRANTED) {
+                val intent = Intent(this, MainActivity::class.java)
+                intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
+                startActivity(intent)
+            }
+        }
+
+        // Create the location service object
+        locationServiceIntent = Intent(this, LocationService::class.java)
+
+        // Start the service - it should always run
+        startService(locationServiceIntent)
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -85,7 +113,7 @@ class MainActivity : AppCompatActivity() {
         // as you specify a parent activity in AndroidManifest.xml.
         return when (item.itemId) {
             R.id.action_preferences -> {
-                // Dont go to settings if the settingsFragment is already in focus
+                // Don't go to settings if the settingsFragment is already in focus
                 if (navController.currentDestination?.id == R.id.settingsFragment) {
                     // nothing to do here
                     return true
@@ -95,6 +123,7 @@ class MainActivity : AppCompatActivity() {
                     return true
                 }
             }
+
             else -> super.onOptionsItemSelected(item)
         }
     }
@@ -104,9 +133,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
-        if (::mServiceIntent.isInitialized) {
-            stopService(mServiceIntent)
-        }
+        // Stop the location service
+        stopService(locationServiceIntent)
         super.onDestroy()
     }
 }
