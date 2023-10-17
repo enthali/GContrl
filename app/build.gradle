@@ -19,8 +19,8 @@ android {
         applicationId "de.drachenfels.gcontrl"
         minSdk 26
         targetSdk 33
-        versionCode 22
-        versionName 'implement error handling for MQTT connections'
+        versionCode 24
+        versionName 'stabilization - v24'
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
