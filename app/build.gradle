@@ -19,8 +19,8 @@ android {
         applicationId "de.drachenfels.gcontrl"
         minSdk 26
         targetSdk 33
-        versionCode 25
-        versionName 'monochome icon'
+        versionCode 26
+        versionName 'Stabilization R8 fullMode false'
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
