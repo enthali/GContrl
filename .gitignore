@@ -7,6 +7,10 @@ build/
 # Local configuration file (sdk path, etc)
 local.properties
 
+# script generated files
+filelist.md
+TODO.md
+
 # Android Studio
 *.iml
 .idea/
