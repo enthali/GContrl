@@ -1,56 +1,41 @@
-# Garage Door Opener
+# GaragePilot
 
-This is the Android app for the Drachen-Fels Garage Door Opener System.
-It's a private hobby project that I maintain during my rare spare time.
-Feedback is welcome.
+A simple Android Automotive OS app for controlling your garage door via MQTT.
 
-The idea is simple: When I arrive at home, I want the garage door to open,
-and when I drive off, I want it to close.
+## Features
 
-The system works, but like any system, it requires:
+- Simple one-button garage door control
+- Direct MQTT communication
+- Status indication for door position
+- Easy configuration through settings screen
+- Works with Android Automotive OS
 
-- Better documentation and installation guide
-- The repository here at GitHub should include the whole solution - not just the Android App
-- More thorough testing
+## System Requirements
 
-The project has a very long list of things to consider for the future.
+- Android Automotive OS device
+- MQTT server (e.g., HiveMQ)
+- MQTT-compatible garage door controller
 
-However, it works - at least for the one test instance I run at my house.
-So feel free to copy the solution and use this project as inspiration for your own home automation module.
+## Setup
 
-If you are interested in setting something like this up yourself, here are the main ingredients:
+1. Install the app on your Android Automotive OS device
+2. Configure your MQTT server details in the settings
+3. Connect your garage door controller to the same MQTT server
+4. Control your garage door directly from your car
 
-## System Setup
+## Privacy & Security
 
-Home or Cloud:
+- The app only sends basic door control commands via MQTT
+- No location tracking or data collection
+- Secure MQTT communication using username/password authentication
 
-- MQTT server to communicate between the Android app and the backend
-- Node-RED server to bridge between the MQTT server and the MEROS Garage Door Module (if you use the MEROS Module)
-- A domain address where you can reach your MQTT server using an SSL connection
+## Development
 
-Mobile:
+This is a private hobby project. The focus is on simplicity and reliability.
+Feel free to use this as inspiration for your own projects.
 
-- Android Phone
-- A car with Google Automotive Services (e.g., Polestar/Volvo/GM or Honda)
-
-At Your Garage:
-
-- MEROS Garage Door Opener
-- ESPHome device handling your garage door communicating via MQTT with your server
-
-Data Privacy:
-This app exclusively sends open and close commands to the door.
-The location management is local on your device.
-
-Security:
-
-- SSL communication
-- Additional features on the roadmap...
-
-## Revision History:
-| Version | comment |
+### Version History
+| Version | Comment |
 | --- | --- |
-| 27 | Refactor approach |
-| 1-16 | Internal revisions |
-
-
+| 27 | Simplified app to basic MQTT control |
+| 1-26 | Previous versions (different approach) |
