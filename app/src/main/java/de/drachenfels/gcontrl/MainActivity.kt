@@ -5,7 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.*
-import de.drachenfels.gcontrl.ui.theme.GaragePilotTheme
+import de.drachenfels.gcontrl.ui.theme.GContrlTheme
 import de.drachenfels.gcontrl.ui.MainScreen
 import de.drachenfels.gcontrl.ui.SettingsScreen
 import de.drachenfels.gcontrl.utils.LogConfig
@@ -20,25 +20,7 @@ class MainActivity : ComponentActivity() {
         
         enableEdgeToEdge()
         setContent {
-            var showSettings by remember { mutableStateOf(false) }
-
-            GaragePilotTheme {
-                if (showSettings) {
-                    SettingsScreen(
-                        onNavigateBack = {
-                            showSettings = false
-                            logger.d(LogConfig.TAG_MAIN, "Navigating back to main")
-                        }
-                    )
-                } else {
-                    MainScreen(
-                        onNavigateToSettings = {
-                            showSettings = true
-                            logger.d(LogConfig.TAG_MAIN, "Navigating to settings")
-                        }
-                    )
-                }
-            }
+            GContrlApp()
         }
     }
 
@@ -50,5 +32,22 @@ class MainActivity : ComponentActivity() {
     override fun onPause() {
         super.onPause()
         logger.d(LogConfig.TAG_MAIN, "onPause")
+    }
+}
+
+@Composable
+fun GContrlApp() {
+    var showSettings by remember { mutableStateOf(false) }
+
+    GContrlTheme {
+        if (showSettings) {
+            SettingsScreen(
+                onNavigateBack = { showSettings = false }
+            )
+        } else {
+            MainScreen(
+                onNavigateToSettings = { showSettings = true }
+            )
+        }
     }
 }
