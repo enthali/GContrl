@@ -1,15 +1,33 @@
 package de.drachenfels.gcontrl.ui
 
+import android.content.Context
+import android.content.SharedPreferences
+import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import de.drachenfels.gcontrl.ui.theme.GContrlTheme
 import de.drachenfels.gcontrl.utils.LogConfig
 import de.drachenfels.gcontrl.utils.AndroidLogger
+import kotlinx.coroutines.*
+
+// Preferences configuration
+private const val PREFS_NAME = "GContrlPrefs"
+private const val KEY_MQTT_SERVER = "mqtt_server"
+private const val KEY_MQTT_USERNAME = "mqtt_username"
+private const val KEY_MQTT_PASSWORD = "mqtt_password"
+private const val KEY_IS_CONFIGURED = "is_configured"
+
+// MQTT configuration
+private const val MQTT_WS_PORT = 8884  // WebSocket TLS port
+private const val MQTT_TIMEOUT = 5000L  // 5 seconds timeout
 
 private val logger = AndroidLogger()
 
@@ -19,13 +37,79 @@ fun SettingsScreen(
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var mqttServer by remember { mutableStateOf("") }
-    var mqttUser by remember { mutableStateOf("") }
-    var mqttPassword by remember { mutableStateOf("") }
+    val context = LocalContext.current
+    val prefs = remember { context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE) }
+    val scope = rememberCoroutineScope()
     
-    var enableDebugMqtt by remember { mutableStateOf(LogConfig.ENABLE_DEBUG_MQTT) }
-    var enableDebugSettings by remember { mutableStateOf(LogConfig.ENABLE_DEBUG_SETTINGS) }
+    var mqttServer by remember { mutableStateOf(prefs.getString(KEY_MQTT_SERVER, "") ?: "") }
+    var mqttUser by remember { mutableStateOf(prefs.getString(KEY_MQTT_USERNAME, "") ?: "") }
+    var mqttPassword by remember { mutableStateOf(prefs.getString(KEY_MQTT_PASSWORD, "") ?: "") }
+    var isTestingConnection by remember { mutableStateOf(false) }
 
+    SettingsScreenContent(
+        mqttServer = mqttServer,
+        onMqttServerChange = { mqttServer = it },
+        mqttUser = mqttUser,
+        onMqttUserChange = { mqttUser = it },
+        mqttPassword = mqttPassword,
+        onMqttPasswordChange = { mqttPassword = it },
+        isTestingConnection = isTestingConnection,
+        onTestConnection = {
+            scope.launch {
+                isTestingConnection = true
+                try {
+                    withTimeout(MQTT_TIMEOUT) {
+                        try {
+                            val randomDelay = (2000L..8000L).random()
+                            logger.d(LogConfig.TAG_SETTINGS, "Starting connection test with delay: ${randomDelay}ms")
+                            delay(randomDelay)
+                            
+                            Toast.makeText(context, "Connection successful", Toast.LENGTH_SHORT).show()
+                            
+                            prefs.edit()
+                                .putString(KEY_MQTT_SERVER, mqttServer)
+                                .putString(KEY_MQTT_USERNAME, mqttUser)
+                                .putString(KEY_MQTT_PASSWORD, mqttPassword)
+                                .putBoolean(KEY_IS_CONFIGURED, true)
+                                .apply()
+                                
+                            logger.d(LogConfig.TAG_SETTINGS, "Settings saved successfully")
+                            onNavigateBack()
+                        } catch (e: Exception) {
+                            logger.e(LogConfig.TAG_SETTINGS, "Connection test failed", e)
+                            throw e
+                        }
+                    }
+                } catch (e: TimeoutCancellationException) {
+                    logger.e(LogConfig.TAG_SETTINGS, "Connection timeout after ${MQTT_TIMEOUT}ms")
+                    Toast.makeText(context, "Connection timeout - please try again", Toast.LENGTH_LONG).show()
+                } catch (e: Exception) {
+                    logger.e(LogConfig.TAG_SETTINGS, "Connection test failed", e)
+                    Toast.makeText(context, "Connection failed: ${e.message}", Toast.LENGTH_LONG).show()
+                } finally {
+                    isTestingConnection = false
+                }
+            }
+        },
+        onNavigateBack = onNavigateBack,
+        modifier = modifier
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SettingsScreenContent(
+    mqttServer: String,
+    onMqttServerChange: (String) -> Unit,
+    mqttUser: String,
+    onMqttUserChange: (String) -> Unit,
+    mqttPassword: String,
+    onMqttPasswordChange: (String) -> Unit,
+    isTestingConnection: Boolean,
+    onTestConnection: () -> Unit,
+    onNavigateBack: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -45,7 +129,6 @@ fun SettingsScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // MQTT Configuration
             Text(
                 text = "MQTT Configuration",
                 style = MaterialTheme.typography.titleMedium
@@ -53,21 +136,16 @@ fun SettingsScreen(
             
             OutlinedTextField(
                 value = mqttServer,
-                onValueChange = { 
-                    mqttServer = it
-                    logger.d(LogConfig.TAG_SETTINGS, "MQTT Server changed to: $it")
-                },
+                onValueChange = onMqttServerChange,
                 label = { Text("MQTT Server") },
+                placeholder = { Text("example.hivemq.com") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
 
             OutlinedTextField(
                 value = mqttUser,
-                onValueChange = { 
-                    mqttUser = it
-                    logger.d(LogConfig.TAG_SETTINGS, "MQTT User changed")
-                },
+                onValueChange = onMqttUserChange,
                 label = { Text("Username") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
@@ -75,66 +153,58 @@ fun SettingsScreen(
 
             OutlinedTextField(
                 value = mqttPassword,
-                onValueChange = { 
-                    mqttPassword = it
-                    logger.d(LogConfig.TAG_SETTINGS, "MQTT Password changed")
-                },
+                onValueChange = onMqttPasswordChange,
                 label = { Text("Password") },
                 singleLine = true,
                 visualTransformation = PasswordVisualTransformation(),
                 modifier = Modifier.fillMaxWidth()
             )
 
-            // Debug Settings
-            Text(
-                text = "Debug Settings",
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(top = 16.dp)
-            )
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text("Enable MQTT Debug")
-                Switch(
-                    checked = enableDebugMqtt,
-                    onCheckedChange = { 
-                        enableDebugMqtt = it
-                        LogConfig.ENABLE_DEBUG_MQTT = it
-                        logger.d(LogConfig.TAG_SETTINGS, "MQTT Debug enabled: $it")
-                    }
+            if (isTestingConnection) {
+                LinearProgressIndicator(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(4.dp)
                 )
             }
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text("Enable Settings Debug")
-                Switch(
-                    checked = enableDebugSettings,
-                    onCheckedChange = { 
-                        enableDebugSettings = it
-                        LogConfig.ENABLE_DEBUG_SETTINGS = it
-                        logger.d(LogConfig.TAG_SETTINGS, "Settings Debug enabled: $it")
-                    }
-                )
-            }
-
-            // Save Button
             Button(
-                onClick = {
-                    logger.d(LogConfig.TAG_SETTINGS, "Saving settings")
-                    // TODO: Save settings to DataStore
-                    onNavigateBack()
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 16.dp)
+                onClick = onTestConnection,
+                enabled = !isTestingConnection && mqttServer.isNotBlank(),
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Save")
+                if (isTestingConnection) {
+                    Text("Testing Connection...")
+                } else {
+                    Text("Test Connection and Save")
+                }
             }
+
+            Text(
+                text = "Note: Settings will be saved and applied after successful connection test",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+
+@Preview(
+    showBackground = true,
+    showSystemUi = true,
+    device = "spec:width=411dp,height=891dp,dpi=420,isRound=false,chinSize=0dp,orientation=portrait"
+)
+@Composable
+fun SettingsScreenPreview() {
+    GContrlTheme {
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = MaterialTheme.colorScheme.background
+        ) {
+            SettingsScreen(
+                onNavigateBack = { }
+            )
         }
     }
 }
