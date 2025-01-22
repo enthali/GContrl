@@ -26,6 +26,7 @@ private const val COMMAND_OPEN = "open"
 private const val COMMAND_CLOSE = "close"
 private const val COMMAND_STOP = "stop"
 
+// TODO investigate : Warning:(29, 27) Constructor parameter is never used as a property
 class MQTTService(private val context: Context) {
     private val logger = AndroidLogger()
     private val _connectionState = MutableStateFlow<ConnectionState>(ConnectionState.Disconnected)
