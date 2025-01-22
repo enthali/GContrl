@@ -163,18 +163,51 @@ class MQTTService(private val context: Context) {
     }
 
     fun openDoor() {
-        // TODO: Publish COMMAND_OPEN an TOPIC_COMMAND
-        // ESPHome übernimmt die Logik ob das Kommando ausgeführt werden kann
+        logger.d(LogConfig.TAG_MQTT, "Publishing open command")
+        client?.publishWith()
+            ?.topic(TOPIC_COMMAND)
+            ?.payload(COMMAND_OPEN.toByteArray())
+            ?.send()
+            ?.whenComplete { pubAck, throwable ->
+                if (throwable != null) {
+                    logger.e(LogConfig.TAG_MQTT, "Failed to publish open command", throwable)
+                    _connectionState.value = ConnectionState.Error(throwable.message ?: "Publish failed")
+                } else {
+                    logger.d(LogConfig.TAG_MQTT, "Open command published successfully")
+                }
+            }
     }
 
     fun closeDoor() {
-        // TODO: Publish COMMAND_CLOSE an TOPIC_COMMAND
-        // ESPHome übernimmt die Logik ob das Kommando ausgeführt werden kann
+        logger.d(LogConfig.TAG_MQTT, "Publishing close command")
+        client?.publishWith()
+            ?.topic(TOPIC_COMMAND)
+            ?.payload(COMMAND_CLOSE.toByteArray())
+            ?.send()
+            ?.whenComplete { pubAck, throwable ->
+                if (throwable != null) {
+                    logger.e(LogConfig.TAG_MQTT, "Failed to publish close command", throwable)
+                    _connectionState.value = ConnectionState.Error(throwable.message ?: "Publish failed")
+                } else {
+                    logger.d(LogConfig.TAG_MQTT, "Close command published successfully")
+                }
+            }
     }
 
     fun stopDoor() {
-        // TODO: Publish COMMAND_STOP an TOPIC_COMMAND
-        // ESPHome übernimmt die Logik ob das Kommando ausgeführt werden kann
+        logger.d(LogConfig.TAG_MQTT, "Publishing stop command")
+        client?.publishWith()
+            ?.topic(TOPIC_COMMAND)
+            ?.payload(COMMAND_STOP.toByteArray())
+            ?.send()
+            ?.whenComplete { pubAck, throwable ->
+                if (throwable != null) {
+                    logger.e(LogConfig.TAG_MQTT, "Failed to publish stop command", throwable)
+                    _connectionState.value = ConnectionState.Error(throwable.message ?: "Publish failed")
+                } else {
+                    logger.d(LogConfig.TAG_MQTT, "Stop command published successfully")
+                }
+            }
     }
 
     sealed class ConnectionState {
