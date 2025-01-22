@@ -1,7 +1,6 @@
 package de.drachenfels.gcontrl.ui
 
 import android.content.Context
-import android.content.SharedPreferences
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -16,35 +15,35 @@ import androidx.compose.ui.unit.dp
 import de.drachenfels.gcontrl.ui.theme.GContrlTheme
 import de.drachenfels.gcontrl.utils.LogConfig
 import de.drachenfels.gcontrl.utils.AndroidLogger
+import de.drachenfels.gcontrl.mqtt.MQTTService
 import kotlinx.coroutines.*
 
-// Preferences configuration
+// MQTT configuration
+private const val MQTT_TIMEOUT = 5000L  // 5 seconds timeout
 private const val PREFS_NAME = "GContrlPrefs"
 private const val KEY_MQTT_SERVER = "mqtt_server"
 private const val KEY_MQTT_USERNAME = "mqtt_username"
 private const val KEY_MQTT_PASSWORD = "mqtt_password"
-private const val KEY_IS_CONFIGURED = "is_configured"
-
-// MQTT configuration
-private const val MQTT_WS_PORT = 8884  // WebSocket TLS port
-private const val MQTT_TIMEOUT = 5000L  // 5 seconds timeout
+private const val KEY_CONFIG_VALID = "mqtt_config_valid"
 
 private val logger = AndroidLogger()
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
+    mqttService: MQTTService,
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     val prefs = remember { context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE) }
-    val scope = rememberCoroutineScope()
     
+    // Load current values from preferences
     var mqttServer by remember { mutableStateOf(prefs.getString(KEY_MQTT_SERVER, "") ?: "") }
     var mqttUser by remember { mutableStateOf(prefs.getString(KEY_MQTT_USERNAME, "") ?: "") }
     var mqttPassword by remember { mutableStateOf(prefs.getString(KEY_MQTT_PASSWORD, "") ?: "") }
     var isTestingConnection by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
 
     SettingsScreenContent(
         mqttServer = mqttServer,
@@ -54,30 +53,28 @@ fun SettingsScreen(
         mqttPassword = mqttPassword,
         onMqttPasswordChange = { mqttPassword = it },
         isTestingConnection = isTestingConnection,
-        onTestConnection = {
+        onSaveAndTest = {
             scope.launch {
                 isTestingConnection = true
                 try {
+                    // First save the new configuration
+                    prefs.edit()
+                        .putString(KEY_MQTT_SERVER, mqttServer)
+                        .putString(KEY_MQTT_USERNAME, mqttUser)
+                        .putString(KEY_MQTT_PASSWORD, mqttPassword)
+                        .putBoolean(KEY_CONFIG_VALID, false)  // Initially mark as invalid
+                        .apply()
+
+                    // Then test connection
                     withTimeout(MQTT_TIMEOUT) {
-                        try {
-                            val randomDelay = (2000L..8000L).random()
-                            logger.d(LogConfig.TAG_SETTINGS, "Starting connection test with delay: ${randomDelay}ms")
-                            delay(randomDelay)
-                            
+                        val connected = mqttService.connect()
+                        if (connected) {
+                            // If connect was successful, mark config as valid
+                            prefs.edit().putBoolean(KEY_CONFIG_VALID, true).apply()
                             Toast.makeText(context, "Connection successful", Toast.LENGTH_SHORT).show()
-                            
-                            prefs.edit()
-                                .putString(KEY_MQTT_SERVER, mqttServer)
-                                .putString(KEY_MQTT_USERNAME, mqttUser)
-                                .putString(KEY_MQTT_PASSWORD, mqttPassword)
-                                .putBoolean(KEY_IS_CONFIGURED, true)
-                                .apply()
-                                
-                            logger.d(LogConfig.TAG_SETTINGS, "Settings saved successfully")
                             onNavigateBack()
-                        } catch (e: Exception) {
-                            logger.e(LogConfig.TAG_SETTINGS, "Connection test failed", e)
-                            throw e
+                        } else {
+                            Toast.makeText(context, "Connection failed - could not establish connection", Toast.LENGTH_LONG).show()
                         }
                     }
                 } catch (e: TimeoutCancellationException) {
@@ -106,7 +103,7 @@ private fun SettingsScreenContent(
     mqttPassword: String,
     onMqttPasswordChange: (String) -> Unit,
     isTestingConnection: Boolean,
-    onTestConnection: () -> Unit,
+    onSaveAndTest: () -> Unit,
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -169,26 +166,25 @@ private fun SettingsScreenContent(
             }
 
             Button(
-                onClick = onTestConnection,
+                onClick = onSaveAndTest,
                 enabled = !isTestingConnection && mqttServer.isNotBlank(),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 if (isTestingConnection) {
                     Text("Testing Connection...")
                 } else {
-                    Text("Test Connection and Save")
+                    Text("Save and Test Connection")
                 }
             }
 
             Text(
-                text = "Note: Settings will be saved and applied after successful connection test",
+                text = "Note: Settings will only be activated after a successful connection test",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
 }
-
 
 @Preview(
     showBackground = true,
@@ -202,7 +198,10 @@ fun SettingsScreenPreview() {
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background
         ) {
+            // Preview-Version mit lokalem Context
+            val context = LocalContext.current
             SettingsScreen(
+                mqttService = MQTTService(context),
                 onNavigateBack = { }
             )
         }

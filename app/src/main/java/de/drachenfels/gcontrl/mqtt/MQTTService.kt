@@ -2,14 +2,22 @@ package de.drachenfels.gcontrl.mqtt
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.hivemq.client.mqtt.mqtt5.Mqtt5AsyncClient
+import com.hivemq.client.mqtt.mqtt5.Mqtt5Client
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import java.util.UUID
+import de.drachenfels.gcontrl.utils.AndroidLogger
+import de.drachenfels.gcontrl.utils.LogConfig
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
+import kotlin.coroutines.suspendCoroutine
 
 private const val PREFS_NAME = "GContrlPrefs"
 private const val KEY_MQTT_SERVER = "mqtt_server"
 private const val KEY_MQTT_USERNAME = "mqtt_username"
 private const val KEY_MQTT_PASSWORD = "mqtt_password"
-private const val MQTT_WS_PORT = 8884  // WebSocket TLS port
+private const val MQTT_PORT = 8883  // Standard MQTT TLS port
 
 // MQTT Topics und Commands
 private const val TOPIC_STATE = "garage/state"      // ESPHome publishes door state here
@@ -20,6 +28,7 @@ private const val COMMAND_CLOSE = "close"
 private const val COMMAND_STOP = "stop"
 
 class MQTTService(private val context: Context) {
+    private val logger = AndroidLogger()
     private val _connectionState = MutableStateFlow<ConnectionState>(ConnectionState.Disconnected)
     val connectionState: StateFlow<ConnectionState> = _connectionState
     
@@ -27,21 +36,125 @@ class MQTTService(private val context: Context) {
     val doorState: StateFlow<DoorState> = _doorState
 
     private val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    private var client: Mqtt5AsyncClient? = null
 
-    fun connect() {
-        // TODO: Implementiere MQTT Verbindungsaufbau
-        // - Konfiguration aus SharedPreferences lesen
-        // - HiveMQ Client erstellen und konfigurieren
-        // - Verbindung aufbauen
-        // - Subscribe auf TOPIC_STATE für Door Status Updates
-        // - Status Updates in _doorState publishen
+    private fun buildMqttClient(): Mqtt5AsyncClient {
+        logger.d(LogConfig.TAG_MQTT, "Building MQTT client")
+        val server = prefs.getString(KEY_MQTT_SERVER, "") ?: ""
+        logger.d(LogConfig.TAG_MQTT, "Server: $server")
+        
+        return Mqtt5Client.builder()
+            .identifier(UUID.randomUUID().toString())
+            .serverHost(server)
+            .serverPort(MQTT_PORT)
+            .addConnectedListener {
+                logger.d(LogConfig.TAG_MQTT, "Connected listener triggered")
+                _connectionState.value = ConnectionState.Connected
+                subscribeToState()
+            }
+            .addDisconnectedListener {
+                logger.d(LogConfig.TAG_MQTT, "Disconnected listener triggered")
+                _connectionState.value = ConnectionState.Disconnected
+                _doorState.value = DoorState.UNKNOWN
+            }
+            .buildAsync()
+    }
+
+    private fun subscribeToState() {
+        logger.d(LogConfig.TAG_MQTT, "Subscribing to state topic")
+        client?.subscribeWith()
+            ?.topicFilter(TOPIC_STATE)
+            ?.callback { publish -> 
+                val message = String(publish.payloadAsBytes)
+                logger.d(LogConfig.TAG_MQTT, "Received state: $message")
+                try {
+                    _doorState.value = DoorState.valueOf(message)
+                } catch (e: IllegalArgumentException) {
+                    _doorState.value = DoorState.UNKNOWN
+                }
+            }
+            ?.send()
+            ?.whenComplete { subAck, throwable ->
+                if (throwable != null) {
+                    logger.e(LogConfig.TAG_MQTT, "Subscribe failed", throwable)
+                    _connectionState.value = ConnectionState.Error(throwable.message ?: "Subscribe failed")
+                } else {
+                    logger.d(LogConfig.TAG_MQTT, "Subscribe successful")
+                }
+            }
+    }
+
+    suspend fun connect(): Boolean = suspendCoroutine { continuation ->
+        try {
+            logger.d(LogConfig.TAG_MQTT, "Starting connect sequence")
+            if (client == null) {
+                client = buildMqttClient()
+                logger.d(LogConfig.TAG_MQTT, "Created new MQTT client")
+            }
+            
+            val username = prefs.getString(KEY_MQTT_USERNAME, "") ?: ""
+            val password = prefs.getString(KEY_MQTT_PASSWORD, "") ?: ""
+            
+            _connectionState.value = ConnectionState.Disconnected
+            
+            client?.connectWith()
+                ?.simpleAuth()
+                ?.username(username)
+                ?.password(password.toByteArray())
+                ?.applySimpleAuth()
+                ?.send()
+                ?.whenComplete { connAck, throwable ->
+                    if (throwable != null) {
+                        logger.e(LogConfig.TAG_MQTT, "Connection failed", throwable)
+                        _connectionState.value = ConnectionState.Error(throwable.message ?: "Connection failed")
+                        continuation.resume(false)
+                    } else {
+                        logger.d(LogConfig.TAG_MQTT, "Connect acknowledged successfully")
+                        // Warte auf Connected Status von ConnectedListener
+                        object : Thread() {
+                            override fun run() {
+                                var attempts = 0
+                                while (attempts < 50) {
+                                    if (_connectionState.value is ConnectionState.Connected) {
+                                        logger.d(LogConfig.TAG_MQTT, "Full connection established")
+                                        continuation.resume(true)
+                                        return
+                                    }
+                                    Thread.sleep(100)
+                                    attempts++
+                                }
+                                logger.d(LogConfig.TAG_MQTT, "Connection timeout - state: ${_connectionState.value}")
+                                continuation.resume(false)
+                            }
+                        }.start()
+                    }
+                }
+        } catch (e: Exception) {
+            logger.e(LogConfig.TAG_MQTT, "Exception during connect", e)
+            _connectionState.value = ConnectionState.Error(e.message ?: "Unknown error during connect")
+            continuation.resumeWithException(e)
+        }
     }
 
     fun disconnect() {
-        // TODO: Implementiere sauberes Trennen der MQTT Verbindung
-        // - Unsubscribe von TOPIC_STATE
-        // - Client disconnecten
-        // - States zurücksetzen
+        try {
+            logger.d(LogConfig.TAG_MQTT, "Starting disconnect")
+            client?.disconnect()
+                ?.whenComplete { _, throwable ->
+                    if (throwable != null) {
+                        logger.e(LogConfig.TAG_MQTT, "Disconnect failed", throwable)
+                        _connectionState.value = ConnectionState.Error(throwable.message ?: "Disconnect failed")
+                    } else {
+                        logger.d(LogConfig.TAG_MQTT, "Disconnect successful")
+                        client = null
+                        _connectionState.value = ConnectionState.Disconnected
+                        _doorState.value = DoorState.UNKNOWN
+                    }
+                }
+        } catch (e: Exception) {
+            logger.e(LogConfig.TAG_MQTT, "Exception during disconnect", e)
+            _connectionState.value = ConnectionState.Error(e.message ?: "Unknown error during disconnect")
+        }
     }
 
     fun openDoor() {

@@ -2,6 +2,12 @@
 
 A simple Android Automotive OS app for controlling your garage door via MQTT.
 
+## Technical Details
+- Package Name: de.drachenfels.gcontrl
+- Target Platforms: Android Automotive OS & Android Phone
+- UI Framework: Jetpack Compose
+- Communication: MQTT (HiveMQ Client)
+
 ## Features
 
 - Simple one-button garage door control
