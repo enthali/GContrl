@@ -12,12 +12,14 @@ import de.drachenfels.gcontrl.utils.LogConfig
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
+import java.util.concurrent.TimeUnit
 
 private const val PREFS_NAME = "GContrlPrefs"
 private const val KEY_MQTT_SERVER = "mqtt_server"
 private const val KEY_MQTT_USERNAME = "mqtt_username"
 private const val KEY_MQTT_PASSWORD = "mqtt_password"
 private const val MQTT_PORT = 8883  // Standard MQTT TLS port
+private const val MQTT_CONNECTION_TIMEOUT_SECONDS = 30L
 
 // MQTT Topics und Commands
 private const val TOPIC_STATE = "garage/state"      // ESPHome publishes door state here
@@ -31,7 +33,7 @@ class MQTTService(private val context: Context) {
     private val logger = AndroidLogger()
     private val _connectionState = MutableStateFlow<ConnectionState>(ConnectionState.Disconnected)
     val connectionState: StateFlow<ConnectionState> = _connectionState
-    
+
     private val _doorState = MutableStateFlow<DoorState>(DoorState.UNKNOWN)
     val doorState: StateFlow<DoorState> = _doorState
 
@@ -42,11 +44,14 @@ class MQTTService(private val context: Context) {
         logger.d(LogConfig.TAG_MQTT, "Building MQTT client")
         val server = prefs.getString(KEY_MQTT_SERVER, "") ?: ""
         logger.d(LogConfig.TAG_MQTT, "Server: $server")
-        
+
         return Mqtt5Client.builder()
             .identifier(UUID.randomUUID().toString())
             .serverHost(server)
             .serverPort(MQTT_PORT)
+            .sslConfig()
+            .applySslConfig()
+            .automaticReconnectWithDefaultConfig()
             .addConnectedListener {
                 logger.d(LogConfig.TAG_MQTT, "Connected listener triggered")
                 _connectionState.value = ConnectionState.Connected
@@ -64,7 +69,7 @@ class MQTTService(private val context: Context) {
         logger.d(LogConfig.TAG_MQTT, "Subscribing to state topic")
         client?.subscribeWith()
             ?.topicFilter(TOPIC_STATE)
-            ?.callback { publish -> 
+            ?.callback { publish ->
                 val message = String(publish.payloadAsBytes)
                 logger.d(LogConfig.TAG_MQTT, "Received state: $message")
                 try {
@@ -91,12 +96,12 @@ class MQTTService(private val context: Context) {
                 client = buildMqttClient()
                 logger.d(LogConfig.TAG_MQTT, "Created new MQTT client")
             }
-            
+
             val username = prefs.getString(KEY_MQTT_USERNAME, "") ?: ""
             val password = prefs.getString(KEY_MQTT_PASSWORD, "") ?: ""
-            
+
             _connectionState.value = ConnectionState.Disconnected
-            
+
             client?.connectWith()
                 ?.simpleAuth()
                 ?.username(username)
@@ -110,7 +115,7 @@ class MQTTService(private val context: Context) {
                         continuation.resume(false)
                     } else {
                         logger.d(LogConfig.TAG_MQTT, "Connect acknowledged successfully")
-                        // Warte auf Connected Status von ConnectedListener
+                        // Wait for Connected status from ConnectedListener
                         object : Thread() {
                             override fun run() {
                                 var attempts = 0
