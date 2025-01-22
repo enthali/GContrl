@@ -17,7 +17,6 @@ private const val KEY_MQTT_SERVER = "mqtt_server"
 private const val KEY_MQTT_USERNAME = "mqtt_username"
 private const val KEY_MQTT_PASSWORD = "mqtt_password"
 private const val MQTT_PORT = 8883  // Standard MQTT TLS port
-private const val MQTT_CONNECTION_TIMEOUT_SECONDS = 30L
 
 // MQTT Topics und Commands
 private const val TOPIC_STATE = "garage/state"      // ESPHome publishes door state here
@@ -123,7 +122,8 @@ class MQTTService(private val context: Context) {
                                         continuation.resume(true)
                                         return
                                     }
-                                    Thread.sleep(100)
+                                    // TODO rethink approach on polling wait with a potentially blocking call sleep
+                                    sleep(100)
                                     attempts++
                                 }
                                 logger.d(LogConfig.TAG_MQTT, "Connection timeout - state: ${_connectionState.value}")

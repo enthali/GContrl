@@ -113,6 +113,7 @@ private fun SettingsScreenContent(
                 title = { Text("Settings") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
+                        // TODO find other icon for back (Warning:(116, 44) 'ArrowBack: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.ArrowBack)
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")
                     }
                 }
