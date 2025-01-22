@@ -1,18 +1,16 @@
 package de.drachenfels.gcontrl.mqtt
 
 import android.content.Context
-import android.content.SharedPreferences
 import com.hivemq.client.mqtt.mqtt5.Mqtt5AsyncClient
 import com.hivemq.client.mqtt.mqtt5.Mqtt5Client
+import de.drachenfels.gcontrl.utils.AndroidLogger
+import de.drachenfels.gcontrl.utils.LogConfig
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import java.util.UUID
-import de.drachenfels.gcontrl.utils.AndroidLogger
-import de.drachenfels.gcontrl.utils.LogConfig
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
-import java.util.concurrent.TimeUnit
 
 private const val PREFS_NAME = "GContrlPrefs"
 private const val KEY_MQTT_SERVER = "mqtt_server"
