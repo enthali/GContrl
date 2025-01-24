@@ -18,6 +18,15 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        create("release") {
+            storeFile = file("C:\\Users\\georg\\OneDrive\\Computer\\Android\\AppKeys\\gcontrol\\keystore.jks")
+            storePassword = "gcontrol"
+            keyAlias = "upload"
+            keyPassword = "gcontrol"
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -25,6 +34,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("release")
             buildConfigField("Boolean", "ENABLE_DEBUG", "false")
         }
         debug {

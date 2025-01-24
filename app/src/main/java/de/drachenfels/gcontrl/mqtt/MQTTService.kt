@@ -40,7 +40,7 @@ class MQTTService(private val context: Context) {
 
     private fun buildMqttClient(): Mqtt5AsyncClient {
         logger.d(LogConfig.TAG_MQTT, "Building MQTT client")
-        val server = prefs.getString(KEY_MQTT_SERVER, "") ?: ""
+        val server = prefs.getString(KEY_MQTT_SERVER, "GaragePilot.com") ?: "GaragePilot.com"
         logger.d(LogConfig.TAG_MQTT, "Server: $server")
 
         return Mqtt5Client.builder()
