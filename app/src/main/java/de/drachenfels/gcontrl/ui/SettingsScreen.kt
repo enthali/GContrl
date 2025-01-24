@@ -17,6 +17,7 @@ import de.drachenfels.gcontrl.utils.LogConfig
 import de.drachenfels.gcontrl.utils.AndroidLogger
 import de.drachenfels.gcontrl.mqtt.MQTTService
 import kotlinx.coroutines.*
+import java.lang.Thread.sleep
 
 // MQTT configuration
 private const val MQTT_TIMEOUT = 5000L  // 5 seconds timeout
@@ -35,8 +36,7 @@ fun SettingsScreen(
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // Disconnect any existing connection when entering settings
-    mqttService.disconnect()
+
 
     val context = LocalContext.current
     val prefs = remember { context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE) }
@@ -58,6 +58,8 @@ fun SettingsScreen(
         isTestingConnection = isTestingConnection,
         onSaveAndTest = {
             scope.launch {
+                mqttService.disconnect()
+                sleep(500)
                 isTestingConnection = true
                 try {
                     // First save the new configuration

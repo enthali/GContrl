@@ -25,8 +25,9 @@ private const val TOPIC_COMMAND = "garage/command"  // App publishes commands he
 private const val COMMAND_OPEN = "open"
 private const val COMMAND_CLOSE = "close"
 private const val COMMAND_STOP = "stop"
+private const val COMMAND_REQUEST_STATUS = "request_status"
 
-// TODO investigate : Warning:(29, 27) Constructor parameter is never used as a property
+// TODO: Convert to Android Foreground Service to maintain connection and support future geofencing features
 class MQTTService(private val context: Context) {
     private val logger = AndroidLogger()
     private val _connectionState = MutableStateFlow<ConnectionState>(ConnectionState.Disconnected)
@@ -120,10 +121,14 @@ class MQTTService(private val context: Context) {
                                 while (attempts < 50) {
                                     if (_connectionState.value is ConnectionState.Connected) {
                                         logger.d(LogConfig.TAG_MQTT, "Full connection established")
+                                        // Request initial state after 2 seconds
+                                        Thread {
+                                            sleep(2000)
+                                            requestStatus()
+                                        }.start()
                                         continuation.resume(true)
                                         return
                                     }
-                                    // TODO rethink approach on polling wait with a potentially blocking call sleep
                                     sleep(100)
                                     attempts++
                                 }
@@ -159,6 +164,22 @@ class MQTTService(private val context: Context) {
             logger.e(LogConfig.TAG_MQTT, "Exception during disconnect", e)
             _connectionState.value = ConnectionState.Error(e.message ?: "Unknown error during disconnect")
         }
+    }
+
+    fun requestStatus() {
+        logger.d(LogConfig.TAG_MQTT, "Requesting door status")
+        client?.publishWith()
+            ?.topic(TOPIC_COMMAND)
+            ?.payload(COMMAND_REQUEST_STATUS.toByteArray())
+            ?.send()
+            ?.whenComplete { pubAck, throwable ->
+                if (throwable != null) {
+                    logger.e(LogConfig.TAG_MQTT, "Failed to request status", throwable)
+                    _connectionState.value = ConnectionState.Error(throwable.message ?: "Status request failed")
+                } else {
+                    logger.d(LogConfig.TAG_MQTT, "Status request sent successfully")
+                }
+            }
     }
 
     fun openDoor() {

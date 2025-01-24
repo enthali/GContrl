@@ -35,7 +35,6 @@ import de.drachenfels.gcontrl.mqtt.MQTTService
 import de.drachenfels.gcontrl.ui.theme.GContrlTheme
 import de.drachenfels.gcontrl.utils.AndroidLogger
 
-// TODO add logging to this file
 private val logger = AndroidLogger()
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -45,7 +44,6 @@ fun MainScreen(
     mqttService: MQTTService,
     modifier: Modifier = Modifier
 ) {
-    // TODO DoorState shows "Door State Unkown" at startup and doesn't get the latest status from MQTT server
     val doorState by mqttService.doorState.collectAsState()
     val connectionState by mqttService.connectionState.collectAsState()
 

@@ -18,6 +18,7 @@ import de.drachenfels.gcontrl.utils.AndroidLogger
 import de.drachenfels.gcontrl.utils.LogConfig
 import kotlinx.coroutines.launch
 
+// TODO: MQTTService should be converted to Foreground Service
 class MainActivity : ComponentActivity() {
     private val logger = AndroidLogger()
     private lateinit var mqttService: MQTTService
@@ -52,6 +53,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onPause() {
         super.onPause()
+        mqttService.disconnect()
         logger.d(LogConfig.TAG_MAIN, "onPause")
     }
 
