@@ -12,8 +12,8 @@ android {
         applicationId = "de.drachenfels.gcontrl"
         minSdk = 26
         targetSdk = 35
-        versionCode = 28
-        versionName = "New Live"
+        versionCode = 29
+        versionName = "lets drive"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
