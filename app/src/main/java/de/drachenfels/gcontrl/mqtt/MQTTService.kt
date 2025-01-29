@@ -91,10 +91,21 @@ class MQTTService(private val context: Context) {
     suspend fun connect(): Boolean = suspendCoroutine { continuation ->
         try {
             logger.d(LogConfig.TAG_MQTT, "Starting connect sequence")
-            if (client == null) {
-                client = buildMqttClient()
-                logger.d(LogConfig.TAG_MQTT, "Created new MQTT client")
+
+            // Force new client creation
+            if (client != null) {
+                logger.d(LogConfig.TAG_MQTT, "Disposing old client")
+                try {
+                    client?.disconnect()
+                } catch (e: Exception) {
+                    logger.e(LogConfig.TAG_MQTT, "Error during old client disconnect", e)
+                }
+                client = null
             }
+
+            // Create new client
+            client = buildMqttClient()
+            logger.d(LogConfig.TAG_MQTT, "Created new MQTT client")
 
             val username = prefs.getString(KEY_MQTT_USERNAME, "") ?: ""
             val password = prefs.getString(KEY_MQTT_PASSWORD, "") ?: ""
@@ -121,11 +132,6 @@ class MQTTService(private val context: Context) {
                                 while (attempts < 50) {
                                     if (_connectionState.value is ConnectionState.Connected) {
                                         logger.d(LogConfig.TAG_MQTT, "Full connection established")
-                                        // Request initial state after 2 seconds
-                                        Thread {
-                                            sleep(2000)
-                                            requestStatus()
-                                        }.start()
                                         continuation.resume(true)
                                         return
                                     }
