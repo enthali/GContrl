@@ -61,35 +61,43 @@ fun SettingsScreen(
                 mqttService.disconnect()
                 sleep(500)
                 isTestingConnection = true
-                try {
-                    // First save the new configuration
-                    prefs.edit()
-                        .putString(KEY_MQTT_SERVER, mqttServer)
-                        .putString(KEY_MQTT_USERNAME, mqttUser)
-                        .putString(KEY_MQTT_PASSWORD, mqttPassword)
-                        .putBoolean(KEY_CONFIG_VALID, false)  // Initially mark as invalid
-                        .apply()
 
-                    // Then test connection
-                    withTimeout(MQTT_TIMEOUT) {
+                // Definiere einen separaten Job für den Verbindungsversuch
+                val connectionJob = launch {
+                    try {
+                        // Konfiguration speichern
+                        prefs.edit()
+                            .putString(KEY_MQTT_SERVER, mqttServer)
+                            .putString(KEY_MQTT_USERNAME, mqttUser)
+                            .putString(KEY_MQTT_PASSWORD, mqttPassword)
+                            .putBoolean(KEY_CONFIG_VALID, false)
+                            .apply()
+
+                        // Verbindung testen
                         val connected = mqttService.connect()
                         if (connected) {
-                            // If connect was successful, mark config as valid
                             prefs.edit().putBoolean(KEY_CONFIG_VALID, true).apply()
                             Toast.makeText(context, "Connection successful", Toast.LENGTH_SHORT).show()
                             onNavigateBack()
                         } else {
                             Toast.makeText(context, "Connection failed - could not establish connection", Toast.LENGTH_LONG).show()
                         }
+                    } catch (e: Exception) {
+                        logger.e(LogConfig.TAG_SETTINGS, "Connection test failed", e)
+                        Toast.makeText(context, "Connection failed: ${e.message}", Toast.LENGTH_LONG).show()
+                    } finally {
+                        isTestingConnection = false
                     }
-                } catch (e: TimeoutCancellationException) {
-                    logger.e(LogConfig.TAG_SETTINGS, "Connection timeout after ${MQTT_TIMEOUT}ms")
-                    Toast.makeText(context, "Connection timeout - please try again", Toast.LENGTH_LONG).show()
-                } catch (e: Exception) {
-                    logger.e(LogConfig.TAG_SETTINGS, "Connection test failed", e)
-                    Toast.makeText(context, "Connection failed: ${e.message}", Toast.LENGTH_LONG).show()
-                } finally {
-                    isTestingConnection = false
+                }
+
+                // Setze einen Timer, der den Job nach MQTT_TIMEOUT cancelt
+                delay(MQTT_TIMEOUT)
+                if (connectionJob.isActive) {
+                    connectionJob.cancel()
+                    withContext(Dispatchers.Main) {
+                        isTestingConnection = false
+                        Toast.makeText(context, "Connection timeout - please try again", Toast.LENGTH_LONG).show()
+                    }
                 }
             }
         },
