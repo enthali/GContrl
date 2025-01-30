@@ -16,7 +16,6 @@ fun VersionInfoSection(
             .fillMaxWidth()
             .padding(top = 32.dp)
     ) {
-        HorizontalDivider()
         Spacer(modifier = Modifier.height(16.dp))
         
         Text(
