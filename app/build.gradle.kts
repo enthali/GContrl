@@ -1,7 +1,20 @@
+import java.text.SimpleDateFormat
+import java.util.Date
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+}
+
+// Function to determine Git Branch
+fun getGitBranch(): String {
+    val process = ProcessBuilder("git", "rev-parse", "--abbrev-ref", "HEAD")
+        .redirectError(ProcessBuilder.Redirect.INHERIT)
+        .start()
+
+    return process.inputStream.bufferedReader().use { it.readText() }.trim()
+        .ifEmpty { "unknown" }
 }
 
 android {
@@ -12,10 +25,17 @@ android {
         applicationId = "de.drachenfels.gcontrl"
         minSdk = 26
         targetSdk = 35
-        versionCode = 29
-        versionName = "lets drive"
+        versionCode = 30
+        versionName = "set things right"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // Add Build Date and Time
+        val formattedDate = SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(Date())
+        buildConfigField("String", "BUILD_DATE", "\"${formattedDate}\"")
+
+        // Add Git Branch Information
+        buildConfigField("String", "GIT_BRANCH", "\"${getGitBranch()}\"")
     }
 
     signingConfigs {

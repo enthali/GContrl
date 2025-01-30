@@ -12,6 +12,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import de.drachenfels.gcontrl.BuildConfig
 import de.drachenfels.gcontrl.ui.theme.GContrlTheme
 import de.drachenfels.gcontrl.utils.LogConfig
 import de.drachenfels.gcontrl.utils.AndroidLogger
@@ -36,8 +37,6 @@ fun SettingsScreen(
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-
-
     val context = LocalContext.current
     val prefs = remember { context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE) }
     
@@ -104,6 +103,43 @@ fun SettingsScreen(
         onNavigateBack = onNavigateBack,
         modifier = modifier
     )
+}
+
+@Composable
+private fun VersionInfoSection() {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 32.dp)
+    ) {
+        Divider()
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        Text(
+            text = "About",
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+        
+        Text(
+            text = "Version: ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE}) - ${BuildConfig.GIT_BRANCH}",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        
+        Text(
+            text = "Build Date: ${BuildConfig.BUILD_DATE}",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        Text(
+            text = "GitHub: github.com/enthali/GaragePilot",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(top = 4.dp)
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -196,6 +232,12 @@ private fun SettingsScreenContent(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+
+            // Add Spacer for better spacing
+            Spacer(modifier = Modifier.weight(1f))
+
+            // Add the version info section
+            VersionInfoSection()
         }
     }
 }
