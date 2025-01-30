@@ -1,5 +1,15 @@
 package de.drachenfels.gcontrl.ui
 
+/*
+ * TODO: Consider refactoring settings management into separate manager classes when adding location settings
+ * This would separate business logic from UI for each feature area (MQTT, Location, etc.).
+ * Each manager would handle its own preferences and logic, making the code more modular and testable.
+ * Example structure:
+ * - MqttSettingsManager (MQTT preferences and connection testing)
+ * - LocationSettingsManager (Location preferences and permissions)
+ * This refactoring should be done when implementing location settings.
+ */
+
 import android.content.Context
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
@@ -39,7 +49,7 @@ fun SettingsScreen(
 ) {
     val context = LocalContext.current
     val prefs = remember { context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE) }
-
+    
     // Load current values from preferences
     var mqttServer by remember { mutableStateOf(prefs.getString(KEY_MQTT_SERVER, "") ?: "") }
     var mqttUser by remember { mutableStateOf(prefs.getString(KEY_MQTT_USERNAME, "") ?: "") }
@@ -125,7 +135,7 @@ private fun MqttConfigurationSection(
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.padding(bottom = 16.dp)
         )
-
+        
         OutlinedTextField(
             value = mqttServer,
             onValueChange = onMqttServerChange,
@@ -198,19 +208,19 @@ private fun VersionInfoSection() {
     ) {
         HorizontalDivider()
         Spacer(modifier = Modifier.height(16.dp))
-
+        
         Text(
             text = "About",
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.padding(bottom = 8.dp)
         )
-
+        
         Text(
             text = "Version: ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE}) - ${BuildConfig.GIT_BRANCH}",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
-
+        
         Text(
             text = "Build Date: ${BuildConfig.BUILD_DATE}",
             style = MaterialTheme.typography.bodySmall,
