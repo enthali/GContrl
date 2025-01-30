@@ -39,7 +39,7 @@ fun SettingsScreen(
 ) {
     val context = LocalContext.current
     val prefs = remember { context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE) }
-    
+
     // Load current values from preferences
     var mqttServer by remember { mutableStateOf(prefs.getString(KEY_MQTT_SERVER, "") ?: "") }
     var mqttUser by remember { mutableStateOf(prefs.getString(KEY_MQTT_USERNAME, "") ?: "") }
@@ -106,27 +106,111 @@ fun SettingsScreen(
 }
 
 @Composable
+private fun MqttConfigurationSection(
+    mqttServer: String,
+    onMqttServerChange: (String) -> Unit,
+    mqttUser: String,
+    onMqttUserChange: (String) -> Unit,
+    mqttPassword: String,
+    onMqttPasswordChange: (String) -> Unit,
+    isTestingConnection: Boolean,
+    onSaveAndTest: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier.fillMaxWidth()
+    ) {
+        Text(
+            text = "MQTT Configuration",
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
+
+        OutlinedTextField(
+            value = mqttServer,
+            onValueChange = onMqttServerChange,
+            label = { Text("MQTT Server") },
+            placeholder = { Text("example.hivemq.com") },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        OutlinedTextField(
+            value = mqttUser,
+            onValueChange = onMqttUserChange,
+            label = { Text("Username") },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        OutlinedTextField(
+            value = mqttPassword,
+            onValueChange = onMqttPasswordChange,
+            label = { Text("Password") },
+            singleLine = true,
+            visualTransformation = PasswordVisualTransformation(),
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        if (isTestingConnection) {
+            Spacer(modifier = Modifier.height(16.dp))
+            LinearProgressIndicator(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(4.dp)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Button(
+            onClick = onSaveAndTest,
+            enabled = !isTestingConnection && mqttServer.isNotBlank(),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            if (isTestingConnection) {
+                Text("Testing Connection...")
+            } else {
+                Text("Save and Test Connection")
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text(
+            text = "Note: Settings will only be activated after a successful connection test",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+@Composable
 private fun VersionInfoSection() {
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(top = 32.dp)
     ) {
-        Divider()
+        HorizontalDivider()
         Spacer(modifier = Modifier.height(16.dp))
-        
+
         Text(
             text = "About",
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.padding(bottom = 8.dp)
         )
-        
+
         Text(
             text = "Version: ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE}) - ${BuildConfig.GIT_BRANCH}",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
-        
+
         Text(
             text = "Build Date: ${BuildConfig.BUILD_DATE}",
             style = MaterialTheme.typography.bodySmall,
@@ -176,61 +260,16 @@ private fun SettingsScreenContent(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text(
-                text = "MQTT Configuration",
-                style = MaterialTheme.typography.titleMedium
-            )
-            
-            OutlinedTextField(
-                value = mqttServer,
-                onValueChange = onMqttServerChange,
-                label = { Text("MQTT Server") },
-                placeholder = { Text("example.hivemq.com") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            OutlinedTextField(
-                value = mqttUser,
-                onValueChange = onMqttUserChange,
-                label = { Text("Username") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            OutlinedTextField(
-                value = mqttPassword,
-                onValueChange = onMqttPasswordChange,
-                label = { Text("Password") },
-                singleLine = true,
-                visualTransformation = PasswordVisualTransformation(),
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            if (isTestingConnection) {
-                LinearProgressIndicator(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(4.dp)
-                )
-            }
-
-            Button(
-                onClick = onSaveAndTest,
-                enabled = !isTestingConnection && mqttServer.isNotBlank(),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                if (isTestingConnection) {
-                    Text("Testing Connection...")
-                } else {
-                    Text("Save and Test Connection")
-                }
-            }
-
-            Text(
-                text = "Note: Settings will only be activated after a successful connection test",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+            // MQTT Configuration Section
+            MqttConfigurationSection(
+                mqttServer = mqttServer,
+                onMqttServerChange = onMqttServerChange,
+                mqttUser = mqttUser,
+                onMqttUserChange = onMqttUserChange,
+                mqttPassword = mqttPassword,
+                onMqttPasswordChange = onMqttPasswordChange,
+                isTestingConnection = isTestingConnection,
+                onSaveAndTest = onSaveAndTest
             )
 
             // Add Spacer for better spacing
