@@ -12,7 +12,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.lifecycleScope
 import de.drachenfels.gcontrl.mqtt.MQTTService
 import de.drachenfels.gcontrl.ui.MainScreen
-import de.drachenfels.gcontrl.ui.SettingsScreen
+import de.drachenfels.gcontrl.ui.settings.SettingsScreen
 import de.drachenfels.gcontrl.ui.theme.GContrlTheme
 import de.drachenfels.gcontrl.utils.AndroidLogger
 import de.drachenfels.gcontrl.utils.LogConfig

@@ -3,6 +3,8 @@ package de.drachenfels.gcontrl.ui.settings
 import android.content.Context
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
@@ -45,6 +47,7 @@ fun SettingsScreen(
     val context = LocalContext.current
     val prefs = remember { context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE) }
     val scope = rememberCoroutineScope()
+    val scrollState = rememberScrollState()
     
     // MQTT state
     var mqttServer by remember { mutableStateOf(prefs.getString(KEY_MQTT_SERVER, "") ?: "") }
@@ -86,6 +89,7 @@ fun SettingsScreen(
             modifier = modifier
                 .fillMaxSize()
                 .padding(paddingValues)
+                .verticalScroll(scrollState)
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
@@ -141,7 +145,7 @@ fun SettingsScreen(
                 }
             )
 
-            HorizontalDivider()
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
             // Location Automation Section
             LocationAutomationSection(
@@ -168,9 +172,8 @@ fun SettingsScreen(
                 }
             )
 
-            Spacer(modifier = Modifier.weight(1f))
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
-            // Version Info Section
             VersionInfoSection()
         }
     }
