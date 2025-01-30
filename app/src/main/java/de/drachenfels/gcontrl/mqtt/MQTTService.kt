@@ -8,6 +8,7 @@ import de.drachenfels.gcontrl.utils.LogConfig
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import java.util.UUID
+import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
@@ -38,6 +39,7 @@ class MQTTService(private val context: Context) {
 
     private val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
     private var client: Mqtt5AsyncClient? = null
+    private var connectContinuation: Continuation<Boolean>? = null
 
     private fun buildMqttClient(): Mqtt5AsyncClient {
         logger.d(LogConfig.TAG_MQTT, "Building MQTT client")
@@ -55,6 +57,8 @@ class MQTTService(private val context: Context) {
                 logger.d(LogConfig.TAG_MQTT, "Connected listener triggered")
                 _connectionState.value = ConnectionState.Connected
                 subscribeToState()
+                connectContinuation?.resume(true)
+                connectContinuation = null
             }
             .addDisconnectedListener {
                 logger.d(LogConfig.TAG_MQTT, "Disconnected listener triggered")
@@ -91,6 +95,7 @@ class MQTTService(private val context: Context) {
     suspend fun connect(): Boolean = suspendCoroutine { continuation ->
         try {
             logger.d(LogConfig.TAG_MQTT, "Starting connect sequence")
+            connectContinuation = continuation
 
             // Force new client creation
             if (client != null) {
@@ -122,38 +127,25 @@ class MQTTService(private val context: Context) {
                     if (throwable != null) {
                         logger.e(LogConfig.TAG_MQTT, "Connection failed", throwable)
                         _connectionState.value = ConnectionState.Error(throwable.message ?: "Connection failed")
-                        continuation.resume(false)
+                        connectContinuation?.resume(false)
+                        connectContinuation = null
                     } else {
                         logger.d(LogConfig.TAG_MQTT, "Connect acknowledged successfully")
-                        // Wait for Connected status from ConnectedListener
-                        object : Thread() {
-                            override fun run() {
-                                var attempts = 0
-                                while (attempts < 50) {
-                                    if (_connectionState.value is ConnectionState.Connected) {
-                                        logger.d(LogConfig.TAG_MQTT, "Full connection established")
-                                        continuation.resume(true)
-                                        return
-                                    }
-                                    sleep(100)
-                                    attempts++
-                                }
-                                logger.d(LogConfig.TAG_MQTT, "Connection timeout - state: ${_connectionState.value}")
-                                continuation.resume(false)
-                            }
-                        }.start()
+                        // Connected event will be handled by the ConnectedListener
                     }
                 }
         } catch (e: Exception) {
             logger.e(LogConfig.TAG_MQTT, "Exception during connect", e)
             _connectionState.value = ConnectionState.Error(e.message ?: "Unknown error during connect")
             continuation.resumeWithException(e)
+            connectContinuation = null
         }
     }
 
     fun disconnect() {
         try {
             logger.d(LogConfig.TAG_MQTT, "Starting disconnect")
+            connectContinuation = null  // Clear any pending connection continuation
             client?.disconnect()
                 ?.whenComplete { _, throwable ->
                     if (throwable != null) {
