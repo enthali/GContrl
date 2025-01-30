@@ -37,6 +37,9 @@ private const val KEY_TRIGGER_DISTANCE = "trigger_distance"
 
 private val logger = AndroidLogger()
 
+// feature to be implemented in future release
+private const val ENABLE_LOCATION_FEATURES = false  // Will be enabled in future release
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
@@ -147,33 +150,35 @@ fun SettingsScreen(
 
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
-            // Location Automation Section
-            LocationAutomationSection(
-                isEnabled = locationAutomationEnabled,
-                onEnabledChange = { enabled ->
-                    locationAutomationEnabled = enabled
-                    prefs.edit().putBoolean(KEY_LOCATION_AUTOMATION_ENABLED, enabled).apply()
-                },
-                location = garageLocation,
-                onSetCurrentLocation = {
-                    // For testing: Set to Munich coordinates
-                    val munichLocation = Pair(48.1351, 11.5820)
-                    garageLocation = munichLocation
-                    prefs.edit()
-                        .putFloat(KEY_GARAGE_LAT, munichLocation.first.toFloat())
-                        .putFloat(KEY_GARAGE_LON, munichLocation.second.toFloat())
-                        .apply()
-                    Toast.makeText(context, "Location set to Munich", Toast.LENGTH_SHORT).show()
-                },
-                triggerDistance = triggerDistance,
-                onTriggerDistanceChange = { distance ->
-                    triggerDistance = distance
-                    prefs.edit().putInt(KEY_TRIGGER_DISTANCE, distance).apply()
-                }
-            )
+            // feature to be implemented in future release
+            if (ENABLE_LOCATION_FEATURES) {
+                // Location Automation Section
+                LocationAutomationSection(
+                    isEnabled = locationAutomationEnabled,
+                    onEnabledChange = { enabled ->
+                        locationAutomationEnabled = enabled
+                        prefs.edit().putBoolean(KEY_LOCATION_AUTOMATION_ENABLED, enabled).apply()
+                    },
+                    location = garageLocation,
+                    onSetCurrentLocation = {
+                        // For testing: Set to Munich coordinates
+                        val munichLocation = Pair(48.1351, 11.5820)
+                        garageLocation = munichLocation
+                        prefs.edit()
+                            .putFloat(KEY_GARAGE_LAT, munichLocation.first.toFloat())
+                            .putFloat(KEY_GARAGE_LON, munichLocation.second.toFloat())
+                            .apply()
+                        Toast.makeText(context, "Location set to Munich", Toast.LENGTH_SHORT).show()
+                    },
+                    triggerDistance = triggerDistance,
+                    onTriggerDistanceChange = { distance ->
+                        triggerDistance = distance
+                        prefs.edit().putInt(KEY_TRIGGER_DISTANCE, distance).apply()
+                    }
+                )
 
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            }
             VersionInfoSection()
         }
     }
