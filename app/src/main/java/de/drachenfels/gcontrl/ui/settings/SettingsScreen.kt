@@ -1,6 +1,7 @@
 package de.drachenfels.gcontrl.ui.settings
 
 import android.content.Context
+import android.content.ContextWrapper
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -13,14 +14,18 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import de.drachenfels.gcontrl.LocationAutomationSettings
 import de.drachenfels.gcontrl.mqtt.MQTTService
 import de.drachenfels.gcontrl.ui.settings.components.*
+import de.drachenfels.gcontrl.ui.theme.GContrlTheme
 import de.drachenfels.gcontrl.utils.AndroidLogger
 import de.drachenfels.gcontrl.utils.LogConfig
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import java.lang.Thread.sleep
 
 // TODO: consider moveing to dataStore
@@ -195,6 +200,46 @@ fun SettingsScreen(
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             }
             VersionInfoSection()
+        }
+    }
+}
+
+
+
+// Deine eigene ContextWrapper-Klasse
+class SettingsPreviewContextWrapper(
+    base: Context,
+    val locationAutomationSettingsFlow: StateFlow<LocationAutomationSettings>
+) : ContextWrapper(base)
+
+@Preview(
+    name = "Settings Screen",
+    showBackground = true,
+    showSystemUi = true,
+    device = "spec:width=411dp,height=891dp,dpi=420,isRound=false,chinSize=0dp,orientation=portrait"
+)
+@Composable
+fun SettingsScreenPreview() {
+    val locationAutomationSettingsFlow = remember { MutableStateFlow(LocationAutomationSettings()) }
+    // Verwende SettingsPreviewContextWrapper
+    CompositionLocalProvider(
+        LocalContext provides SettingsPreviewContextWrapper(
+            LocalContext.current,
+            locationAutomationSettingsFlow.asStateFlow()
+        )
+    ) {
+        GContrlTheme {
+            Surface(
+                modifier = Modifier.fillMaxSize(),
+                color = MaterialTheme.colorScheme.background
+            ) {
+                SettingsScreen(
+                    mqttService = MQTTService(LocalContext.current),
+                    onNavigateBack = { },
+                    updateLocationAutomationSettings = { },
+                    locationAutomationSettings = locationAutomationSettingsFlow.asStateFlow()
+                )
+            }
         }
     }
 }

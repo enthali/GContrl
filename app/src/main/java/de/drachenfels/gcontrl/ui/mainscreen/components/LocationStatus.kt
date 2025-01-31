@@ -1,5 +1,7 @@
 package de.drachenfels.gcontrl.ui.mainscreen.components
 
+
+import android.icu.text.DecimalFormat
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DirectionsCar
@@ -7,11 +9,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import de.drachenfels.gcontrl.R
 import de.drachenfels.gcontrl.mqtt.DoorState
+import kotlin.text.format
 
 @Composable
 fun LocationAutomationStatus(
@@ -20,6 +25,10 @@ fun LocationAutomationStatus(
     triggerDistance: Float,
     modifier: Modifier = Modifier
 ) {
+    val configuration = LocalConfiguration.current
+    val screenWidth = configuration.screenWidthDp.dp
+    val iconSize = screenWidth * 0.25f
+
     Column(
         modifier = modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -29,37 +38,51 @@ fun LocationAutomationStatus(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                painter = painterResource(id = R.drawable.ic_garage_closed),
-                contentDescription = null,
-                modifier = Modifier.size(60.dp),
-                tint = MaterialTheme.colorScheme.primary
-            )
-            
+            DoorStatus(doorState, iconSize, false)
+
             Icon(
                 imageVector = Icons.Default.DirectionsCar,
                 contentDescription = null,
-                modifier = Modifier.size(60.dp),
+                modifier = Modifier.size(iconSize),
                 tint = MaterialTheme.colorScheme.primary
             )
         }
         
         Slider(
-            value = currentDistance,
+            value = triggerDistance,
             onValueChange = { /* Read only */ },
-            valueRange = 0f..triggerDistance,
+            valueRange = 0f..currentDistance,
             enabled = false,
+            colors = SliderDefaults.colors(
+                activeTrackColor = MaterialTheme.colorScheme.primary,
+                disabledActiveTrackColor = MaterialTheme.colorScheme.primary,
+                inactiveTrackColor = MaterialTheme.colorScheme.outlineVariant,
+                disabledInactiveTrackColor = MaterialTheme.colorScheme.outlineVariant,
+                thumbColor = MaterialTheme.colorScheme.primary,
+                disabledThumbColor = MaterialTheme.colorScheme.primary
+            ),
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 8.dp)
         )
-        
+
         Text(
-            text = "${currentDistance.toInt()}/${triggerDistance.toInt()}m",
+            text = formatDistance(currentDistance),
             style = MaterialTheme.typography.bodyLarge
         )
     }
 }
+
+fun formatDistance(distance: Float): String {
+    return if (distance < 900) {
+        "${distance.toInt()}m"
+    } else {
+        val km = distance / 1000
+        val df = DecimalFormat("#.#")
+        "${df.format(km)}km"
+    }
+}
+
 
 @Preview(
     name = "Location Status - Far",
@@ -71,7 +94,7 @@ fun LocationAutomationStatusPreview() {
     MaterialTheme {
         LocationAutomationStatus(
             doorState = DoorState.CLOSED,
-            currentDistance = 50f,
+            currentDistance = 1200f,
             triggerDistance = 100f
         )
     }

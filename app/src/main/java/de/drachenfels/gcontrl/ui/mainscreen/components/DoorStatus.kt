@@ -21,7 +21,7 @@ fun DoorStatus(
 ) {
     val configuration = LocalConfiguration.current
     val screenWidth = configuration.screenWidthDp.dp
-    val iconSize = if (size != Dp.Unspecified) size else (screenWidth * 0.55f)
+    val iconSize = if (size != Dp.Unspecified) size else (screenWidth * 0.50f)
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,

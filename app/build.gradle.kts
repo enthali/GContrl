@@ -95,6 +95,7 @@ dependencies {
     implementation(libs.hivemq.mqtt.client)
     implementation(libs.androidx.material.icons.extended)
     implementation(libs.androidx.games.activity)
+    implementation(libs.androidx.constraintlayout)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

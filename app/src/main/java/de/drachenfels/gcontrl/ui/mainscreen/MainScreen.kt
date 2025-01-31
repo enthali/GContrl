@@ -1,5 +1,7 @@
 package de.drachenfels.gcontrl.ui.mainscreen
 
+import android.content.Context
+import android.content.ContextWrapper
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -15,10 +17,19 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import de.drachenfels.gcontrl.ui.mainscreen.components.*
+import de.drachenfels.gcontrl.ui.theme.GContrlTheme
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -47,7 +58,7 @@ fun MainScreen(
             )
         }
     ) { paddingValues ->
-        Box(
+        Column(
             modifier = modifier
                 .fillMaxSize()
                 .padding(paddingValues)
@@ -55,8 +66,9 @@ fun MainScreen(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .align(Alignment.TopCenter),
-                horizontalAlignment = Alignment.CenterHorizontally
+                    .weight(1f),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
             ) {
                 if (locationAutomationSettings.isLocationAutomationEnabled) {
                     LocationAutomationStatus(
@@ -69,13 +81,11 @@ fun MainScreen(
                     DoorStatus(doorState)
                 }
             }
-
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .align(Alignment.BottomCenter)
                     .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.Bottom)
             ) {
                 GarageButton(
                     text = "Open",
@@ -94,6 +104,76 @@ fun MainScreen(
                     onClick = { mqttService.closeDoor() },
                     connectionState = connectionState,
                     modifier = Modifier.padding(bottom = 16.dp)
+                )
+            }
+        }
+    }
+}
+
+
+class PreviewContextWrapper(
+    base: Context,
+    val locationAutomationSettingsFlow: StateFlow<LocationAutomationSettings>
+) : ContextWrapper(base)
+
+@Preview(
+    name = "Without Location Automation",
+    showBackground = true,
+    showSystemUi = true,
+    device = "spec:width=411dp,height=891dp,dpi=420,isRound=false,chinSize=0dp,orientation=portrait"
+)
+@Composable
+fun MainScreenPreviewWithoutLocation() {
+    val locationAutomationSettingsFlow =
+        remember { MutableStateFlow(LocationAutomationSettings(isLocationAutomationEnabled = false)) }
+    // Verwende PreviewContextWrapper
+    CompositionLocalProvider(
+        LocalContext provides PreviewContextWrapper(
+            LocalContext.current,
+            locationAutomationSettingsFlow.asStateFlow()
+        )
+    ) {
+        GContrlTheme {
+            Surface(
+                modifier = Modifier.fillMaxSize(),
+                color = MaterialTheme.colorScheme.background
+            ) {
+                MainScreen(
+                    onNavigateToSettings = { },
+                    mqttService = MQTTService(LocalContext.current),
+                    locationAutomationSettingsFlow = locationAutomationSettingsFlow.asStateFlow()
+                )
+            }
+        }
+    }
+}
+
+@Preview(
+    name = "With Location Automation",
+    showBackground = true,
+    showSystemUi = true,
+    device = "spec:width=411dp,height=891dp,dpi=420,isRound=false,chinSize=0dp,orientation=portrait"
+)
+@Composable
+fun MainScreenPreviewWithLocation() {
+    val locationAutomationSettingsFlow =
+        remember { MutableStateFlow(LocationAutomationSettings(isLocationAutomationEnabled = true)) }
+    // Verwende PreviewContextWrapper
+    CompositionLocalProvider(
+        LocalContext provides PreviewContextWrapper(
+            LocalContext.current,
+            locationAutomationSettingsFlow.asStateFlow()
+        )
+    ) {
+        GContrlTheme {
+            Surface(
+                modifier = Modifier.fillMaxSize(),
+                color = MaterialTheme.colorScheme.background
+            ) {
+                MainScreen(
+                    onNavigateToSettings = { },
+                    mqttService = MQTTService(LocalContext.current),
+                    locationAutomationSettingsFlow = locationAutomationSettingsFlow.asStateFlow()
                 )
             }
         }
