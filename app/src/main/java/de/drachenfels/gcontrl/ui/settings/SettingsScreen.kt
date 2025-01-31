@@ -13,19 +13,17 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import de.drachenfels.gcontrl.LocationAutomationSettings
 import de.drachenfels.gcontrl.mqtt.MQTTService
-import de.drachenfels.gcontrl.ui.settings.sections.*
-import de.drachenfels.gcontrl.ui.theme.GContrlTheme
+import de.drachenfels.gcontrl.ui.settings.components.*
 import de.drachenfels.gcontrl.utils.AndroidLogger
 import de.drachenfels.gcontrl.utils.LogConfig
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import java.lang.Thread.sleep
 
+// TODO: consider moveing to dataStore
 // Settings keys
 private const val PREFS_NAME = "GContrlPrefs"
 

@@ -1,4 +1,4 @@
-package de.drachenfels.gcontrl.ui.settings.sections
+package de.drachenfels.gcontrl.ui.settings.components
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
