@@ -1,5 +1,7 @@
 package de.drachenfels.gcontrl
 
+import android.content.Context
+import android.content.SharedPreferences
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -11,24 +13,56 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import de.drachenfels.gcontrl.mqtt.MQTTService
-import de.drachenfels.gcontrl.ui.MainScreen
+import de.drachenfels.gcontrl.ui.mainscreen.MainScreen
 import de.drachenfels.gcontrl.ui.settings.SettingsScreen
 import de.drachenfels.gcontrl.ui.theme.GContrlTheme
 import de.drachenfels.gcontrl.utils.AndroidLogger
 import de.drachenfels.gcontrl.utils.LogConfig
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+
+data class LocationAutomationSettings(
+    val isLocationAutomationEnabled: Boolean = false,
+    val triggerDistance: Int = 100
+)
+
+// Settings keys
+private const val PREFS_NAME = "GContrlPrefs"
+private const val KEY_LOCATION_AUTOMATION_ENABLED = "location_automation_enabled"
+private const val KEY_TRIGGER_DISTANCE = "trigger_distance"
 
 class MainActivity : ComponentActivity() {
     private val logger = AndroidLogger()
     private lateinit var mqttService: MQTTService
+    private lateinit var prefs: SharedPreferences
+
+    private val _locationAutomationSettings = MutableStateFlow(LocationAutomationSettings())
+    val locationAutomationSettings: StateFlow<LocationAutomationSettings> = _locationAutomationSettings.asStateFlow()
+
+    fun updateLocationAutomationSettings(newSettings: LocationAutomationSettings) {
+        _locationAutomationSettings.value = newSettings
+        with(prefs.edit()) {
+            putBoolean(KEY_LOCATION_AUTOMATION_ENABLED, newSettings.isLocationAutomationEnabled)
+            putInt(KEY_TRIGGER_DISTANCE, newSettings.triggerDistance)
+            apply()
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         logger.d(LogConfig.TAG_MAIN, "onCreate - Initializing app")
         mqttService = MQTTService(this)
-        
+        prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+
+        _locationAutomationSettings.value = LocationAutomationSettings(
+            isLocationAutomationEnabled = prefs.getBoolean(KEY_LOCATION_AUTOMATION_ENABLED, false),
+            triggerDistance = prefs.getInt(KEY_TRIGGER_DISTANCE, 100)
+        )
+
         enableEdgeToEdge()
         setContent {
-            GContrlApp(mqttService)
+            GContrlApp(mqttService, ::updateLocationAutomationSettings, locationAutomationSettings)
         }
         logger.d(LogConfig.TAG_MAIN, "onCreate - App initialized")
     }
@@ -52,7 +86,11 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun GContrlApp(mqttService: MQTTService) {
+fun GContrlApp(
+    mqttService: MQTTService,
+    updateLocationAutomationSettings: (LocationAutomationSettings) -> Unit,
+    locationAutomationSettings: StateFlow<LocationAutomationSettings>
+) {
     val logger = AndroidLogger()
     var showSettings by remember { mutableStateOf(false) }
 
@@ -71,18 +109,21 @@ fun GContrlApp(mqttService: MQTTService) {
         if (showSettings) {
             SettingsScreen(
                 mqttService = mqttService,
-                onNavigateBack = { 
+                onNavigateBack = {
                     logger.d(LogConfig.TAG_MAIN, "User requested navigation: Settings -> Main")
-                    showSettings = false 
-                }
+                    showSettings = false
+                },
+                updateLocationAutomationSettings = updateLocationAutomationSettings,
+                locationAutomationSettings = locationAutomationSettings
             )
         } else {
             MainScreen(
                 mqttService = mqttService,
-                onNavigateToSettings = { 
+                onNavigateToSettings = {
                     logger.d(LogConfig.TAG_MAIN, "User requested navigation: Main -> Settings")
-                    showSettings = true 
-                }
+                    showSettings = true
+                },
+                locationAutomationSettingsFlow = locationAutomationSettings
             )
         }
     }

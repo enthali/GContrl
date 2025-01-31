@@ -9,21 +9,28 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import de.drachenfels.gcontrl.LocationAutomationSettings
 import de.drachenfels.gcontrl.mqtt.MQTTService
 import de.drachenfels.gcontrl.ui.settings.sections.*
 import de.drachenfels.gcontrl.ui.theme.GContrlTheme
 import de.drachenfels.gcontrl.utils.AndroidLogger
 import de.drachenfels.gcontrl.utils.LogConfig
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import java.lang.Thread.sleep
+
+// Settings keys
+private const val PREFS_NAME = "GContrlPrefs"
 
 // MQTT configuration
 private const val MQTT_TIMEOUT = 5000L  // 5 seconds timeout
-private const val PREFS_NAME = "GContrlPrefs"
 private const val KEY_MQTT_SERVER = "mqtt_server"
 private const val KEY_MQTT_USERNAME = "mqtt_username"
 private const val KEY_MQTT_PASSWORD = "mqtt_password"
@@ -45,23 +52,28 @@ private const val ENABLE_LOCATION_FEATURES = true  // Will be enabled in future 
 fun SettingsScreen(
     mqttService: MQTTService,
     onNavigateBack: () -> Unit,
+    updateLocationAutomationSettings: (LocationAutomationSettings) -> Unit,
+    locationAutomationSettings: StateFlow<LocationAutomationSettings>,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     val prefs = remember { context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE) }
     val scope = rememberCoroutineScope()
     val scrollState = rememberScrollState()
-    
+
     // MQTT state
     var mqttServer by remember { mutableStateOf(prefs.getString(KEY_MQTT_SERVER, "") ?: "") }
     var mqttUser by remember { mutableStateOf(prefs.getString(KEY_MQTT_USERNAME, "") ?: "") }
     var mqttPassword by remember { mutableStateOf(prefs.getString(KEY_MQTT_PASSWORD, "") ?: "") }
     var isTestingConnection by remember { mutableStateOf(false) }
 
+    val currentSettings by locationAutomationSettings.collectAsState()
+
     // Location automation state
-    var locationAutomationEnabled by remember { 
-        mutableStateOf(prefs.getBoolean(KEY_LOCATION_AUTOMATION_ENABLED, false)) 
+    var locationAutomationEnabled by remember {
+        mutableStateOf(currentSettings.isLocationAutomationEnabled)
     }
+
     var garageLocation by remember {
         mutableStateOf(
             if (prefs.contains(KEY_GARAGE_LAT) && prefs.contains(KEY_GARAGE_LON)) {
@@ -72,9 +84,10 @@ fun SettingsScreen(
             } else null
         )
     }
-    var triggerDistance by remember { 
-        mutableStateOf(prefs.getInt(KEY_TRIGGER_DISTANCE, 100)) 
+    var triggerDistance by remember {
+        mutableStateOf(currentSettings.triggerDistance)
     }
+
 
     Scaffold(
         topBar = {
@@ -157,7 +170,9 @@ fun SettingsScreen(
                     isEnabled = locationAutomationEnabled,
                     onEnabledChange = { enabled ->
                         locationAutomationEnabled = enabled
-                        prefs.edit().putBoolean(KEY_LOCATION_AUTOMATION_ENABLED, enabled).apply()
+                        updateLocationAutomationSettings(
+                            currentSettings.copy(isLocationAutomationEnabled = enabled)
+                        )
                     },
                     location = garageLocation,
                     onSetCurrentLocation = {
@@ -173,33 +188,15 @@ fun SettingsScreen(
                     triggerDistance = triggerDistance,
                     onTriggerDistanceChange = { distance ->
                         triggerDistance = distance
-                        prefs.edit().putInt(KEY_TRIGGER_DISTANCE, distance).apply()
+                        updateLocationAutomationSettings(
+                            currentSettings.copy(triggerDistance = distance)
+                        )
                     }
                 )
 
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             }
             VersionInfoSection()
-        }
-    }
-}
-
-@Preview(
-    showBackground = true,
-    showSystemUi = true,
-    device = "spec:width=411dp,height=891dp,dpi=420,isRound=false,chinSize=0dp,orientation=portrait"
-)
-@Composable
-fun SettingsScreenPreview() {
-    GContrlTheme {
-        Surface(
-            modifier = Modifier.fillMaxSize(),
-            color = MaterialTheme.colorScheme.background
-        ) {
-            SettingsScreen(
-                mqttService = MQTTService(LocalContext.current),
-                onNavigateBack = { }
-            )
         }
     }
 }

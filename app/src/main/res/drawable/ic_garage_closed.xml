@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="108dp"
-    android:height="108dp"
-    android:viewportWidth="108"
-    android:viewportHeight="108">
+    android:width="64dp"
+    android:height="64dp"
+    android:viewportWidth="60"
+    android:viewportHeight="55">
     <!-- Gefüllter innerer Bereich -->
     <path
         android:fillColor="#000000"
         android:fillAlpha="0.3"
-        android:pathData="M30,45h49v30h-49z"/>
+        android:pathData="M6,20h49v30h-49z"/>
 
     <!-- Haus-Umriss - breiter und mit dickeren Linien -->
     <path
@@ -16,27 +16,25 @@
         android:strokeWidth="8"
         android:strokeLineCap="round"
         android:strokeLineJoin="round"
-        android:pathData="M29,44 L54,30 L79,44 L79,75 L29,75 Z"
+        android:pathData="M5,19 L30,5 L55,19 L55,50 L5,50 Z"
         android:fillColor="#00000000"/>
-
-
 
     <!-- Garagentor-Linien - breiter und dicker -->
     <path
         android:strokeColor="#6650a4"
         android:strokeWidth="6"
         android:strokeLineCap="round"
-        android:pathData="M38,50 L70,50"/>
+        android:pathData="M14,25 L46,25"/>
 
     <path
         android:strokeColor="#6650a4"
         android:strokeWidth="6"
         android:strokeLineCap="round"
-        android:pathData="M38,58 L70,58"/>
+        android:pathData="M14,33 L46,33"/>
 
     <path
         android:strokeColor="#6650a4"
         android:strokeWidth="6"
         android:strokeLineCap="round"
-        android:pathData="M38,66 L70,66"/>
+        android:pathData="M14,41 L46,41"/>
 </vector>
