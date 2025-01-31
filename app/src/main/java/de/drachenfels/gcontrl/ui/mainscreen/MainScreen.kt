@@ -44,10 +44,11 @@ fun MainScreen(
     val doorState by mqttService.doorState.collectAsState()
     val connectionState by mqttService.connectionState.collectAsState()
 
-    // Collect location data for speed check
+    // Collect location data for speed check and distance
     val locationData by LocationDataRepository.locationUpdates.collectAsState()
     val currentSpeed = locationData?.speed ?: 0f
     val showSettings = currentSpeed <= 3f
+    val currentDistance = locationData?.distanceToGarage?.toFloat() ?: 1000f
 
     Scaffold(
         topBar = {
@@ -81,7 +82,7 @@ fun MainScreen(
                 if (locationAutomationSettings.isLocationAutomationEnabled) {
                     LocationAutomationStatus(
                         doorState = doorState,
-                        currentDistance = 50f, // TODO: Implementiere echte Distanz
+                        currentDistance = currentDistance,
                         triggerDistance = locationAutomationSettings.triggerDistance.toFloat(),
                         modifier = Modifier.padding(16.dp)
                     )

@@ -11,7 +11,8 @@ import kotlinx.coroutines.flow.asStateFlow
 data class LocationData(
     val latitude: Double,
     val longitude: Double,
-    val speed: Float
+    val speed: Float,
+    val distanceToGarage: Double? = null
 )
 
 object LocationDataRepository {

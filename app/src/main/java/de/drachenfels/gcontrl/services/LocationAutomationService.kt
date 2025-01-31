@@ -58,19 +58,39 @@ class LocationAutomationService : Service() {
     }
 
     private fun createLocationRequest() {
-        locationRequest = LocationRequest.Builder(10000L)
+        locationRequest = LocationRequest.Builder(2000L)
             .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
             .build()
     }
 
+    // TODO: Implmenent preferences manager possibly using a stateflow to distribute changes to the settings...
     private fun createLocationCallback() {
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(locationResult: LocationResult) {
                 locationResult.lastLocation?.let { location ->
                     logger.d(LogConfig.TAG_LOCATION, "Location update: ${location.latitude}, ${location.longitude}")
-                    // Emit location update to SharedFlow
+
+                    // Calculate distance if home location is set
+                    val homeLatitude = prefs.getFloat(KEY_HOME_LATITUDE, 0.0f).toDouble()
+                    val homeLongitude = prefs.getFloat(KEY_HOME_LONGITUDE, 0.0f).toDouble()
+                    val distance = if (homeLatitude != 0.0 && homeLongitude != 0.0) {
+                        val homeLocation = Location("").apply {
+                            latitude = homeLatitude
+                            longitude = homeLongitude
+                        }
+                        calculateDistance(location, homeLocation)
+                    } else null
+
+                    // Emit location update to SharedFlow with distance
                     CoroutineScope(Dispatchers.IO).launch {
-                        locationDataRepository.emitLocation(LocationData(location.latitude, location.longitude, location.speed))
+                        locationDataRepository.emitLocation(
+                            LocationData(
+                                latitude = location.latitude,
+                                longitude = location.longitude,
+                                speed = location.speed,
+                                distanceToGarage = distance
+                            )
+                        )
                     }
                     checkLocation(location)
                 }
