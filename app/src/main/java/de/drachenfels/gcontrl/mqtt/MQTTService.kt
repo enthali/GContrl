@@ -88,6 +88,9 @@ class MQTTService(private val context: Context) {
                     _connectionState.value = ConnectionState.Error(throwable.message ?: "Subscribe failed")
                 } else {
                     logger.d(LogConfig.TAG_MQTT, "Subscribe successful")
+                    // Status nach erfolgreichem Subscribe anfragen
+                    logger.d(LogConfig.TAG_MQTT, "Requesting initial door state")
+                    requestStatus()
                 }
             }
     }

@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -18,66 +19,72 @@ import de.drachenfels.gcontrl.utils.AndroidLogger
 import de.drachenfels.gcontrl.utils.LogConfig
 import kotlinx.coroutines.launch
 
-// TODO: MQTTService should be converted to Foreground Service
 class MainActivity : ComponentActivity() {
     private val logger = AndroidLogger()
     private lateinit var mqttService: MQTTService
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        logger.d(LogConfig.TAG_MAIN, "onCreate")
+        logger.d(LogConfig.TAG_MAIN, "onCreate - Initializing app")
         mqttService = MQTTService(this)
         
         enableEdgeToEdge()
         setContent {
             GContrlApp(mqttService)
         }
-    }
-
-
-    override fun onResume() {
-        super.onResume()
-        logger.d(LogConfig.TAG_MAIN, "onResume - attempting to connect")
-        // Versuche beim Starten zu verbinden
-        lifecycleScope.launch {
-            val isConnected = mqttService.connect()
-            if (isConnected) {
-                // Handle successful connection, e.g., update UI
-                logger.d(LogConfig.TAG_MAIN, "onResume - connected")
-            } else {
-                // Handle connection failure, e.g., show error message
-                logger.d(LogConfig.TAG_MAIN, "onResume - connection failed")
-            }
-        }
+        logger.d(LogConfig.TAG_MAIN, "onCreate - App initialized")
     }
 
     override fun onPause() {
         super.onPause()
-        mqttService.disconnect()
-        logger.d(LogConfig.TAG_MAIN, "onPause")
+        logger.d(LogConfig.TAG_MAIN, "onPause - App going to background")
+    }
+
+    override fun onResume() {
+        super.onResume()
+        logger.d(LogConfig.TAG_MAIN, "onResume - App coming to foreground")
     }
 
     override fun onDestroy() {
         super.onDestroy()
+        logger.d(LogConfig.TAG_MAIN, "onDestroy - Cleaning up")
         mqttService.disconnect()
-        logger.d(LogConfig.TAG_MAIN, "onDestroy")
+        logger.d(LogConfig.TAG_MAIN, "onDestroy - MQTT connection closed")
     }
 }
 
 @Composable
 fun GContrlApp(mqttService: MQTTService) {
+    val logger = AndroidLogger()
     var showSettings by remember { mutableStateOf(false) }
+
+    // Effekt für Screen-Wechsel
+    LaunchedEffect(showSettings) {
+        if (showSettings) {
+            logger.d(LogConfig.TAG_MAIN, "Screen transition: Main -> Settings, disconnecting MQTT")
+            mqttService.disconnect()
+        } else {
+            logger.d(LogConfig.TAG_MAIN, "Screen transition: Settings -> Main, connecting MQTT")
+            mqttService.connect()
+        }
+    }
 
     GContrlTheme {
         if (showSettings) {
             SettingsScreen(
                 mqttService = mqttService,
-                onNavigateBack = { showSettings = false }
+                onNavigateBack = { 
+                    logger.d(LogConfig.TAG_MAIN, "User requested navigation: Settings -> Main")
+                    showSettings = false 
+                }
             )
         } else {
             MainScreen(
                 mqttService = mqttService,
-                onNavigateToSettings = { showSettings = true }
+                onNavigateToSettings = { 
+                    logger.d(LogConfig.TAG_MAIN, "User requested navigation: Main -> Settings")
+                    showSettings = true 
+                }
             )
         }
     }
