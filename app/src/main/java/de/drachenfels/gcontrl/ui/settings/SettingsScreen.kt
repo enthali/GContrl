@@ -38,7 +38,7 @@ private const val KEY_TRIGGER_DISTANCE = "trigger_distance"
 private val logger = AndroidLogger()
 
 // feature to be implemented in future release
-private const val ENABLE_LOCATION_FEATURES = false  // Will be enabled in future release
+private const val ENABLE_LOCATION_FEATURES = true  // Will be enabled in future release
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
