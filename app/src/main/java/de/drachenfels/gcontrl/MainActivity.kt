@@ -57,21 +57,6 @@ class MainActivity : ComponentActivity() {
     private val _locationAutomationSettings = MutableStateFlow(LocationAutomationSettings())
     val locationAutomationSettings: StateFlow<LocationAutomationSettings> = _locationAutomationSettings.asStateFlow()
 
-    fun updateLocationAutomationSettings(newSettings: LocationAutomationSettings) {
-        _locationAutomationSettings.value = newSettings
-        with(prefs.edit()) {
-            putBoolean(KEY_LOCATION_AUTOMATION_ENABLED, newSettings.isLocationAutomationEnabled)
-            putInt(KEY_TRIGGER_DISTANCE, newSettings.triggerDistance)
-            apply()
-        }
-        // Start or stop the service based on the new settings
-        if (newSettings.isLocationAutomationEnabled) {
-            startLocationAutomationService()
-        } else {
-            stopLocationAutomationService()
-        }
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         logger.d(LogConfig.TAG_MAIN, "onCreate - Initializing app")
@@ -90,6 +75,8 @@ class MainActivity : ComponentActivity() {
 
                 if (fineLocationGranted && coarseLocationGranted) {
                     logger.d(LogConfig.TAG_LOCATION, "Location permissions granted by user")
+                    // Start service after permissions are granted
+                    startLocationAutomationService()
                 } else {
                     logger.d(LogConfig.TAG_LOCATION, "Location permissions denied by user")
                 }
@@ -103,8 +90,16 @@ class MainActivity : ComponentActivity() {
         }
         logger.d(LogConfig.TAG_MAIN, "onCreate - App initialized")
 
-        if (_locationAutomationSettings.value.isLocationAutomationEnabled) {
-            startLocationAutomationService()
+        // Always start the service, as we need it for speed-based navigation
+        startLocationAutomationService()
+    }
+
+    fun updateLocationAutomationSettings(newSettings: LocationAutomationSettings) {
+        _locationAutomationSettings.value = newSettings
+        with(prefs.edit()) {
+            putBoolean(KEY_LOCATION_AUTOMATION_ENABLED, newSettings.isLocationAutomationEnabled)
+            putInt(KEY_TRIGGER_DISTANCE, newSettings.triggerDistance)
+            apply()
         }
     }
 
