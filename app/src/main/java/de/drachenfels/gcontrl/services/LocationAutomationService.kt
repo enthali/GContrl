@@ -42,6 +42,11 @@ class LocationAutomationService : Service() {
     private  val KEY_HOME_LATITUDE = "garage_latitude"
     private  val KEY_HOME_LONGITUDE = "garage_longitude"
 
+    // Add new properties for state tracking
+    private var lastKnownDistance: Double? = null
+    private var lastCommandTime: Long = 0
+    private val COMMAND_COOLDOWN = 60000L // 1 minute cooldown between commands
+
     override fun onCreate() {
         super.onCreate()
         logger.d(LogConfig.TAG_LOCATION, "LocationAutomationService created")
@@ -122,6 +127,7 @@ class LocationAutomationService : Service() {
             logger.d(LogConfig.TAG_LOCATION, "Location Automation is disabled")
             return
         }
+
         val homeLatitude = prefs.getFloat(KEY_HOME_LATITUDE, 0.0f).toDouble()
         val homeLongitude = prefs.getFloat(KEY_HOME_LONGITUDE, 0.0f).toDouble()
         val triggerDistance = prefs.getInt(KEY_TRIGGER_DISTANCE, 100)
@@ -130,29 +136,47 @@ class LocationAutomationService : Service() {
             logger.d(LogConfig.TAG_LOCATION, "Home location not set")
             return
         }
+
         val homeLocation = Location("").apply {
             latitude = homeLatitude
             longitude = homeLongitude
         }
 
-        val distance = calculateDistance(currentLocation, homeLocation)
-        logger.d(LogConfig.TAG_LOCATION, "Distance to home: $distance meters")
+        val currentDistance = calculateDistance(currentLocation, homeLocation)
+        logger.d(LogConfig.TAG_LOCATION, "Distance to home: $currentDistance meters")
 
-        //TODO: Trigger detection, we should only send one open/close command, when we move over the trigger distance
-        if (distance < triggerDistance) {
-            logger.d(LogConfig.TAG_LOCATION, "Within trigger distance, opening garage")
-            CoroutineScope(Dispatchers.IO).launch {
-                MQTTService.getInstance().openDoor()
+        // Check if enough time has passed since last command
+        val currentTime = System.currentTimeMillis()
+        if (currentTime - lastCommandTime < COMMAND_COOLDOWN) {
+            logger.d(LogConfig.TAG_LOCATION, "Command cooldown active, skipping check")
+            return
+        }
+
+        // Only trigger if we have a previous distance to compare against
+        lastKnownDistance?.let { lastDistance ->
+            when {
+                // Trigger when crossing from outside to inside
+                lastDistance >= triggerDistance && currentDistance < triggerDistance -> {
+                    logger.d(LogConfig.TAG_LOCATION, "Crossed trigger distance inward, opening garage")
+                    CoroutineScope(Dispatchers.IO).launch {
+                        MQTTService.getInstance().openDoor()
+                    }
+                    lastCommandTime = currentTime
+                }
+                // Trigger when crossing from inside to outside
+                lastDistance < triggerDistance && currentDistance >= triggerDistance -> {
+                    logger.d(LogConfig.TAG_LOCATION, "Crossed trigger distance outward, closing garage")
+                    CoroutineScope(Dispatchers.IO).launch {
+                        MQTTService.getInstance().closeDoor()
+                    }
+                    lastCommandTime = currentTime
+                }
             }
         }
 
-        if (distance > triggerDistance) {
-            logger.d(LogConfig.TAG_LOCATION, "Within trigger distance, opening garage")
-            CoroutineScope(Dispatchers.IO).launch {
-                MQTTService.getInstance().closeDoor()
-            }
-        }
+        lastKnownDistance = currentDistance
     }
+
 
     private fun calculateDistance(location1: Location, location2: Location): Double {
         val earthRadius = 6371000.0 // in meters
