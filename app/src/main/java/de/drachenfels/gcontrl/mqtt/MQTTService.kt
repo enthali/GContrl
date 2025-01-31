@@ -5,8 +5,11 @@ import com.hivemq.client.mqtt.mqtt5.Mqtt5AsyncClient
 import com.hivemq.client.mqtt.mqtt5.Mqtt5Client
 import de.drachenfels.gcontrl.utils.AndroidLogger
 import de.drachenfels.gcontrl.utils.LogConfig
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 import java.util.UUID
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
@@ -184,22 +187,26 @@ class MQTTService(private val context: Context) {
     }
 
     fun openDoor() {
-        logger.d(LogConfig.TAG_MQTT, "Publishing open command")
-        client?.publishWith()
-            ?.topic(TOPIC_COMMAND)
-            ?.payload(COMMAND_OPEN.toByteArray())
-            ?.send()
-            ?.whenComplete { pubAck, throwable ->
-                if (throwable != null) {
-                    logger.e(LogConfig.TAG_MQTT, "Failed to publish open command", throwable)
-                    _connectionState.value = ConnectionState.Error(throwable.message ?: "Publish failed")
-                } else {
-                    logger.d(LogConfig.TAG_MQTT, "Open command published successfully")
+        CoroutineScope(Dispatchers.IO).launch {
+            logger.d(LogConfig.TAG_MQTT, "Publishing open command")
+            client?.publishWith()
+                ?.topic(TOPIC_COMMAND)
+                ?.payload(COMMAND_OPEN.toByteArray())
+                ?.send()
+                ?.whenComplete { pubAck, throwable ->
+                    if (throwable != null) {
+                        logger.e(LogConfig.TAG_MQTT, "Failed to publish open command", throwable)
+                        _connectionState.value =
+                            ConnectionState.Error(throwable.message ?: "Publish failed")
+                    } else {
+                        logger.d(LogConfig.TAG_MQTT, "Open command published successfully")
+                    }
                 }
-            }
+        }
     }
 
     fun closeDoor() {
+        CoroutineScope(Dispatchers.IO).launch {
         logger.d(LogConfig.TAG_MQTT, "Publishing close command")
         client?.publishWith()
             ?.topic(TOPIC_COMMAND)
@@ -213,22 +220,26 @@ class MQTTService(private val context: Context) {
                     logger.d(LogConfig.TAG_MQTT, "Close command published successfully")
                 }
             }
+        }
     }
 
     fun stopDoor() {
-        logger.d(LogConfig.TAG_MQTT, "Publishing stop command")
-        client?.publishWith()
-            ?.topic(TOPIC_COMMAND)
-            ?.payload(COMMAND_STOP.toByteArray())
-            ?.send()
-            ?.whenComplete { pubAck, throwable ->
-                if (throwable != null) {
-                    logger.e(LogConfig.TAG_MQTT, "Failed to publish stop command", throwable)
-                    _connectionState.value = ConnectionState.Error(throwable.message ?: "Publish failed")
-                } else {
-                    logger.d(LogConfig.TAG_MQTT, "Stop command published successfully")
+        CoroutineScope(Dispatchers.IO).launch {
+            logger.d(LogConfig.TAG_MQTT, "Publishing stop command")
+            client?.publishWith()
+                ?.topic(TOPIC_COMMAND)
+                ?.payload(COMMAND_STOP.toByteArray())
+                ?.send()
+                ?.whenComplete { pubAck, throwable ->
+                    if (throwable != null) {
+                        logger.e(LogConfig.TAG_MQTT, "Failed to publish stop command", throwable)
+                        _connectionState.value =
+                            ConnectionState.Error(throwable.message ?: "Publish failed")
+                    } else {
+                        logger.d(LogConfig.TAG_MQTT, "Stop command published successfully")
+                    }
                 }
-            }
+        }
     }
 
     sealed class ConnectionState {
