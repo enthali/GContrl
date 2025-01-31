@@ -67,7 +67,7 @@ fun LocationAutomationSection(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                FilledTonalButton(
+                Button(
                     onClick = onSetCurrentLocation,
                     modifier = Modifier.fillMaxWidth()
                 ) {

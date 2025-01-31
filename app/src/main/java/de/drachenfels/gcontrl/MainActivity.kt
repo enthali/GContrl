@@ -19,6 +19,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
+import de.drachenfels.gcontrl.services.LocationDataRepository
 import de.drachenfels.gcontrl.services.MQTTService
 import de.drachenfels.gcontrl.ui.mainscreen.MainScreen
 import de.drachenfels.gcontrl.ui.settings.SettingsScreen
@@ -97,7 +98,7 @@ class MainActivity : ComponentActivity() {
 
         enableEdgeToEdge()
         setContent {
-            GContrlApp(::updateLocationAutomationSettings, locationAutomationSettings)
+            GContrlApp(::updateLocationAutomationSettings, locationAutomationSettings, LocationDataRepository)
         }
         logger.d(LogConfig.TAG_MAIN, "onCreate - App initialized")
 
@@ -166,8 +167,9 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun GContrlApp(
     updateLocationAutomationSettings: (LocationAutomationSettings) -> Unit,
-    locationAutomationSettings: StateFlow<LocationAutomationSettings>
-) {
+    locationAutomationSettings: StateFlow<LocationAutomationSettings>,
+    locationDataRepository: LocationDataRepository  // Neu
+){
     val logger = AndroidLogger()
     var showSettings by remember { mutableStateOf(false) }
     val mqttService = MQTTService.getInstance()
@@ -200,7 +202,8 @@ fun GContrlApp(
                     showSettings = false
                 },
                 updateLocationAutomationSettings = updateLocationAutomationSettings,
-                locationAutomationSettings = locationAutomationSettings
+                locationAutomationSettings = locationAutomationSettings,
+                locationDataRepository = locationDataRepository
             )
         } else {
             MainScreen(

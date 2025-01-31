@@ -2,8 +2,11 @@ package de.drachenfels.gcontrl
 
 import android.Manifest
 import android.app.Service
+import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
+import android.location.Location
 import android.os.IBinder
 import androidx.core.app.ActivityCompat
 import com.google.android.gms.location.FusedLocationProviderClient
@@ -11,21 +14,38 @@ import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
-import com.google.android.gms.location.Priority
+import de.drachenfels.gcontrl.services.LocationData
+import de.drachenfels.gcontrl.services.LocationDataRepository
+import de.drachenfels.gcontrl.services.MQTTService
 import de.drachenfels.gcontrl.utils.AndroidLogger
 import de.drachenfels.gcontrl.utils.LogConfig
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlin.math.atan2
+import kotlin.math.cos
+import kotlin.math.sin
+import kotlin.math.sqrt
 
 class LocationAutomationService : Service() {
-
     private val logger = AndroidLogger()
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationRequest: LocationRequest
     private lateinit var locationCallback: LocationCallback
+    private lateinit var prefs: SharedPreferences
+    private val locationDataRepository = LocationDataRepository
+
+    // Settings keys
+    private  val PREFS_NAME = "GContrlPrefs"
+    private  val KEY_LOCATION_AUTOMATION_ENABLED = "location_automation_enabled"
+    private  val KEY_TRIGGER_DISTANCE = "trigger_distance"
+    private  val KEY_HOME_LATITUDE = "garage_latitude"
+    private  val KEY_HOME_LONGITUDE = "garage_longitude"
 
     override fun onCreate() {
         super.onCreate()
         logger.d(LogConfig.TAG_LOCATION, "LocationAutomationService created")
-
+        prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         createLocationRequest()
         createLocationCallback()
@@ -37,18 +57,9 @@ class LocationAutomationService : Service() {
         return START_STICKY
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        logger.d(LogConfig.TAG_LOCATION, "LocationAutomationService destroyed")
-        stopLocationUpdates()
-    }
-
-    override fun onBind(intent: Intent?): IBinder? {
-        return null // We don't provide binding for this service
-    }
-
     private fun createLocationRequest() {
-        locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 10000)
+        locationRequest = LocationRequest.Builder(10000L)
+            .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
             .build()
     }
 
@@ -57,7 +68,11 @@ class LocationAutomationService : Service() {
             override fun onLocationResult(locationResult: LocationResult) {
                 locationResult.lastLocation?.let { location ->
                     logger.d(LogConfig.TAG_LOCATION, "Location update: ${location.latitude}, ${location.longitude}")
-                    // Hier die Logik zum Berechnen der Entfernung und Senden von MQTT-Befehlen einfügen
+                    // Emit location update to SharedFlow
+                    CoroutineScope(Dispatchers.IO).launch {
+                        locationDataRepository.emitLocation(LocationData(location.latitude, location.longitude, location.speed))
+                    }
+                    checkLocation(location)
                 }
             }
         }
@@ -72,17 +87,73 @@ class LocationAutomationService : Service() {
                 Manifest.permission.ACCESS_COARSE_LOCATION
             ) != PackageManager.PERMISSION_GRANTED
         ) {
-            logger.e(LogConfig.TAG_LOCATION, "Location permissions not granted")
             return
         }
         fusedLocationClient.requestLocationUpdates(
             locationRequest,
             locationCallback,
-            null /* Looper */
+            null
         )
     }
 
-    private fun stopLocationUpdates() {
-        fusedLocationClient.removeLocationUpdates(locationCallback)
+    private fun checkLocation(currentLocation: Location) {
+        val isLocationAutomationEnabled = prefs.getBoolean(KEY_LOCATION_AUTOMATION_ENABLED, false)
+        if (!isLocationAutomationEnabled) {
+            logger.d(LogConfig.TAG_LOCATION, "Location Automation is disabled")
+            return
+        }
+        val homeLatitude = prefs.getFloat(KEY_HOME_LATITUDE, 0.0f).toDouble()
+        val homeLongitude = prefs.getFloat(KEY_HOME_LONGITUDE, 0.0f).toDouble()
+        val triggerDistance = prefs.getInt(KEY_TRIGGER_DISTANCE, 100)
+
+        if (homeLatitude == 0.0 && homeLongitude == 0.0) {
+            logger.d(LogConfig.TAG_LOCATION, "Home location not set")
+            return
+        }
+        val homeLocation = Location("").apply {
+            latitude = homeLatitude
+            longitude = homeLongitude
+        }
+
+        val distance = calculateDistance(currentLocation, homeLocation)
+        logger.d(LogConfig.TAG_LOCATION, "Distance to home: $distance meters")
+
+        //TODO: Trigger detection, we should only send one open/close command, when we move over the trigger distance
+        if (distance < triggerDistance) {
+            logger.d(LogConfig.TAG_LOCATION, "Within trigger distance, opening garage")
+            CoroutineScope(Dispatchers.IO).launch {
+                MQTTService.getInstance().openDoor()
+            }
+        }
+
+        if (distance > triggerDistance) {
+            logger.d(LogConfig.TAG_LOCATION, "Within trigger distance, opening garage")
+            CoroutineScope(Dispatchers.IO).launch {
+                MQTTService.getInstance().closeDoor()
+            }
+        }
+    }
+
+    private fun calculateDistance(location1: Location, location2: Location): Double {
+        val earthRadius = 6371000.0 // in meters
+
+        val lat1 = Math.toRadians(location1.latitude)
+        val lon1 = Math.toRadians(location1.longitude)
+        val lat2 = Math.toRadians(location2.latitude)
+        val lon2 = Math.toRadians(location2.longitude)
+
+        val dLat = lat2 - lat1
+        val dLon = lon2 - lon1
+
+        val a = sin(dLat / 2) * sin(dLat / 2) +
+                cos(lat1) * cos(lat2) *
+                sin(dLon / 2) * sin(dLon / 2)
+        val c = 2 * atan2(sqrt(a), sqrt(1 - a))
+
+        return earthRadius * c
+    }
+
+    override fun onBind(intent: Intent): IBinder? {
+        return null
     }
 }

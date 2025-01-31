@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -17,6 +18,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import de.drachenfels.gcontrl.LocationAutomationSettings
+import de.drachenfels.gcontrl.services.LocationDataRepository
 import de.drachenfels.gcontrl.services.MQTTService
 import de.drachenfels.gcontrl.ui.settings.components.*
 import de.drachenfels.gcontrl.ui.theme.GContrlTheme
@@ -26,6 +28,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import java.lang.Thread.sleep
 
 // TODO: consider moveing to dataStore
@@ -57,8 +60,9 @@ fun SettingsScreen(
     onNavigateBack: () -> Unit,
     updateLocationAutomationSettings: (LocationAutomationSettings) -> Unit,
     locationAutomationSettings: StateFlow<LocationAutomationSettings>,
+    locationDataRepository: LocationDataRepository,  // Neu
     modifier: Modifier = Modifier
-) {
+){
     val context = LocalContext.current
     val prefs = remember { context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE) }
     val scope = rememberCoroutineScope()
@@ -91,6 +95,18 @@ fun SettingsScreen(
         mutableStateOf(currentSettings.triggerDistance)
     }
 
+    // Collect location updates
+    var currentLocation by remember { mutableStateOf<Pair<Double, Double>?>(null) }
+
+    LaunchedEffect(key1 = locationDataRepository) {
+        logger.d(LogConfig.TAG_SETTINGS, "Starting location collection")
+        locationDataRepository.locationUpdates.collect { locationData ->
+            locationData?.let {
+                logger.d(LogConfig.TAG_SETTINGS, "Collected location: ${it.latitude}, ${it.longitude}")
+                currentLocation = Pair(it.latitude, it.longitude)
+            }
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -179,14 +195,16 @@ fun SettingsScreen(
                     },
                     location = garageLocation,
                     onSetCurrentLocation = {
-                        // For testing: Set to Munich coordinates
-                        val munichLocation = Pair(48.1351, 11.5820)
-                        garageLocation = munichLocation
-                        prefs.edit()
-                            .putFloat(KEY_GARAGE_LAT, munichLocation.first.toFloat())
-                            .putFloat(KEY_GARAGE_LON, munichLocation.second.toFloat())
-                            .apply()
-                        Toast.makeText(context, "Location set to Munich", Toast.LENGTH_SHORT).show()
+                        currentLocation?.let { location ->
+                            garageLocation = location
+                            prefs.edit()
+                                .putFloat(KEY_GARAGE_LAT, location.first.toFloat())
+                                .putFloat(KEY_GARAGE_LON, location.second.toFloat())
+                                .apply()
+                            Toast.makeText(context, "Location set to current location", Toast.LENGTH_SHORT).show()
+                        } ?: run {
+                            Toast.makeText(context, "Current location not available", Toast.LENGTH_SHORT).show()
+                        }
                     },
                     triggerDistance = triggerDistance,
                     onTriggerDistanceChange = { distance ->
@@ -221,6 +239,8 @@ class SettingsPreviewContextWrapper(
 @Composable
 fun SettingsScreenPreview() {
     val locationAutomationSettingsFlow = remember { MutableStateFlow(LocationAutomationSettings()) }
+    // Erstelle eine Instanz von LocationDataRepository
+    val locationDataRepository = remember { LocationDataRepository }
     // Verwende SettingsPreviewContextWrapper
     CompositionLocalProvider(
         LocalContext provides SettingsPreviewContextWrapper(
@@ -237,7 +257,8 @@ fun SettingsScreenPreview() {
                     mqttService = MQTTService.getInstance(),
                     onNavigateBack = { },
                     updateLocationAutomationSettings = { },
-                    locationAutomationSettings = locationAutomationSettingsFlow.asStateFlow()
+                    locationAutomationSettings = locationAutomationSettingsFlow.asStateFlow(),
+                    locationDataRepository = locationDataRepository
                 )
             }
         }
