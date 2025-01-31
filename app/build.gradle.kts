@@ -25,8 +25,8 @@ android {
         applicationId = "de.drachenfels.gcontrl"
         minSdk = 26
         targetSdk = 35
-        versionCode = 30
-        versionName = "set things right"
+        versionCode = 31
+        versionName = "connect me"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
