@@ -25,6 +25,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import de.drachenfels.gcontrl.services.LocationDataRepository
 import de.drachenfels.gcontrl.ui.mainscreen.components.*
 import de.drachenfels.gcontrl.ui.theme.GContrlTheme
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -43,6 +44,11 @@ fun MainScreen(
     val doorState by mqttService.doorState.collectAsState()
     val connectionState by mqttService.connectionState.collectAsState()
 
+    // Collect location data for speed check
+    val locationData by LocationDataRepository.locationUpdates.collectAsState()
+    val currentSpeed = locationData?.speed ?: 0f
+    val showSettings = currentSpeed <= 3f
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -51,8 +57,10 @@ fun MainScreen(
                     ConnectionStatusIcon(connectionState)
                 },
                 actions = {
-                    IconButton(onClick = onNavigateToSettings) {
-                        Icon(Icons.Default.Settings, contentDescription = "Settings")
+                    if (showSettings) {
+                        IconButton(onClick = onNavigateToSettings) {
+                            Icon(Icons.Default.Settings, contentDescription = "Settings")
+                        }
                     }
                 }
             )

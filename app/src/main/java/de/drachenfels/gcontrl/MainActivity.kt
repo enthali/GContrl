@@ -13,6 +13,7 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -168,14 +169,26 @@ class MainActivity : ComponentActivity() {
 fun GContrlApp(
     updateLocationAutomationSettings: (LocationAutomationSettings) -> Unit,
     locationAutomationSettings: StateFlow<LocationAutomationSettings>,
-    locationDataRepository: LocationDataRepository  // Neu
+    locationDataRepository: LocationDataRepository
 ){
     val logger = AndroidLogger()
     var showSettings by remember { mutableStateOf(false) }
     val mqttService = MQTTService.getInstance()
     val context = LocalContext.current
 
-    // Effekt für Screen-Wechsel
+    // Collect location data for speed check
+    val locationData by locationDataRepository.locationUpdates.collectAsState()
+
+    // Effect to handle speed-based navigation
+    LaunchedEffect(locationData) {
+        val speed = locationData?.speed ?: 0f
+        if (speed > 3f && showSettings) {
+            logger.d(LogConfig.TAG_MAIN, "Speed exceeds 3 km/h, returning to main screen")
+            showSettings = false
+        }
+    }
+
+    // Effect for screen transitions
     LaunchedEffect(showSettings) {
         if (showSettings) {
             logger.d(LogConfig.TAG_MAIN, "Screen transition: Main -> Settings, disconnecting MQTT")
@@ -209,8 +222,11 @@ fun GContrlApp(
             MainScreen(
                 mqttService = mqttService,
                 onNavigateToSettings = {
-                    logger.d(LogConfig.TAG_MAIN, "User requested navigation: Main -> Settings")
-                    showSettings = true
+                    val speed = locationData?.speed ?: 0f
+                    if (speed <= 3f) {
+                        logger.d(LogConfig.TAG_MAIN, "User requested navigation: Main -> Settings")
+                        showSettings = true
+                    }
                 },
                 locationAutomationSettingsFlow = locationAutomationSettings
             )
