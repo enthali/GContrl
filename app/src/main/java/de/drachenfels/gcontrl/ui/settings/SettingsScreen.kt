@@ -17,7 +17,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import de.drachenfels.gcontrl.LocationAutomationSettings
-import de.drachenfels.gcontrl.mqtt.MQTTService
+import de.drachenfels.gcontrl.services.MQTTService
 import de.drachenfels.gcontrl.ui.settings.components.*
 import de.drachenfels.gcontrl.ui.theme.GContrlTheme
 import de.drachenfels.gcontrl.utils.AndroidLogger

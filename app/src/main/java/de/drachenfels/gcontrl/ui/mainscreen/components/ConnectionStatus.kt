@@ -6,7 +6,7 @@ import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
-import de.drachenfels.gcontrl.mqtt.MQTTService
+import de.drachenfels.gcontrl.services.MQTTService
 
 @Composable
 fun ConnectionStatusIcon(connectionState: MQTTService.ConnectionState) {

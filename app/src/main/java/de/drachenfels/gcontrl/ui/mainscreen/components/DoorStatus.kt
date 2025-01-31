@@ -11,7 +11,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import de.drachenfels.gcontrl.R
-import de.drachenfels.gcontrl.mqtt.DoorState
+import de.drachenfels.gcontrl.services.DoorState
 
 @Composable
 fun DoorStatus(

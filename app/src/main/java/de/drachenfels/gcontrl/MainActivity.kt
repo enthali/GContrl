@@ -12,7 +12,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import de.drachenfels.gcontrl.mqtt.MQTTService
+import de.drachenfels.gcontrl.services.MQTTService
 import de.drachenfels.gcontrl.ui.mainscreen.MainScreen
 import de.drachenfels.gcontrl.ui.settings.SettingsScreen
 import de.drachenfels.gcontrl.ui.theme.GContrlTheme

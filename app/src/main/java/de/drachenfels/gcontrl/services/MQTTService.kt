@@ -1,4 +1,4 @@
-package de.drachenfels.gcontrl.mqtt
+package de.drachenfels.gcontrl.services
 
 import android.content.Context
 import com.hivemq.client.mqtt.mqtt5.Mqtt5AsyncClient

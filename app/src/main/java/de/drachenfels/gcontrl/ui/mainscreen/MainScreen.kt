@@ -11,7 +11,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import de.drachenfels.gcontrl.LocationAutomationSettings
-import de.drachenfels.gcontrl.mqtt.MQTTService
+import de.drachenfels.gcontrl.services.MQTTService
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
