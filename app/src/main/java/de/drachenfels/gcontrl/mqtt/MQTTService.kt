@@ -31,7 +31,6 @@ private const val COMMAND_CLOSE = "close"
 private const val COMMAND_STOP = "stop"
 private const val COMMAND_REQUEST_STATUS = "request_status"
 
-// TODO: Convert to Android Foreground Service to maintain connection and support future geofencing features
 class MQTTService(private val context: Context) {
     private val logger = AndroidLogger()
     private val _connectionState = MutableStateFlow<ConnectionState>(ConnectionState.Disconnected)
@@ -45,26 +44,29 @@ class MQTTService(private val context: Context) {
     private var connectContinuation: Continuation<Boolean>? = null
 
     private fun buildMqttClient(): Mqtt5AsyncClient {
-        logger.d(LogConfig.TAG_MQTT, "Building MQTT client")
+        val clientId = UUID.randomUUID().toString()
+        logger.d(LogConfig.TAG_MQTT, "Building MQTT client with ID: $clientId")
         val server = prefs.getString(KEY_MQTT_SERVER, "GaragePilot.com") ?: "GaragePilot.com"
         logger.d(LogConfig.TAG_MQTT, "Server: $server")
 
         return Mqtt5Client.builder()
-            .identifier(UUID.randomUUID().toString())
+            .identifier(clientId)
             .serverHost(server)
             .serverPort(MQTT_PORT)
             .sslConfig()
             .applySslConfig()
             .automaticReconnectWithDefaultConfig()
             .addConnectedListener {
-                logger.d(LogConfig.TAG_MQTT, "Connected listener triggered")
+                logger.d(LogConfig.TAG_MQTT, """Connected listener triggered for client:
+                |Client ID: $clientId""".trimMargin())
                 _connectionState.value = ConnectionState.Connected
                 subscribeToState()
                 connectContinuation?.resume(true)
                 connectContinuation = null
             }
             .addDisconnectedListener {
-                logger.d(LogConfig.TAG_MQTT, "Disconnected listener triggered")
+                logger.d(LogConfig.TAG_MQTT, """Disconnected listener triggered:
+                |Client ID: $clientId""".trimMargin())
                 _connectionState.value = ConnectionState.Disconnected
                 _doorState.value = DoorState.UNKNOWN
             }
