@@ -25,8 +25,8 @@ android {
         applicationId = "de.drachenfels.gcontrl"
         minSdk = 26
         targetSdk = 35
-        versionCode = 31
-        versionName = "connect me"
+        versionCode = 32
+        versionName = "new icon"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 

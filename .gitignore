@@ -11,6 +11,9 @@ local.properties
 filelist.md
 TODO.md
 
+#screenshots
+docu/screenshots/
+
 # Android Studio
 *.iml
 .idea/
