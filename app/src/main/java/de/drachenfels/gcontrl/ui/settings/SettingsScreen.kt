@@ -136,7 +136,7 @@ fun SettingsScreen(
                                     .putBoolean(KEY_CONFIG_VALID, false)
                                     .apply()
 
-                                val connected = mqttService.connect()
+                                val connected = mqttService.connect(mqttServer, mqttUser, mqttPassword)
                                 if (connected) {
                                     prefs.edit().putBoolean(KEY_CONFIG_VALID, true).apply()
                                     Toast.makeText(context, "Connection successful", Toast.LENGTH_SHORT).show()
@@ -234,7 +234,7 @@ fun SettingsScreenPreview() {
                 color = MaterialTheme.colorScheme.background
             ) {
                 SettingsScreen(
-                    mqttService = MQTTService(LocalContext.current),
+                    mqttService = MQTTService.getInstance(),
                     onNavigateBack = { },
                     updateLocationAutomationSettings = { },
                     locationAutomationSettings = locationAutomationSettingsFlow.asStateFlow()

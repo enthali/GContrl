@@ -7,15 +7,18 @@ import de.drachenfels.gcontrl.BuildConfig
  * All debug flags and component tags are managed here.
  */
 object LogConfig {
+
+
     // Debug flags
     var ENABLE_DEBUG = BuildConfig.DEBUG      // Master switch for debug
     var ENABLE_DEBUG_MQTT = false            // MQTT logging
     var ENABLE_DEBUG_SETTINGS = false        // Settings debug flag
 
     // Standard tags for components
-    const val TAG_MAIN = "GContrl"           // General app tag
-    const val TAG_MQTT = "MQTT"              // MQTT specific
-    const val TAG_SETTINGS = "Settings"      // Settings related
+    const val TAG_MAIN = "GPLog: GContrl"           // General app tag
+    const val TAG_MQTT = "GPLog: MQTT"              // MQTT specific
+    const val TAG_SETTINGS = "GPLog: Settings"      // Settings related
+    const val TAG_LOCATION = "GPLog: LocationAutomation"
 
     // Computed property for debug status
     val isDebuggingEnabled: Boolean

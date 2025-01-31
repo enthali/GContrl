@@ -12,6 +12,7 @@ hivemqMqttClient = "1.3.4"
 materialIconsExtended = "1.7.7"
 gamesActivity = "3.0.5"
 constraintlayout = "2.2.0"
+playServicesLocation = "21.3.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -32,6 +33,7 @@ hivemq-mqtt-client = { group = "com.hivemq", name = "hivemq-mqtt-client", versio
 androidx-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended", version.ref = "materialIconsExtended" }
 androidx-games-activity = { group = "androidx.games", name = "games-activity", version.ref = "gamesActivity" }
 androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
+play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

@@ -31,7 +31,7 @@ private const val COMMAND_CLOSE = "close"
 private const val COMMAND_STOP = "stop"
 private const val COMMAND_REQUEST_STATUS = "request_status"
 
-class MQTTService(private val context: Context) {
+class MQTTService private constructor () {
     private val logger = AndroidLogger()
     private val _connectionState = MutableStateFlow<ConnectionState>(ConnectionState.Disconnected)
     val connectionState: StateFlow<ConnectionState> = _connectionState
@@ -39,14 +39,23 @@ class MQTTService(private val context: Context) {
     private val _doorState = MutableStateFlow<DoorState>(DoorState.UNKNOWN)
     val doorState: StateFlow<DoorState> = _doorState
 
-    private val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
     private var client: Mqtt5AsyncClient? = null
     private var connectContinuation: Continuation<Boolean>? = null
 
-    private fun buildMqttClient(): Mqtt5AsyncClient {
+    companion object {
+        @Volatile
+        private var instance: MQTTService? = null
+
+        fun getInstance(): MQTTService {
+            return instance ?: synchronized(this) {
+                instance ?: MQTTService().also { instance = it }
+            }
+        }
+    }
+
+    private fun buildMqttClient(server: String): Mqtt5AsyncClient {
         val clientId = UUID.randomUUID().toString()
         logger.d(LogConfig.TAG_MQTT, "Building MQTT client with ID: $clientId")
-        val server = prefs.getString(KEY_MQTT_SERVER, "GaragePilot.com") ?: "GaragePilot.com"
         logger.d(LogConfig.TAG_MQTT, "Server: $server")
 
         return Mqtt5Client.builder()
@@ -58,7 +67,7 @@ class MQTTService(private val context: Context) {
             .automaticReconnectWithDefaultConfig()
             .addConnectedListener {
                 logger.d(LogConfig.TAG_MQTT, """Connected listener triggered for client:
-                |Client ID: $clientId""".trimMargin())
+Client ID: $clientId""".trimMargin())
                 _connectionState.value = ConnectionState.Connected
                 subscribeToState()
                 connectContinuation?.resume(true)
@@ -66,7 +75,7 @@ class MQTTService(private val context: Context) {
             }
             .addDisconnectedListener {
                 logger.d(LogConfig.TAG_MQTT, """Disconnected listener triggered:
-                |Client ID: $clientId""".trimMargin())
+Client ID: $clientId""".trimMargin())
                 _connectionState.value = ConnectionState.Disconnected
                 _doorState.value = DoorState.UNKNOWN
             }
@@ -100,7 +109,7 @@ class MQTTService(private val context: Context) {
             }
     }
 
-    suspend fun connect(): Boolean = suspendCoroutine { continuation ->
+    suspend fun connect(server: String, username: String, password: String): Boolean = suspendCoroutine { continuation ->
         try {
             logger.d(LogConfig.TAG_MQTT, "Starting connect sequence")
             connectContinuation = continuation
@@ -117,11 +126,8 @@ class MQTTService(private val context: Context) {
             }
 
             // Create new client
-            client = buildMqttClient()
+            client = buildMqttClient(server)
             logger.d(LogConfig.TAG_MQTT, "Created new MQTT client")
-
-            val username = prefs.getString(KEY_MQTT_USERNAME, "") ?: ""
-            val password = prefs.getString(KEY_MQTT_PASSWORD, "") ?: ""
 
             _connectionState.value = ConnectionState.Disconnected
 

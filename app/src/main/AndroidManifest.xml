@@ -2,6 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
@@ -15,6 +17,11 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.GaragePilot"
         tools:targetApi="31">
+
+        <service
+            android:name=".services.LocationAutomationService"
+            android:enabled="true"
+            android:exported="false" />
         <activity
             android:name=".MainActivity"
             android:exported="true"
