@@ -42,6 +42,7 @@ class MQTTService private constructor () {
     private var client: Mqtt5AsyncClient? = null
     private var connectContinuation: Continuation<Boolean>? = null
 
+    //TODO: investigate sporadic disconnects
     companion object {
         @Volatile
         private var instance: MQTTService? = null
