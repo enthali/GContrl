@@ -32,6 +32,7 @@ fun DoorStatus(
             painter = painterResource(
                 id = when (state) {
                     DoorState.OPEN -> R.drawable.ic_garage_open
+                    DoorState.UNKNOWN -> R.drawable.ic_garage_unknown
                     else -> R.drawable.ic_garage_closed
                 }
             ),
