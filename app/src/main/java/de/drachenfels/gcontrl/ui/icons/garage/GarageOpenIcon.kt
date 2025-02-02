@@ -1,6 +1,7 @@
 package de.drachenfels.gcontrl.ui.icons.garage
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -18,19 +19,21 @@ fun GarageOpenIcon(
 
     val surfaceVariant = MaterialTheme.colorScheme.surfaceVariant
 
-    Canvas(modifier = modifier) {
-        val width = size.width
-        val scale = width / 60f  // Viewbox scaling
+    Box(modifier = modifier) {
+        Canvas(modifier = modifier.matchParentSize()) {
+            val width = size.width
+            val scale = width / 60f  // Viewbox scaling
 
-        // Innerer Bereich
-        drawRect(
-            color = surfaceVariant,
-            alpha = 0.3f,
-            topLeft = Offset(6f * scale, 20f * scale),
-            size = Size(49f * scale, 30f * scale)
-        )
+            // Innerer Bereich
+            drawRect(
+                color = surfaceVariant,
+                alpha = 0.3f,
+                topLeft = Offset(6f * scale, 20f * scale),
+                size = Size(49f * scale, 30f * scale)
+            )
+        }
+        GarageOutline(modifier = modifier.matchParentSize())
     }
-    GarageOutline(modifier = modifier)
 }
 
 @Preview

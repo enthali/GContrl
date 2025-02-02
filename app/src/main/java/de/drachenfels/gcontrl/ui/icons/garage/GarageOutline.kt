@@ -11,6 +11,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import de.drachenfels.gcontrl.ui.theme.GContrlTheme
 
+// TODO: refactor from xml resources to composeable für garage door visualistaion
 @Composable
 fun GarageOutline(
     modifier: Modifier = Modifier

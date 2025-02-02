@@ -6,12 +6,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import de.drachenfels.gcontrl.R
 import de.drachenfels.gcontrl.services.DoorState
+import de.drachenfels.gcontrl.ui.icons.garage.GarageClosedIcon
+import de.drachenfels.gcontrl.ui.icons.garage.GarageOpenIcon
+import de.drachenfels.gcontrl.ui.icons.garage.GarageUnknownIcon
 
 @Composable
 fun DoorStatus(
@@ -28,18 +29,12 @@ fun DoorStatus(
         verticalArrangement = Arrangement.Center,
         modifier = Modifier.padding(vertical = if (showText) 16.dp else 4.dp)
     ) {
-        Icon(
-            painter = painterResource(
-                id = when (state) {
-                    DoorState.OPEN -> R.drawable.ic_garage_open
-                    DoorState.UNKNOWN -> R.drawable.ic_garage_unknown
-                    else -> R.drawable.ic_garage_closed
-                }
-            ),
-            contentDescription = null,
-            modifier = Modifier.size(iconSize),
-            tint = MaterialTheme.colorScheme.primary
-        )
+
+        when (state) {
+            DoorState.OPEN -> GarageOpenIcon(modifier = Modifier.size(iconSize))
+            DoorState.CLOSED -> GarageClosedIcon(modifier = Modifier.size(iconSize))
+            else -> GarageUnknownIcon(modifier = Modifier.size(iconSize))
+            }
 
         if (showText) {
             Text(
@@ -77,5 +72,16 @@ fun DoorStatusPreview() {
 fun DoorStatusClosedPreview() {
     MaterialTheme {
         DoorStatus(state = DoorState.CLOSED)
+    }
+}
+
+@Preview(
+    name = "Door Status - unkown",
+    showBackground = true
+)
+@Composable
+fun DoorStatusUnknownPreview() {
+    MaterialTheme {
+        DoorStatus(state = DoorState.UNKNOWN)
     }
 }
