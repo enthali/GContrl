@@ -8,6 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.drawscope.translate
@@ -22,12 +23,16 @@ fun GarageUnknownIcon(
     GarageOutline(modifier = modifier)
 
     val primary = MaterialTheme.colorScheme.primary
+    val background = MaterialTheme.colorScheme.background
 
     Canvas(modifier = modifier) {
+        scale(scale = 7f)
+        {
+            translate(
+                left = size.width * 0.43f,
+                top = size.height * 0.43f
+            ) {// Fragezeichen zeichnen
 
-        // Fragezeichen zeichnen
-        translate(left = 17f * 2, top = 14f * 2) {
-            scale(scale = 2.5f) {
                 val questionMarkPath = Path().apply {
                     // Fragezeichen-Kurve
                     moveTo(11.07f, 12.85f)
@@ -107,9 +112,25 @@ fun GarageUnknownIcon(
 
                 drawPath(
                     path = questionMarkPath,
+                    color = background,
+                    style = Stroke(
+                        width = 4f,
+                        cap = StrokeCap.Round,
+                        join = StrokeJoin.Round
+                    )
+                )
+
+                drawPath(
+                    path = questionMarkPath,
+                    color = primary,
+                    style = Fill
+                )
+
+                drawPath(
+                    path = questionMarkPath,
                     color = primary,
                     style = Stroke(
-                        width = 2f,
+                        width = .5f,
                         cap = StrokeCap.Round,
                         join = StrokeJoin.Round
                     )
@@ -118,7 +139,6 @@ fun GarageUnknownIcon(
         }
     }
 }
-
 
 @Preview
 @Composable
