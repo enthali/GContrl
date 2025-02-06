@@ -43,6 +43,7 @@ Feel free to use this as inspiration for your own projects.
 ### Version History
 | Version | Comment |
 | --- | --- |
+| 34 | Lets make the door move |
 | 33 | A long way from home |
 | 32 | New icon |
 | 31 | Connect me |

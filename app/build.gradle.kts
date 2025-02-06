@@ -25,8 +25,8 @@ android {
         applicationId = "de.drachenfels.gcontrl"
         minSdk = 26
         targetSdk = 35
-        versionCode = 33
-        versionName = "A long way from home"
+        versionCode = 34
+        versionName = "Lets make the door move"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
