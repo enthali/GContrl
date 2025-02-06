@@ -20,6 +20,7 @@ fun getGitBranch(): String {
 android {
     namespace = "de.drachenfels.gcontrl"
     compileSdk = 35
+    ndkVersion = "28.0.13004108"
 
     defaultConfig {
         applicationId = "de.drachenfels.gcontrl"
@@ -49,13 +50,16 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
             signingConfig = signingConfigs.getByName("release")
             buildConfigField("Boolean", "ENABLE_DEBUG", "false")
+            ndk {
+                debugSymbolLevel = "FULL"
+            }
         }
         debug {
             buildConfigField("Boolean", "ENABLE_DEBUG", "true")
@@ -83,7 +87,6 @@ android {
 }
 
 dependencies {
-
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
