@@ -26,7 +26,7 @@ android {
         minSdk = 26
         targetSdk = 35
         versionCode = 34
-        versionName = "Lets make the door move"
+        versionName = "Let\'s make the door move"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
