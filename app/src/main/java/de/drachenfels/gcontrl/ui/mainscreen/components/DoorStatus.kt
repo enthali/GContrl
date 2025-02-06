@@ -11,7 +11,9 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import de.drachenfels.gcontrl.services.DoorState
 import de.drachenfels.gcontrl.ui.icons.garage.GarageClosedIcon
+import de.drachenfels.gcontrl.ui.icons.garage.GarageClosingIcon
 import de.drachenfels.gcontrl.ui.icons.garage.GarageOpenIcon
+import de.drachenfels.gcontrl.ui.icons.garage.GarageOpeningIcon
 import de.drachenfels.gcontrl.ui.icons.garage.GarageUnknownIcon
 
 @Composable
@@ -33,6 +35,10 @@ fun DoorStatus(
         when (state) {
             DoorState.OPEN -> GarageOpenIcon(modifier = Modifier.size(iconSize))
             DoorState.CLOSED -> GarageClosedIcon(modifier = Modifier.size(iconSize))
+            DoorState.OPENING -> GarageOpeningIcon(modifier = Modifier.size(iconSize))
+            DoorState.CLOSING -> GarageClosingIcon(modifier = Modifier.size(iconSize))
+//            DoorState.STOPPED -> GarageClosedIcon(modifier = Modifier.size(iconSize))
+
             else -> GarageUnknownIcon(modifier = Modifier.size(iconSize))
             }
 
