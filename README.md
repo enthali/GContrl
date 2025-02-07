@@ -41,20 +41,22 @@ This is a private hobby project. The focus is on simplicity and reliability.
 Feel free to use this as inspiration for your own projects.
 
 ### Version History
-| Version | Comment | Description |
-| --- | --- | --- |
-| 34 | Let's make the door move | Enhanced garage door movement visualization with animated icons. Opening and closing states are now represented by smooth animations. |
-| 33 | A long way from home |
-| 32 | New icon |
-| 31 | Connect me |
-| 30 | Set things right |
-| 29 | Lets drive |
-| 28 | New Live |
-| 26 | Stabilization: Fix 'Abort during opening/closing action' |
-| 25 | AGP Upgrade |
-| 24 | Swap Car and Home pictograms (User Feedback) |
-| 13 | Geo location services |
-| 4 | Color theme update |
-| 3 | Initial public release |
-| 2 | Internal test release |
-| 1 | First internal release |
+| Version | Comment                                                 | Description                                                                                                                           |
+|---------|---------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------|
+| 36      | What a wide view again                                  | Supporting Portrait and Landsacpe screen orientation - resolved startup crash                                                         |
+| 35      | What a wide view                                        | Supporting Portrait and Landscape screen orientation - non functional                                                                 |
+| 34      | Let's make the door move                                | Enhanced garage door movement visualization with animated icons. Opening and closing states are now represented by smooth animations. |
+| 33      | A long way from home                                    |
+| 32      | New icon                                                |
+| 31      | Connect me                                              |
+| 30      | Set things right                                        |
+| 29      | Lets drive                                              |
+| 28      | New Live                                                |
+| 26      | Stabilization: Fix 'Abort during opening/closing action' |
+| 25      | AGP Upgrade                                             |
+| 24      | Swap Car and Home pictograms (User Feedback)            |
+| 13      | Geo location services                                   |
+| 4       | Color theme update                                      |
+| 3       | Initial public release                                  |
+| 2       | Internal test release                                   |
+| 1       | First internal release                                  |

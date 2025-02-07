@@ -70,7 +70,6 @@ fun IconArea(
 
 @Composable
 fun ControlButtonArea(
-    connectionState: ConnectionState,
     onOpenClick: () -> Unit,
     onStopClick: () -> Unit,
     onCloseClick: () -> Unit,
@@ -110,5 +109,45 @@ fun ControlButtonArea(
             Text("Close", style = MaterialTheme.typography.headlineMedium)
         }
     }
+}
+
+
+
+@Preview(showBackground = true, widthDp = 400)
+@Composable
+fun IconAreaPreview() {
+    IconArea(
+        doorState = DoorState.CLOSED,
+        locationAutomationSettings = LocationAutomationSettings(
+            isLocationAutomationEnabled = false,
+            triggerDistance = 100
+        ),
+        currentDistance = 0f,
+        onDoorClick = {}
+    )
+}
+
+@Preview(showBackground = true, widthDp = 400)
+@Composable
+fun IconAreaWithLocationPreview() {
+    IconArea(
+        doorState = DoorState.CLOSED,
+        locationAutomationSettings = LocationAutomationSettings(
+            isLocationAutomationEnabled = true,
+            triggerDistance = 100
+        ),
+        currentDistance = 50f,
+        onDoorClick = {}
+    )
+}
+
+@Preview(showBackground = true, widthDp = 400)
+@Composable
+fun ControlButtonAreaPreview() {
+    ControlButtonArea(
+        onOpenClick = {},
+        onStopClick = {},
+        onCloseClick = {}
+    )
 }
 

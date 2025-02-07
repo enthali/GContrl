@@ -37,7 +37,7 @@ fun VersionInfoSection(
         )
 
         Text(
-            text = "GitHub: github.com/enthali/GControl",
+            text = "GitHub: github.com/enthali/GContrl",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.primary,
             modifier = Modifier.padding(top = 4.dp)

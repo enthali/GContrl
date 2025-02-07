@@ -101,7 +101,6 @@ fun MainScreen(
                         modifier = Modifier.weight(0.67f)
                     )
                     ControlButtonArea(
-                        connectionState = connectionState,
                         onOpenClick = { mqttService.openDoor() },
                         onStopClick = { mqttService.stopDoor() },
                         onCloseClick = { mqttService.closeDoor() },
@@ -119,7 +118,6 @@ fun MainScreen(
                         modifier = Modifier.weight(0.67f)
                     )
                     ControlButtonArea(
-                        connectionState = connectionState,
                         onOpenClick = { mqttService.openDoor() },
                         onStopClick = { mqttService.stopDoor() },
                         onCloseClick = { mqttService.closeDoor() },
