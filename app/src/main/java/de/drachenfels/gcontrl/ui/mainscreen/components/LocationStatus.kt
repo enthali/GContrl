@@ -70,7 +70,7 @@ fun LocationAutomationStatus(
 
         Text(
             text = formatDistance(currentDistance),
-            style = MaterialTheme.typography.bodyLarge.copy(fontSize = 32.sp)
+            style = MaterialTheme.typography.headlineMedium
         )
     }
 }

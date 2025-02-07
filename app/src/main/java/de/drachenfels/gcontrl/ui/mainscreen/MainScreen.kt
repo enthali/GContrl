@@ -2,36 +2,43 @@ package de.drachenfels.gcontrl.ui.mainscreen
 
 import android.content.Context
 import android.content.ContextWrapper
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.ui.Modifier
-import de.drachenfels.gcontrl.LocationAutomationSettings
-import de.drachenfels.gcontrl.services.MQTTService
-import androidx.compose.foundation.layout.*
+import android.content.res.Configuration
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
+import de.drachenfels.gcontrl.LocationAutomationSettings
 import de.drachenfels.gcontrl.services.DoorState
 import de.drachenfels.gcontrl.services.LocationDataRepository
-import de.drachenfels.gcontrl.ui.mainscreen.components.*
+import de.drachenfels.gcontrl.services.MQTTService
+import de.drachenfels.gcontrl.ui.mainscreen.components.ConnectionStatusIcon
+import de.drachenfels.gcontrl.ui.mainscreen.components.ControlButtonArea
+import de.drachenfels.gcontrl.ui.mainscreen.components.IconArea
 import de.drachenfels.gcontrl.ui.theme.GContrlTheme
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -44,8 +51,8 @@ fun MainScreen(
     val locationAutomationSettings by locationAutomationSettingsFlow.collectAsState()
     val doorState by mqttService.doorState.collectAsState()
     val connectionState by mqttService.connectionState.collectAsState()
+    val configuration = LocalConfiguration.current
 
-    // Collect location data for speed check and distance
     val locationData by LocationDataRepository.locationUpdates.collectAsState()
     val currentSpeed = locationData?.speed ?: 0f
     val showSettings = currentSpeed <= 3f
@@ -78,63 +85,53 @@ fun MainScreen(
             )
         }
     ) { paddingValues ->
-        Column(
+        Box(
             modifier = modifier
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                if (locationAutomationSettings.isLocationAutomationEnabled) {
-                    LocationAutomationStatus(
+            if (configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+                // Landscape layout
+                Row(modifier = Modifier.fillMaxSize()) {
+                    IconArea(
                         doorState = doorState,
+                        locationAutomationSettings = locationAutomationSettings,
                         currentDistance = currentDistance,
-                        triggerDistance = locationAutomationSettings.triggerDistance.toFloat(),
-                        onClick = { handleDoorClick(doorState) },
-                        modifier = Modifier.padding(16.dp)
+                        onDoorClick = { handleDoorClick(it) },
+                        modifier = Modifier.weight(0.67f)
                     )
-                } else {
-                    DoorStatus(
-                        state = doorState,
-                        onClick = { handleDoorClick(doorState) }
+                    ControlButtonArea(
+                        connectionState = connectionState,
+                        onOpenClick = { mqttService.openDoor() },
+                        onStopClick = { mqttService.stopDoor() },
+                        onCloseClick = { mqttService.closeDoor() },
+                        modifier = Modifier.weight(0.33f)
                     )
                 }
-            }
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.Bottom)
-            ) {
-                GarageButton(
-                    text = "Open",
-                    onClick = { mqttService.openDoor() },
-                    connectionState = connectionState
-                )
-
-                GarageButton(
-                    text = "Stop",
-                    onClick = { mqttService.stopDoor() },
-                    connectionState = connectionState
-                )
-
-                GarageButton(
-                    text = "Close",
-                    onClick = { mqttService.closeDoor() },
-                    connectionState = connectionState,
-                    modifier = Modifier.padding(bottom = 16.dp)
-                )
+            } else {
+                // Portrait layout
+                Column(modifier = Modifier.fillMaxSize()) {
+                    IconArea(
+                        doorState = doorState,
+                        locationAutomationSettings = locationAutomationSettings,
+                        currentDistance = currentDistance,
+                        onDoorClick = { handleDoorClick(it) },
+                        modifier = Modifier.weight(0.67f)
+                    )
+                    ControlButtonArea(
+                        connectionState = connectionState,
+                        onOpenClick = { mqttService.openDoor() },
+                        onStopClick = { mqttService.stopDoor() },
+                        onCloseClick = { mqttService.closeDoor() },
+                        modifier = Modifier.weight(0.33f)
+                    )
+                }
             }
         }
     }
 }
 
-
+// Preview code unverändert
 class PreviewContextWrapper(
     base: Context,
     val locationAutomationSettingsFlow: StateFlow<LocationAutomationSettings>
@@ -150,7 +147,6 @@ class PreviewContextWrapper(
 fun MainScreenPreviewWithoutLocation() {
     val locationAutomationSettingsFlow =
         remember { MutableStateFlow(LocationAutomationSettings(isLocationAutomationEnabled = false)) }
-    // Verwende PreviewContextWrapper
     CompositionLocalProvider(
         LocalContext provides PreviewContextWrapper(
             LocalContext.current,
@@ -182,7 +178,6 @@ fun MainScreenPreviewWithoutLocation() {
 fun MainScreenPreviewWithLocation() {
     val locationAutomationSettingsFlow =
         remember { MutableStateFlow(LocationAutomationSettings(isLocationAutomationEnabled = true)) }
-    // Verwende PreviewContextWrapper
     CompositionLocalProvider(
         LocalContext provides PreviewContextWrapper(
             LocalContext.current,
