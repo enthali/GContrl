@@ -10,15 +10,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import de.drachenfels.gcontrl.services.DoorState
-import de.drachenfels.gcontrl.ui.icons.garage.GarageClosedIcon
-import de.drachenfels.gcontrl.ui.icons.garage.GarageClosingIcon
-import de.drachenfels.gcontrl.ui.icons.garage.GarageOpenIcon
-import de.drachenfels.gcontrl.ui.icons.garage.GarageOpeningIcon
-import de.drachenfels.gcontrl.ui.icons.garage.GarageUnknownIcon
 
 @Composable
 fun DoorStatus(
     state: DoorState,
+    onClick: () -> Unit,
     size: Dp = Dp.Unspecified,
     showText: Boolean = true
 ) {
@@ -31,16 +27,11 @@ fun DoorStatus(
         verticalArrangement = Arrangement.Center,
         modifier = Modifier.padding(vertical = if (showText) 16.dp else 4.dp)
     ) {
-
-        when (state) {
-            DoorState.OPEN -> GarageOpenIcon(modifier = Modifier.size(iconSize))
-            DoorState.CLOSED -> GarageClosedIcon(modifier = Modifier.size(iconSize))
-            DoorState.OPENING -> GarageOpeningIcon(modifier = Modifier.size(iconSize))
-            DoorState.CLOSING -> GarageClosingIcon(modifier = Modifier.size(iconSize))
-//            DoorState.STOPPED -> GarageClosedIcon(modifier = Modifier.size(iconSize))
-
-            else -> GarageUnknownIcon(modifier = Modifier.size(iconSize))
-            }
+        ClickableGarageIcon(
+            state = state,
+            onClick = onClick,
+            modifier = Modifier.size(iconSize)
+        )
 
         if (showText) {
             Text(
@@ -66,7 +57,10 @@ fun DoorStatus(
 @Composable
 fun DoorStatusPreview() {
     MaterialTheme {
-        DoorStatus(state = DoorState.OPEN)
+        DoorStatus(
+            state = DoorState.OPEN,
+            onClick = {}
+        )
     }
 }
 
@@ -77,17 +71,23 @@ fun DoorStatusPreview() {
 @Composable
 fun DoorStatusClosedPreview() {
     MaterialTheme {
-        DoorStatus(state = DoorState.CLOSED)
+        DoorStatus(
+            state = DoorState.CLOSED,
+            onClick = {}
+        )
     }
 }
 
 @Preview(
-    name = "Door Status - unkown",
+    name = "Door Status - unknown",
     showBackground = true
 )
 @Composable
 fun DoorStatusUnknownPreview() {
     MaterialTheme {
-        DoorStatus(state = DoorState.UNKNOWN)
+        DoorStatus(
+            state = DoorState.UNKNOWN,
+            onClick = {}
+        )
     }
 }

@@ -25,6 +25,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import de.drachenfels.gcontrl.services.DoorState
 import de.drachenfels.gcontrl.services.LocationDataRepository
 import de.drachenfels.gcontrl.ui.mainscreen.components.*
 import de.drachenfels.gcontrl.ui.theme.GContrlTheme
@@ -49,6 +50,16 @@ fun MainScreen(
     val currentSpeed = locationData?.speed ?: 0f
     val showSettings = currentSpeed <= 3f
     val currentDistance = locationData?.distanceToGarage?.toFloat() ?: 1000f
+
+    fun handleDoorClick(currentState: DoorState) {
+        when (currentState) {
+            DoorState.OPEN -> mqttService.closeDoor()
+            DoorState.CLOSED -> mqttService.openDoor()
+            DoorState.OPENING, DoorState.CLOSING -> mqttService.stopDoor()
+            DoorState.STOPPED -> mqttService.openDoor()
+            else -> {} // Handle UNKNOWN state
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -87,7 +98,10 @@ fun MainScreen(
                         modifier = Modifier.padding(16.dp)
                     )
                 } else {
-                    DoorStatus(doorState)
+                    DoorStatus(
+                        state = doorState,
+                        onClick = { handleDoorClick(doorState) }
+                    )
                 }
             }
             Column(
