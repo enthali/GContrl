@@ -95,6 +95,7 @@ fun MainScreen(
                         doorState = doorState,
                         currentDistance = currentDistance,
                         triggerDistance = locationAutomationSettings.triggerDistance.toFloat(),
+                        onClick = { handleDoorClick(doorState) },
                         modifier = Modifier.padding(16.dp)
                     )
                 } else {

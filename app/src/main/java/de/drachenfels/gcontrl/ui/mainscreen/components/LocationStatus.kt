@@ -20,6 +20,7 @@ fun LocationAutomationStatus(
     doorState: DoorState,
     currentDistance: Float,
     triggerDistance: Float,
+    onClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val configuration = LocalConfiguration.current
@@ -35,7 +36,11 @@ fun LocationAutomationStatus(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            DoorStatus(doorState, iconSize, false)
+            DoorStatus(
+                state = doorState,
+                onClick = onClick,
+                size = iconSize,
+                showText = false)
 
             Icon(
                 imageVector = Icons.Default.DirectionsCar,
