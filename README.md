@@ -41,9 +41,9 @@ This is a private hobby project. The focus is on simplicity and reliability.
 Feel free to use this as inspiration for your own projects.
 
 ### Version History
-| Version | Comment |
-| --- | --- |
-| 34 | Let's make the door move |
+| Version | Comment | Description |
+| --- | --- | --- |
+| 34 | Let's make the door move | Enhanced garage door movement visualization with animated icons. Opening and closing states are now represented by smooth animations. |
 | 33 | A long way from home |
 | 32 | New icon |
 | 31 | Connect me |
