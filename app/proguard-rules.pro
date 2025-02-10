@@ -2,11 +2,6 @@
 # Keep Important Attributes
 -keepattributes Signature, InnerClasses, EnclosingMethod, Exceptions, *Annotation*
 
-# Keep JSON classes
--keepclassmembers class * {
-    @com.google.gson.annotations.SerializedName <fields>;
-}
-
 # Keep RxJava
 -dontwarn rx.**
 -keep class rx.** { *; }
@@ -66,9 +61,6 @@
 # Keep Dagger
 -keep class dagger.** { *; }
 -keep class javax.inject.** { *; }
--keep class * extends dagger.internal.Binding
--keep class * extends dagger.internal.ModuleAdapter
--keep class * extends dagger.internal.StaticInjection
 
 # Additional Netty specific rules
 -dontwarn org.jboss.netty.**

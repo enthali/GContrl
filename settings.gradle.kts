@@ -19,6 +19,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Garage Pilot"
+rootProject.name = "GaragePilot"
 include(":app")
- 

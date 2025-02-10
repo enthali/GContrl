@@ -25,7 +25,6 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import de.drachenfels.gcontrl.LocationAutomationSettings
 import de.drachenfels.gcontrl.services.DoorState
-import de.drachenfels.gcontrl.services.MQTTService.ConnectionState
 
 @Composable
 fun IconArea(

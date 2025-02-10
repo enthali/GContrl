@@ -19,7 +19,6 @@ fun GarageOutline(
 
     Canvas(modifier = modifier) {
         val width = size.width
-        val height = size.height
         val scale = width / 60f  // Viewbox scaling
 
 
