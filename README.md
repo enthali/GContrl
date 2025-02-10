@@ -1,11 +1,6 @@
 # GaragePilot
 
-A simple Applicaiton for Android Phones and Android Automotive OS to controlling your garage door via MQTT.
-
-## How it's done Technical Details
-- UI Framework: Jetpack Compose
-- Communication: MQTT (HiveMQ Client)
-- Meeros Door controller (will be replaced soon by a DIY project)
+An Android application for smartphones and Android Automotive OS to control your garage door via MQTT. Developed as a hobby project to enable garage control directly from your car or smartphone.
 
 ## Features
 
@@ -13,50 +8,113 @@ A simple Applicaiton for Android Phones and Android Automotive OS to controlling
 - Direct MQTT communication
 - Status indication for door position and movement
 - Easy configuration through settings screen
-- Works with Android Automotive OS
+- Android Automotive OS support
+- Animated icons for door movements
+- Support for portrait and landscape orientation
+- Geo-location based automation
 
-## System Requirements
+## Technical Details
 
-- Android Phone or Android Automotive OS device with Android SDK 28 or newer
-- MQTT server (e.g., HiveMQ)
-- MQTT-compatible garage door controller (e.g., DIY project or Meeros Door Controler interfaced though Node Red or Home Assist)
+- UI Framework: Jetpack Compose
+- Architecture: MVVM
+- Communication: MQTT (HiveMQ Client)
+- Garage Door Controller: Meeros (will be replaced by DIY project)
+- Minimum Android SDK Version: 28
+- Supported Orientations: Portrait and Landscape
+- Programming Language: Kotlin
 
-## Setup
+## Installation & Setup
 
-1. Install the app on your Android Automotive OS device
-2. Pick an MQTT server (e.g., HiveMQ) and create a user and password
-3. Setup your MQTT server details in the settings
+### For Users
+1. Install the app from Play Store
+2. Select an MQTT server (e.g., HiveMQ) and create credentials
+3. Configure MQTT server details in settings
 4. Connect your garage door controller to the same MQTT server
-5. Control your garage door directly from your car
+5. Control your garage directly from your car
+
+### For Developers
+#### Prerequisites
+- Android Studio Electric Eel or newer
+- Android SDK 28 or higher
+- Kotlin development environment
+
+#### Build Process
+1. Clone the repository:
+```bash
+git clone https://github.com/yourusername/GContrl.git
+```
+2. Open the project in Android Studio
+3. Build the project using Android Studio's build system
 
 ## Privacy & Security
 
-- The app only sends basic door control commands via MQTT
-- Secure MQTT communication using username/password authentication with your preferred MQTT server
-- The location information is only used on the device to create a door automation feature
+- Only basic door control commands via MQTT
+- Secure MQTT communication using username/password authentication
+- Location information is only used locally for door automation
+- No cloud storage
+- No data collection outside the app
+
+## Project Status
+
+- Actively in development
+- Available on Google Play Store
+- Focus on stability and user-friendliness
 
 ## Development
 
-This is a private hobby project. The focus is on simplicity and reliability.
-Feel free to use this as inspiration for your own projects.
+This project is open for contributions. For major changes, please open an issue first to discuss what you would like to change.
 
-### Version History
-| Version | Comment                                                 | Description                                                                                                                           |
-|---------|---------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------|
-| 36      | What a wide view again                                  | Supporting Portrait and Landsacpe screen orientation - resolved startup crash                                                         |
-| 35      | What a wide view                                        | Supporting Portrait and Landscape screen orientation - non functional                                                                 |
-| 34      | Let's make the door move                                | Enhanced garage door movement visualization with animated icons. Opening and closing states are now represented by smooth animations. |
-| 33      | A long way from home                                    |
-| 32      | New icon                                                |
-| 31      | Connect me                                              |
-| 30      | Set things right                                        |
-| 29      | Lets drive                                              |
-| 28      | New Live                                                |
-| 26      | Stabilization: Fix 'Abort during opening/closing action' |
-| 25      | AGP Upgrade                                             |
-| 24      | Swap Car and Home pictograms (User Feedback)            |
-| 13      | Geo location services                                   |
-| 4       | Color theme update                                      |
-| 3       | Initial public release                                  |
-| 2       | Internal test release                                   |
-| 1       | First internal release                                  |
+### Development Guidelines
+- Clear commit messages
+- Test coverage for new features
+- Documentation for API changes
+- Code formatting according to Kotlin standards
+
+This is a private hobby project focusing on simplicity and reliability.
+Feel free to use it as inspiration for your own projects.
+
+## Version History
+
+| Version | Title | Description |
+|---------|-------|-------------|
+| 36 | What a wide view again | Portrait and landscape support - startup crash fixed |
+| 35 | What a wide view | Portrait and landscape support - non-functional |
+| 34 | Let's make the door move | Enhanced garage door movement visualization with animated icons |
+| 33 | A long way from home | Geo-location features improvements |
+| 32 | New icon | New app icon design |
+| 31 | Connect me | Improved MQTT connection |
+| 30 | Set things right | Bug fixes |
+| 29 | Lets drive | Android Automotive OS optimizations |
+| 28 | New Live | Important updates |
+| 26 | Stabilization | Fix: 'Abort during opening/closing action' |
+| 25 | AGP Upgrade | Android Gradle Plugin update |
+| 24 | UI Update | Swapped car and house pictograms (user feedback) |
+| 13 | Geo location | Added geo-location services |
+| 4 | Color theme | Color scheme update |
+| 3 | Public | Initial public release |
+| 2 | Test | Internal test release |
+| 1 | Initial | First internal release |
+
+## Support & Contact
+
+Please use GitHub Issues for:
+- Bug reports
+- Feature requests
+- Questions about the app
+- General feedback
+
+## System Requirements
+
+- Android Smartphone or Android Automotive OS device with Android SDK 28 or newer
+- MQTT server (e.g., HiveMQ)
+- MQTT-compatible garage door controller (e.g., DIY project or Meeros Door Controller via Node Red or Home Assistant)
+
+## License
+
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
+
+## Acknowledgments
+
+- All contributors to this project
+- The open-source community
+- The MQTT community
