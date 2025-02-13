@@ -102,8 +102,8 @@ fun LocationAutomationSection(
                 Slider(
                     value = triggerDistance.toFloat(),
                     onValueChange = { onTriggerDistanceChange(it.toInt()) },
-                    valueRange = 10f..300f,
-                    steps = 29, // (300-10)/10 = 29 steps for 10m intervals
+                    valueRange = 10f..200.1f,
+                    steps = 18, // (200-10)/10 - 1 = 18  10m intervals
                     modifier = Modifier.fillMaxWidth()
                 )
 
@@ -117,7 +117,7 @@ fun LocationAutomationSection(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        text = "300m",
+                        text = "200m",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
