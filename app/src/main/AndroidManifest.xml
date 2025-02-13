@@ -6,6 +6,9 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
         android:allowBackup="true"
@@ -19,6 +22,12 @@
         tools:targetApi="31">
 
         <service
+            android:name=".services.GaragePilotService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
+
+        <service
             android:name=".LocationAutomationService"
             android:enabled="true"
             android:exported="false" />
@@ -29,7 +38,6 @@
             android:theme="@style/Theme.Material3.Light.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
             <meta-data
@@ -37,5 +45,4 @@
                 android:value="true" />
         </activity>
     </application>
-
 </manifest>

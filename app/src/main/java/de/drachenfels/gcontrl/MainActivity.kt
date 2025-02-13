@@ -12,7 +12,6 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -20,6 +19,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
+import de.drachenfels.gcontrl.services.GaragePilotService
 import de.drachenfels.gcontrl.services.LocationDataRepository
 import de.drachenfels.gcontrl.services.MQTTService
 import de.drachenfels.gcontrl.ui.mainscreen.MainScreen
@@ -27,12 +27,9 @@ import de.drachenfels.gcontrl.ui.settings.SettingsScreen
 import de.drachenfels.gcontrl.ui.theme.GContrlTheme
 import de.drachenfels.gcontrl.utils.AndroidLogger
 import de.drachenfels.gcontrl.utils.LogConfig
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
 
 data class LocationAutomationSettings(
     val isLocationAutomationEnabled: Boolean = false,
@@ -43,11 +40,6 @@ data class LocationAutomationSettings(
 private const val PREFS_NAME = "GContrlPrefs"
 private const val KEY_LOCATION_AUTOMATION_ENABLED = "location_automation_enabled"
 private const val KEY_TRIGGER_DISTANCE = "trigger_distance"
-
-private const val KEY_MQTT_SERVER = "mqtt_server"
-private const val KEY_MQTT_USERNAME = "mqtt_username"
-private const val KEY_MQTT_PASSWORD = "mqtt_password"
-
 
 class MainActivity : ComponentActivity() {
     private val logger = AndroidLogger()
@@ -90,8 +82,9 @@ class MainActivity : ComponentActivity() {
         }
         logger.d(LogConfig.TAG_MAIN, "onCreate - App initialized")
 
-        // Always start the service, as we need it for speed-based navigation
+        // Start both services
         startLocationAutomationService()
+        startGaragePilotService()
     }
 
     fun updateLocationAutomationSettings(newSettings: LocationAutomationSettings) {
@@ -102,7 +95,6 @@ class MainActivity : ComponentActivity() {
             apply()
         }
     }
-
 
     override fun onPause() {
         super.onPause()
@@ -117,8 +109,6 @@ class MainActivity : ComponentActivity() {
     override fun onDestroy() {
         super.onDestroy()
         logger.d(LogConfig.TAG_MAIN, "onDestroy - Cleaning up")
-        MQTTService.getInstance().disconnect()
-        logger.d(LogConfig.TAG_MAIN, "onDestroy - MQTT connection closed")
         stopLocationAutomationService()
     }
 
@@ -157,8 +147,19 @@ class MainActivity : ComponentActivity() {
         val serviceIntent = Intent(this, LocationAutomationService::class.java)
         stopService(serviceIntent)
     }
-}
 
+    private fun startGaragePilotService() {
+        logger.d(LogConfig.TAG_MAIN, "Starting GaragePilotService")
+        val serviceIntent = Intent(this, GaragePilotService::class.java)
+        startForegroundService(serviceIntent)
+    }
+
+    private fun stopGaragePilotService() {
+        logger.d(LogConfig.TAG_MAIN, "Stopping GaragePilotService")
+        val serviceIntent = Intent(this, GaragePilotService::class.java)
+        stopService(serviceIntent)
+    }
+}
 
 @Composable
 fun GContrlApp(
@@ -175,30 +176,9 @@ fun GContrlApp(
     val locationData by locationDataRepository.locationUpdates.collectAsState()
 
     // Effect to handle speed-based navigation
-    LaunchedEffect(locationData) {
-        val speed = locationData?.speed ?: 0f
-        if (speed > 3f && showSettings) {
-            logger.d(LogConfig.TAG_MAIN, "Speed exceeds 3 km/h, returning to main screen")
-            showSettings = false
-        }
-    }
-
-    // Effect for screen transitions
-    LaunchedEffect(showSettings) {
-        if (showSettings) {
-            logger.d(LogConfig.TAG_MAIN, "Screen transition: Main -> Settings, disconnecting MQTT")
-            mqttService.disconnect()
-        } else {
-            logger.d(LogConfig.TAG_MAIN, "Screen transition: Settings -> Main, connecting MQTT")
-            // Read MQTT settings from SharedPreferences
-            val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            val server = prefs.getString(KEY_MQTT_SERVER, "GaragePilot.com") ?: "GaragePilot.com"
-            val username = prefs.getString(KEY_MQTT_USERNAME, "") ?: ""
-            val password = prefs.getString(KEY_MQTT_PASSWORD, "") ?: ""
-            CoroutineScope(Dispatchers.IO).launch {
-                mqttService.connect(server, username, password)
-            }
-        }
+    if (locationData?.speed ?: 0f > 3f && showSettings) {
+        logger.d(LogConfig.TAG_MAIN, "Speed exceeds 3 km/h, returning to main screen")
+        showSettings = false
     }
 
     GContrlTheme {
