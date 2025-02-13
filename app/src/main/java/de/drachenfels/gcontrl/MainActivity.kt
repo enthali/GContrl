@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -45,6 +46,7 @@ class MainActivity : ComponentActivity() {
     private val logger = AndroidLogger()
     private lateinit var prefs: SharedPreferences
     private lateinit var requestPermissionLauncher: ActivityResultLauncher<Array<String>>
+    private lateinit var requestNotificationPermissionLauncher: ActivityResultLauncher<String>
 
     private val _locationAutomationSettings = MutableStateFlow(LocationAutomationSettings())
     val locationAutomationSettings: StateFlow<LocationAutomationSettings> = _locationAutomationSettings.asStateFlow()
@@ -59,6 +61,17 @@ class MainActivity : ComponentActivity() {
             triggerDistance = prefs.getInt(KEY_TRIGGER_DISTANCE, 100)
         )
 
+        requestNotificationPermissionLauncher = registerForActivityResult(
+            ActivityResultContracts.RequestPermission()
+        ) { isGranted: Boolean ->
+            if (isGranted) {
+                logger.d(LogConfig.TAG_MAIN, "Notification permission granted")
+                startGaragePilotService()
+            } else {
+                logger.d(LogConfig.TAG_MAIN, "Notification permission denied")
+            }
+        }
+
         // Initialize the ActivityResultLauncher
         requestPermissionLauncher =
             registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
@@ -67,7 +80,6 @@ class MainActivity : ComponentActivity() {
 
                 if (fineLocationGranted && coarseLocationGranted) {
                     logger.d(LogConfig.TAG_LOCATION, "Location permissions granted by user")
-                    // Start service after permissions are granted
                     startLocationAutomationService()
                 } else {
                     logger.d(LogConfig.TAG_LOCATION, "Location permissions denied by user")
@@ -75,6 +87,11 @@ class MainActivity : ComponentActivity() {
             }
 
         requestLocationPermissions()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            requestNotificationPermission()
+        } else {
+            startGaragePilotService()
+        }
 
         enableEdgeToEdge()
         setContent {
@@ -82,9 +99,23 @@ class MainActivity : ComponentActivity() {
         }
         logger.d(LogConfig.TAG_MAIN, "onCreate - App initialized")
 
-        // Start both services
         startLocationAutomationService()
-        startGaragePilotService()
+    }
+
+    private fun requestNotificationPermission() {
+        when {
+            ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED -> {
+                logger.d(LogConfig.TAG_MAIN, "Notification permission already granted")
+                startGaragePilotService()
+            }
+            else -> {
+                logger.d(LogConfig.TAG_MAIN, "Requesting notification permission")
+                requestNotificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
     }
 
     fun updateLocationAutomationSettings(newSettings: LocationAutomationSettings) {

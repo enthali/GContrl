@@ -6,8 +6,11 @@ import android.app.NotificationManager
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 import de.drachenfels.gcontrl.R
 import de.drachenfels.gcontrl.utils.AndroidLogger
 import de.drachenfels.gcontrl.utils.LogConfig
@@ -41,12 +44,35 @@ class GaragePilotService : Service() {
     override fun onCreate() {
         super.onCreate()
         logger.d(LogConfig.TAG_MAIN, "GaragePilotService: onCreate")
+        
+        if (!hasNotificationPermission()) {
+            logger.e(LogConfig.TAG_NOTIFICATION, "Missing POST_NOTIFICATIONS permission!")
+            stopSelf()
+            return
+        }
+
         createNotificationChannel()
-        startForeground(NOTIFICATION_ID, createNotification())
+        val notification = createNotification()
+        logger.d(LogConfig.TAG_NOTIFICATION, "Starting foreground service with notification")
+        startForeground(NOTIFICATION_ID, notification)
         
         mqttService = MQTTService.getInstance()
         startStateCollection()
         connectToMqtt()
+    }
+
+    private fun hasNotificationPermission(): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val hasPermission = ContextCompat.checkSelfPermission(
+                this,
+                android.Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+            logger.d(LogConfig.TAG_NOTIFICATION, "Notification permission check: $hasPermission")
+            hasPermission
+        } else {
+            logger.d(LogConfig.TAG_NOTIFICATION, "Notification permission not required for this Android version")
+            true
+        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -100,6 +126,7 @@ class GaragePilotService : Service() {
     }
 
     private fun createNotificationChannel() {
+        logger.d(LogConfig.TAG_NOTIFICATION, "Creating notification channel: $CHANNEL_ID")
         val channel = NotificationChannel(
             CHANNEL_ID,
             CHANNEL_NAME,
@@ -109,19 +136,27 @@ class GaragePilotService : Service() {
             setShowBadge(false)
         }
 
-        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.createNotificationChannel(channel)
+        try {
+            val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            notificationManager.createNotificationChannel(channel)
+            logger.d(LogConfig.TAG_NOTIFICATION, "Notification channel created successfully")
+        } catch (e: Exception) {
+            logger.e(LogConfig.TAG_NOTIFICATION, "Failed to create notification channel", e)
+        }
     }
 
     private fun createNotification(): Notification {
+        logger.d(LogConfig.TAG_NOTIFICATION, "Creating initial notification")
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("GaragePilot Active")
             .setContentText("Monitoring garage door status")
             .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
             .setOngoing(true)
             .setSilent(true)
             .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
             .build()
+            .also { logger.d(LogConfig.TAG_NOTIFICATION, "Initial notification created") }
     }
 
     private fun startStateCollection() {
@@ -133,16 +168,23 @@ class GaragePilotService : Service() {
     }
 
     private fun updateNotification(doorState: DoorState) {
+        logger.d(LogConfig.TAG_NOTIFICATION, "Updating notification with door state: $doorState")
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("GaragePilot Active")
             .setContentText("Door Status: ${doorState.name}")
             .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
             .setOngoing(true)
             .setSilent(true)
             .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
             .build()
 
-        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.notify(NOTIFICATION_ID, notification)
+        try {
+            val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            notificationManager.notify(NOTIFICATION_ID, notification)
+            logger.d(LogConfig.TAG_NOTIFICATION, "Notification updated successfully")
+        } catch (e: Exception) {
+            logger.e(LogConfig.TAG_NOTIFICATION, "Failed to update notification", e)
+        }
     }
 }
