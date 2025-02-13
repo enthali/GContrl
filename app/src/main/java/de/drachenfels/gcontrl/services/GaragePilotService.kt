@@ -3,6 +3,7 @@ package de.drachenfels.gcontrl.services
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
@@ -11,6 +12,7 @@ import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
+import de.drachenfels.gcontrl.MainActivity
 import de.drachenfels.gcontrl.R
 import de.drachenfels.gcontrl.utils.AndroidLogger
 import de.drachenfels.gcontrl.utils.LogConfig
@@ -33,17 +35,25 @@ class GaragePilotService : Service() {
         private const val CHANNEL_ID = "GaragePilotService"
         private const val CHANNEL_NAME = "Garage Pilot"
         
+        // Action für Stop Button
+        const val ACTION_STOP_SERVICE = "de.drachenfels.gcontrl.STOP_SERVICE"
+        
         // Settings keys
         private const val PREFS_NAME = "GContrlPrefs"
         private const val KEY_MQTT_SERVER = "mqtt_server"
         private const val KEY_MQTT_USERNAME = "mqtt_username"
         private const val KEY_MQTT_PASSWORD = "mqtt_password"
         private const val KEY_CONFIG_VALID = "mqtt_config_valid"
+
+        // Service Status
+        private var isRunning = false
+        fun isRunning(): Boolean = isRunning
     }
 
     override fun onCreate() {
         super.onCreate()
         logger.d(LogConfig.TAG_MAIN, "GaragePilotService: onCreate")
+        isRunning = true
         
         if (!hasNotificationPermission()) {
             logger.e(LogConfig.TAG_NOTIFICATION, "Missing POST_NOTIFICATIONS permission!")
@@ -77,6 +87,14 @@ class GaragePilotService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         logger.d(LogConfig.TAG_MAIN, "GaragePilotService: onStartCommand")
+        
+        when (intent?.action) {
+            ACTION_STOP_SERVICE -> {
+                logger.d(LogConfig.TAG_MAIN, "Stop service action received")
+                stopSelf()
+            }
+        }
+        
         return START_STICKY
     }
 
@@ -87,6 +105,7 @@ class GaragePilotService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         logger.d(LogConfig.TAG_MAIN, "GaragePilotService: onDestroy")
+        isRunning = false
         stateCollectorJob?.cancel()
         mqttService?.disconnect()
         serviceScope.cancel()
@@ -145,18 +164,44 @@ class GaragePilotService : Service() {
         }
     }
 
-    private fun createNotification(): Notification {
-        logger.d(LogConfig.TAG_NOTIFICATION, "Creating initial notification")
+    private fun createNotification(doorState: DoorState = DoorState.UNKNOWN): Notification {
+        logger.d(LogConfig.TAG_NOTIFICATION, "Creating notification with state: $doorState")
+        
+        // Intent zum Öffnen der App
+        val contentIntent = Intent(this, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
+        val contentPendingIntent = PendingIntent.getActivity(
+            this,
+            0,
+            contentIntent,
+            PendingIntent.FLAG_IMMUTABLE
+        )
+
+        // Intent zum Stoppen des Services
+        val stopIntent = Intent(this, GaragePilotService::class.java).apply {
+            action = ACTION_STOP_SERVICE
+        }
+        val stopPendingIntent = PendingIntent.getService(
+            this,
+            0,
+            stopIntent,
+            PendingIntent.FLAG_IMMUTABLE
+        )
+
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("GaragePilot Active")
-            .setContentText("Monitoring garage door status")
+            .setContentText("Door Status: ${doorState.name}")
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setOngoing(true)
             .setSilent(true)
+            .setContentIntent(contentPendingIntent)
+            .addAction(0, "Open App", contentPendingIntent)
+            .addAction(0, "Stop Service", stopPendingIntent)
             .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
             .build()
-            .also { logger.d(LogConfig.TAG_NOTIFICATION, "Initial notification created") }
+            .also { logger.d(LogConfig.TAG_NOTIFICATION, "Notification created") }
     }
 
     private fun startStateCollection() {
@@ -169,17 +214,8 @@ class GaragePilotService : Service() {
 
     private fun updateNotification(doorState: DoorState) {
         logger.d(LogConfig.TAG_NOTIFICATION, "Updating notification with door state: $doorState")
-        val notification = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("GaragePilot Active")
-            .setContentText("Door Status: ${doorState.name}")
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setPriority(NotificationCompat.PRIORITY_LOW)
-            .setOngoing(true)
-            .setSilent(true)
-            .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
-            .build()
-
         try {
+            val notification = createNotification(doorState)
             val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.notify(NOTIFICATION_ID, notification)
             logger.d(LogConfig.TAG_NOTIFICATION, "Notification updated successfully")

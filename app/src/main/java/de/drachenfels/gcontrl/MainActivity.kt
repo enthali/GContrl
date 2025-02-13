@@ -72,7 +72,6 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        // Initialize the ActivityResultLauncher
         requestPermissionLauncher =
             registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
                 val fineLocationGranted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] ?: false
@@ -135,6 +134,9 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         logger.d(LogConfig.TAG_MAIN, "onResume - App coming to foreground")
+        if (!GaragePilotService.isRunning()) {
+            startGaragePilotService()
+        }
     }
 
     override fun onDestroy() {
