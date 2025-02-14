@@ -30,7 +30,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import de.drachenfels.gcontrl.LocationAutomationSettings
 import de.drachenfels.gcontrl.services.DoorState
 import de.drachenfels.gcontrl.services.LocationDataRepository
-import de.drachenfels.gcontrl.services.MQTTService
+import de.drachenfels.gcontrl.services.MqttManager
 import de.drachenfels.gcontrl.ui.mainscreen.components.ConnectionStatusIcon
 import de.drachenfels.gcontrl.ui.mainscreen.components.ControlButtonArea
 import de.drachenfels.gcontrl.ui.mainscreen.components.IconArea
@@ -44,13 +44,13 @@ import kotlinx.coroutines.flow.asStateFlow
 @Composable
 fun MainScreen(
     onNavigateToSettings: () -> Unit,
-    mqttService: MQTTService,
+    mqttManager: MqttManager,
     locationAutomationSettingsFlow: StateFlow<LocationAutomationSettings>,
     modifier: Modifier = Modifier
 ) {
     val locationAutomationSettings by locationAutomationSettingsFlow.collectAsState()
-    val doorState by mqttService.doorState.collectAsState()
-    val connectionState by mqttService.connectionState.collectAsState()
+    val doorState by mqttManager.doorState.collectAsState()
+    val connectionState by mqttManager.connectionState.collectAsState()
     val configuration = LocalConfiguration.current
 
     val locationData by LocationDataRepository.locationUpdates.collectAsState()
@@ -60,10 +60,10 @@ fun MainScreen(
 
     fun handleDoorClick(currentState: DoorState) {
         when (currentState) {
-            DoorState.OPEN -> mqttService.closeDoor()
-            DoorState.CLOSED -> mqttService.openDoor()
-            DoorState.OPENING, DoorState.CLOSING -> mqttService.stopDoor()
-            DoorState.STOPPED -> mqttService.openDoor()
+            DoorState.OPEN -> mqttManager.closeDoor()
+            DoorState.CLOSED -> mqttManager.openDoor()
+            DoorState.OPENING, DoorState.CLOSING -> mqttManager.stopDoor()
+            DoorState.STOPPED -> mqttManager.openDoor()
             else -> {} // Handle UNKNOWN state
         }
     }
@@ -101,9 +101,9 @@ fun MainScreen(
                         modifier = Modifier.weight(0.67f)
                     )
                     ControlButtonArea(
-                        onOpenClick = { mqttService.openDoor() },
-                        onStopClick = { mqttService.stopDoor() },
-                        onCloseClick = { mqttService.closeDoor() },
+                        onOpenClick = { mqttManager.openDoor() },
+                        onStopClick = { mqttManager.stopDoor() },
+                        onCloseClick = { mqttManager.closeDoor() },
                         modifier = Modifier.weight(0.33f)
                     )
                 }
@@ -118,9 +118,9 @@ fun MainScreen(
                         modifier = Modifier.weight(0.67f)
                     )
                     ControlButtonArea(
-                        onOpenClick = { mqttService.openDoor() },
-                        onStopClick = { mqttService.stopDoor() },
-                        onCloseClick = { mqttService.closeDoor() },
+                        onOpenClick = { mqttManager.openDoor() },
+                        onStopClick = { mqttManager.stopDoor() },
+                        onCloseClick = { mqttManager.closeDoor() },
                         modifier = Modifier.weight(0.33f)
                     )
                 }
@@ -158,7 +158,7 @@ fun MainScreenPreviewWithoutLocation() {
             ) {
                 MainScreen(
                     onNavigateToSettings = { },
-                    mqttService = MQTTService.getInstance(),
+                    mqttManager = MqttManager.getInstance(),
                     locationAutomationSettingsFlow = locationAutomationSettingsFlow.asStateFlow()
                 )
             }
@@ -189,7 +189,7 @@ fun MainScreenPreviewWithLocation() {
             ) {
                 MainScreen(
                     onNavigateToSettings = { },
-                    mqttService = MQTTService.getInstance(),
+                    mqttManager = MqttManager.getInstance(),
                     locationAutomationSettingsFlow = locationAutomationSettingsFlow.asStateFlow()
                 )
             }

@@ -22,7 +22,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import de.drachenfels.gcontrl.services.GaragePilotService
 import de.drachenfels.gcontrl.services.LocationDataRepository
-import de.drachenfels.gcontrl.services.MQTTService
+import de.drachenfels.gcontrl.services.MqttManager
 import de.drachenfels.gcontrl.ui.mainscreen.MainScreen
 import de.drachenfels.gcontrl.ui.settings.SettingsScreen
 import de.drachenfels.gcontrl.ui.theme.GContrlTheme
@@ -202,7 +202,7 @@ fun GContrlApp(
 ){
     val logger = AndroidLogger()
     var showSettings by remember { mutableStateOf(false) }
-    val mqttService = MQTTService.getInstance()
+    val mqttManager = MqttManager.getInstance()
     val context = LocalContext.current
 
     // Collect location data for speed check
@@ -217,7 +217,7 @@ fun GContrlApp(
     GContrlTheme {
         if (showSettings) {
             SettingsScreen(
-                mqttService = mqttService,
+                mqttManager = mqttManager,
                 onNavigateBack = {
                     logger.d(LogConfig.TAG_MAIN, "User requested navigation: Settings -> Main")
                     showSettings = false
@@ -228,7 +228,7 @@ fun GContrlApp(
             )
         } else {
             MainScreen(
-                mqttService = mqttService,
+                mqttManager = mqttManager,
                 onNavigateToSettings = {
                     val speed = locationData?.speed ?: 0f
                     if (speed <= 3f) {

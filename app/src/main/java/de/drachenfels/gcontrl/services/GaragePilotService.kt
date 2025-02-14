@@ -27,7 +27,7 @@ import kotlinx.coroutines.launch
 class GaragePilotService : Service() {
     private val logger = AndroidLogger()
     private val serviceScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
-    private var mqttService: MQTTService? = null
+    private var mqttManager: MqttManager? = null
     private var stateCollectorJob: Job? = null
 
     companion object {
@@ -66,7 +66,7 @@ class GaragePilotService : Service() {
         logger.d(LogConfig.TAG_NOTIFICATION, "Starting foreground service with notification")
         startForeground(NOTIFICATION_ID, notification)
         
-        mqttService = MQTTService.getInstance()
+        mqttManager = MqttManager.getInstance()
         startStateCollection()
         connectToMqtt()
     }
@@ -107,7 +107,7 @@ class GaragePilotService : Service() {
         logger.d(LogConfig.TAG_MAIN, "GaragePilotService: onDestroy")
         isRunning = false
         stateCollectorJob?.cancel()
-        mqttService?.disconnect()
+        mqttManager?.disconnect()
         serviceScope.cancel()
     }
 
@@ -132,7 +132,7 @@ class GaragePilotService : Service() {
         serviceScope.launch {
             try {
                 logger.d(LogConfig.TAG_MAIN, "Attempting MQTT connection")
-                val connected = mqttService?.connect(server, username, password) ?: false
+                val connected = mqttManager?.connect(server, username, password) ?: false
                 if (connected) {
                     logger.d(LogConfig.TAG_MAIN, "MQTT connection established")
                 } else {
@@ -206,7 +206,7 @@ class GaragePilotService : Service() {
 
     private fun startStateCollection() {
         stateCollectorJob = serviceScope.launch {
-            mqttService?.doorState?.collectLatest { state ->
+            mqttManager?.doorState?.collectLatest { state ->
                 updateNotification(state)
             }
         }

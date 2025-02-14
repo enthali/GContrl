@@ -8,7 +8,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.getValue
@@ -19,7 +18,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import de.drachenfels.gcontrl.LocationAutomationSettings
 import de.drachenfels.gcontrl.services.LocationDataRepository
-import de.drachenfels.gcontrl.services.MQTTService
+import de.drachenfels.gcontrl.services.MqttManager
 import de.drachenfels.gcontrl.ui.settings.components.*
 import de.drachenfels.gcontrl.ui.theme.GContrlTheme
 import de.drachenfels.gcontrl.utils.AndroidLogger
@@ -28,7 +27,6 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collectLatest
 import java.lang.Thread.sleep
 
 // TODO: consider moveing to dataStore
@@ -56,7 +54,7 @@ private const val ENABLE_LOCATION_FEATURES = true  // Will be enabled in future 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
-    mqttService: MQTTService,
+    mqttManager: MqttManager,
     onNavigateBack: () -> Unit,
     updateLocationAutomationSettings: (LocationAutomationSettings) -> Unit,
     locationAutomationSettings: StateFlow<LocationAutomationSettings>,
@@ -139,7 +137,7 @@ fun SettingsScreen(
                 isTestingConnection = isTestingConnection,
                 onSaveAndTest = {
                     scope.launch {
-                        mqttService.disconnect()
+                        mqttManager.disconnect()
                         sleep(500)
                         isTestingConnection = true
 
@@ -152,7 +150,7 @@ fun SettingsScreen(
                                     .putBoolean(KEY_CONFIG_VALID, false)
                                     .apply()
 
-                                val connected = mqttService.connect(mqttServer, mqttUser, mqttPassword)
+                                val connected = mqttManager.connect(mqttServer, mqttUser, mqttPassword)
                                 if (connected) {
                                     prefs.edit().putBoolean(KEY_CONFIG_VALID, true).apply()
                                     Toast.makeText(context, "Connection successful", Toast.LENGTH_SHORT).show()
@@ -254,7 +252,7 @@ fun SettingsScreenPreview() {
                 color = MaterialTheme.colorScheme.background
             ) {
                 SettingsScreen(
-                    mqttService = MQTTService.getInstance(),
+                    mqttManager = MqttManager.getInstance(),
                     onNavigateBack = { },
                     updateLocationAutomationSettings = { },
                     locationAutomationSettings = locationAutomationSettingsFlow.asStateFlow(),

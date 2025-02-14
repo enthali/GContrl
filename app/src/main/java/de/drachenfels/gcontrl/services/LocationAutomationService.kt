@@ -16,7 +16,7 @@ import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import de.drachenfels.gcontrl.services.LocationData
 import de.drachenfels.gcontrl.services.LocationDataRepository
-import de.drachenfels.gcontrl.services.MQTTService
+import de.drachenfels.gcontrl.services.MqttManager
 import de.drachenfels.gcontrl.utils.AndroidLogger
 import de.drachenfels.gcontrl.utils.LogConfig
 import kotlinx.coroutines.CoroutineScope
@@ -159,7 +159,7 @@ class LocationAutomationService : Service() {
                 lastDistance >= triggerDistance && currentDistance < triggerDistance -> {
                     logger.d(LogConfig.TAG_LOCATION, "Crossed trigger distance inward, opening garage")
                     CoroutineScope(Dispatchers.IO).launch {
-                        MQTTService.getInstance().openDoor()
+                        MqttManager.getInstance().openDoor()
                     }
                     lastCommandTime = currentTime
                 }
@@ -167,7 +167,7 @@ class LocationAutomationService : Service() {
                 lastDistance < triggerDistance && currentDistance >= triggerDistance -> {
                     logger.d(LogConfig.TAG_LOCATION, "Crossed trigger distance outward, closing garage")
                     CoroutineScope(Dispatchers.IO).launch {
-                        MQTTService.getInstance().closeDoor()
+                        MqttManager.getInstance().closeDoor()
                     }
                     lastCommandTime = currentTime
                 }

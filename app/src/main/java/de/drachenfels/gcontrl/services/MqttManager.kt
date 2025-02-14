@@ -1,6 +1,5 @@
 package de.drachenfels.gcontrl.services
 
-import android.content.Context
 import com.hivemq.client.mqtt.mqtt5.Mqtt5AsyncClient
 import com.hivemq.client.mqtt.mqtt5.Mqtt5Client
 import de.drachenfels.gcontrl.utils.AndroidLogger
@@ -31,7 +30,7 @@ private const val COMMAND_CLOSE = "close"
 private const val COMMAND_STOP = "stop"
 private const val COMMAND_REQUEST_STATUS = "request_status"
 
-class MQTTService private constructor () {
+class MqttManager private constructor () {
     private val logger = AndroidLogger()
     private val _connectionState = MutableStateFlow<ConnectionState>(ConnectionState.Disconnected)
     val connectionState: StateFlow<ConnectionState> = _connectionState
@@ -45,11 +44,11 @@ class MQTTService private constructor () {
     //TODO: investigate sporadic disconnects
     companion object {
         @Volatile
-        private var instance: MQTTService? = null
+        private var instance: MqttManager? = null
 
-        fun getInstance(): MQTTService {
+        fun getInstance(): MqttManager {
             return instance ?: synchronized(this) {
-                instance ?: MQTTService().also { instance = it }
+                instance ?: MqttManager().also { instance = it }
             }
         }
     }
