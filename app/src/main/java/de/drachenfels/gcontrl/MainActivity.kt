@@ -32,7 +32,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-// TODO: Move LocationAutomationSettings management to LocationAutomationManager as part of the preferences refactoring
+// TODO: Move LocationAutomationSettings management to LocationAutomationManager as part of the preferences refactoring of the settings
 // The MainActivity should not be responsible for managing these settings
 data class LocationAutomationSettings(
     val isLocationAutomationEnabled: Boolean = false,
@@ -81,17 +81,19 @@ class MainActivity : ComponentActivity() {
 
                 if (fineLocationGranted && coarseLocationGranted) {
                     logger.d(LogConfig.TAG_LOCATION, "Location permissions granted by user")
+                    // Nach den Location Permissions die Notification Permission anfragen
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        requestNotificationPermission()
+                    } else {
+                        startGaragePilotService()
+                    }
                 } else {
                     logger.d(LogConfig.TAG_LOCATION, "Location permissions denied by user")
                 }
             }
 
+        // Zuerst Location Permissions anfordern
         requestLocationPermissions()
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            requestNotificationPermission()
-        } else {
-            startGaragePilotService()
-        }
 
         enableEdgeToEdge()
         setContent {
@@ -108,6 +110,10 @@ class MainActivity : ComponentActivity() {
             ) == PackageManager.PERMISSION_GRANTED -> {
                 logger.d(LogConfig.TAG_MAIN, "Notification permission already granted")
                 startGaragePilotService()
+            }
+            shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS) -> {
+                logger.d(LogConfig.TAG_MAIN, "Should show permission rationale")
+                requestNotificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
             }
             else -> {
                 logger.d(LogConfig.TAG_MAIN, "Requesting notification permission")
@@ -134,7 +140,18 @@ class MainActivity : ComponentActivity() {
         super.onResume()
         logger.d(LogConfig.TAG_MAIN, "onResume - App coming to foreground")
         if (!GaragePilotService.isRunning()) {
-            startGaragePilotService()
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                if (ContextCompat.checkSelfPermission(
+                        this,
+                        Manifest.permission.POST_NOTIFICATIONS
+                    ) == PackageManager.PERMISSION_GRANTED) {
+                    startGaragePilotService()
+                } else {
+                    requestNotificationPermission()
+                }
+            } else {
+                startGaragePilotService()
+            }
         }
     }
 
@@ -164,10 +181,26 @@ class MainActivity : ComponentActivity() {
             )
         } else {
             logger.d(LogConfig.TAG_LOCATION, "Location permissions already granted")
+            // Wenn Location Permissions bereits vorhanden, Notification Permission prüfen
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                requestNotificationPermission()
+            } else {
+                startGaragePilotService()
+            }
         }
     }
 
     private fun startGaragePilotService() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            logger.d(LogConfig.TAG_MAIN, "Cannot start service - missing notification permission")
+            return
+        }
+
         logger.d(LogConfig.TAG_MAIN, "Starting GaragePilotService")
         val serviceIntent = Intent(this, GaragePilotService::class.java)
         startForegroundService(serviceIntent)

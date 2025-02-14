@@ -55,51 +55,38 @@ class GaragePilotService : Service() {
         super.onCreate()
         logger.d(LogConfig.TAG_MAIN, "GaragePilotService: onCreate")
         isRunning = true
-
-        if (!hasNotificationPermission()) {
-            logger.e(LogConfig.TAG_NOTIFICATION, "Missing POST_NOTIFICATIONS permission!")
-            stopSelf()
-            return
-        }
-
         createNotificationChannel()
-        val notification = createNotification()
-        logger.d(LogConfig.TAG_NOTIFICATION, "Starting foreground service with notification")
-        startForeground(NOTIFICATION_ID, notification)
-
-        // Manager initialisieren
-        mqttManager = MqttManager.getInstance()
-        locationManager = LocationAutomationManager.getInstance().also {
-            it.initialize(applicationContext)
-        }
-
-        startStateCollection()
-        connectToMqtt()
-        locationManager?.startLocationTracking()
-    }
-
-
-    private fun hasNotificationPermission(): Boolean {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            val hasPermission = ContextCompat.checkSelfPermission(
-                this,
-                android.Manifest.permission.POST_NOTIFICATIONS
-            ) == PackageManager.PERMISSION_GRANTED
-            logger.d(LogConfig.TAG_NOTIFICATION, "Notification permission check: $hasPermission")
-            hasPermission
-        } else {
-            logger.d(LogConfig.TAG_NOTIFICATION, "Notification permission not required for this Android version")
-            true
-        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         logger.d(LogConfig.TAG_MAIN, "GaragePilotService: onStartCommand")
         
+        // SOFORT eine Notification erstellen und startForeground aufrufen
+        if (!hasNotificationPermission()) {
+            logger.e(LogConfig.TAG_NOTIFICATION, "Missing POST_NOTIFICATIONS permission!")
+            stopSelf()
+            return START_NOT_STICKY
+        }
+
+        // Starte sofort im Foreground mit Notification
+        startForeground(NOTIFICATION_ID, createNotification())
+        
         when (intent?.action) {
             ACTION_STOP_SERVICE -> {
                 logger.d(LogConfig.TAG_MAIN, "Stop service action received")
                 stopSelf()
+            }
+            else -> {
+                // Nur beim ersten Start (nicht beim Restart) die Manager initialisieren
+                if (mqttManager == null) {
+                    mqttManager = MqttManager.getInstance()
+                    locationManager = LocationAutomationManager.getInstance().also {
+                        it.initialize(applicationContext)
+                    }
+                    startStateCollection()
+                    connectToMqtt()
+                    locationManager?.startLocationTracking()
+                }
             }
         }
         
@@ -118,6 +105,20 @@ class GaragePilotService : Service() {
         mqttManager?.disconnect()
         locationManager?.stopLocationTracking()
         serviceScope.cancel()
+    }
+
+    private fun hasNotificationPermission(): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val hasPermission = ContextCompat.checkSelfPermission(
+                this,
+                android.Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+            logger.d(LogConfig.TAG_NOTIFICATION, "Notification permission check: $hasPermission")
+            hasPermission
+        } else {
+            logger.d(LogConfig.TAG_NOTIFICATION, "Notification permission not required for this Android version")
+            true
+        }
     }
 
     private fun connectToMqtt() {

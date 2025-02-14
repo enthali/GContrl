@@ -16,25 +16,18 @@ An Android application for smartphones and Android Automotive OS to control your
 ## Technical Details
 
 - UI Framework: Jetpack Compose
-- Architecture: MVVM
 - Communication: MQTT (HiveMQ Client)
 - Garage Door Controller: Meeros (will be replaced by DIY project)
-- Minimum Android SDK Version: 28
 - Supported Orientations: Portrait and Landscape
-- Programming Language: Kotlin
 
 ## Installation & Setup
 
 ### For Users
-1. Install the app from Play Store
-2. Select an MQTT server (e.g., HiveMQ) and create credentials
-3. Configure MQTT server details in settings
-4. Connect your garage door controller to the same MQTT server
-5. Control your garage directly from your car
+best you contact the developer and ask him to publish a proper user guide :)
 
 ### For Developers
 #### Prerequisites
-- Android Studio Electric Eel or newer
+- Android Studio Lady Bug or newer
 - Android SDK 28 or higher
 - Kotlin development environment
 
@@ -58,25 +51,21 @@ git clone https://github.com/yourusername/GContrl.git
 
 - Actively in development
 - Available on Google Play Store
-- Focus on stability and user-friendliness
+
+This is a private hobby project focusing on simplicity and reliability.
+Feel free to use it as inspiration for your own projects.
+
 
 ## Development
 
 This project is open for contributions. For major changes, please open an issue first to discuss what you would like to change.
 
-### Development Guidelines
-- Clear commit messages
-- Test coverage for new features
-- Documentation for API changes
-- Code formatting according to Kotlin standards
-
-This is a private hobby project focusing on simplicity and reliability.
-Feel free to use it as inspiration for your own projects.
 
 ## Version History
 
 | Version | Title | Description |
 |---------|-------|-------------|
+| 37 | We stay online | The automation now works even if the app is not in the foreground |
 | 36 | What a wide view again | Portrait and landscape support - startup crash fixed |
 | 35 | What a wide view | Portrait and landscape support - non-functional |
 | 34 | Let's make the door move | Enhanced garage door movement visualization with animated icons |
