@@ -23,6 +23,24 @@ import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
 
+/* TODO: Battery Optimization through Dynamic Location Updates
+ * Implement adaptive location tracking based on distance to garage:
+ * 
+ * Within 500m of garage:
+ * - Update interval: 1000ms (1 second)
+ * - Priority: PRIORITY_HIGH_ACCURACY
+ * 
+ * Outside 500m of garage:
+ * - Update interval: 20000ms (20 seconds)
+ * - Priority: PRIORITY_BALANCED_POWER_ACCURACY
+ * 
+ * Rationale:
+ * - High precision needed only near garage (within 500m)
+ * - At 50 km/h, car travels ~300m in 21.6 seconds
+ * - 20-second update interval outside gives sufficient time to detect approach
+ * - PRIORITY_BALANCED_POWER_ACCURACY saves battery while maintaining adequate tracking
+ */
+
 data class LocationData(
     val latitude: Double,
     val longitude: Double,
