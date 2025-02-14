@@ -27,11 +27,6 @@
             android:exported="false"
             android:foregroundServiceType="dataSync" />
 
-        <service
-            android:name=".LocationAutomationService"
-            android:enabled="true"
-            android:exported="false" />
-
         <activity
             android:name=".MainActivity"
             android:exported="true"

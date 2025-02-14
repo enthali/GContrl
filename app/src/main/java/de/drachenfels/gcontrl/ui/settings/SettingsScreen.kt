@@ -17,7 +17,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import de.drachenfels.gcontrl.LocationAutomationSettings
-import de.drachenfels.gcontrl.services.LocationDataRepository
+import de.drachenfels.gcontrl.services.LocationAutomationManager
 import de.drachenfels.gcontrl.services.MqttManager
 import de.drachenfels.gcontrl.ui.settings.components.*
 import de.drachenfels.gcontrl.ui.theme.GContrlTheme
@@ -58,7 +58,7 @@ fun SettingsScreen(
     onNavigateBack: () -> Unit,
     updateLocationAutomationSettings: (LocationAutomationSettings) -> Unit,
     locationAutomationSettings: StateFlow<LocationAutomationSettings>,
-    locationDataRepository: LocationDataRepository,  // Neu
+    locationManager: LocationAutomationManager,
     modifier: Modifier = Modifier
 ){
     val context = LocalContext.current
@@ -96,9 +96,9 @@ fun SettingsScreen(
     // Collect location updates
     var currentLocation by remember { mutableStateOf<Pair<Double, Double>?>(null) }
 
-    LaunchedEffect(key1 = locationDataRepository) {
+    LaunchedEffect(key1 = locationManager) {
         logger.d(LogConfig.TAG_SETTINGS, "Starting location collection")
-        locationDataRepository.locationUpdates.collect { locationData ->
+        locationManager.locationData.collect { locationData ->
             locationData?.let {
                 logger.d(LogConfig.TAG_SETTINGS, "Collected location: ${it.latitude}, ${it.longitude}")
                 currentLocation = Pair(it.latitude, it.longitude)
@@ -220,9 +220,7 @@ fun SettingsScreen(
     }
 }
 
-
-
-// Deine eigene ContextWrapper-Klasse
+// Preview Context Wrapper
 class SettingsPreviewContextWrapper(
     base: Context,
     val locationAutomationSettingsFlow: StateFlow<LocationAutomationSettings>
@@ -237,9 +235,7 @@ class SettingsPreviewContextWrapper(
 @Composable
 fun SettingsScreenPreview() {
     val locationAutomationSettingsFlow = remember { MutableStateFlow(LocationAutomationSettings()) }
-    // Erstelle eine Instanz von LocationDataRepository
-    val locationDataRepository = remember { LocationDataRepository }
-    // Verwende SettingsPreviewContextWrapper
+    
     CompositionLocalProvider(
         LocalContext provides SettingsPreviewContextWrapper(
             LocalContext.current,
@@ -256,7 +252,7 @@ fun SettingsScreenPreview() {
                     onNavigateBack = { },
                     updateLocationAutomationSettings = { },
                     locationAutomationSettings = locationAutomationSettingsFlow.asStateFlow(),
-                    locationDataRepository = locationDataRepository
+                    locationManager = LocationAutomationManager.getInstance()
                 )
             }
         }

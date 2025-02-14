@@ -1,65 +1,83 @@
-package de.drachenfels.gcontrl
+package de.drachenfels.gcontrl.services
 
 import android.Manifest
-import android.app.Service
 import android.content.Context
-import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.location.Location
-import android.os.IBinder
 import androidx.core.app.ActivityCompat
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
-import de.drachenfels.gcontrl.services.LocationData
-import de.drachenfels.gcontrl.services.LocationDataRepository
-import de.drachenfels.gcontrl.services.MqttManager
 import de.drachenfels.gcontrl.utils.AndroidLogger
 import de.drachenfels.gcontrl.utils.LogConfig
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
 
-class LocationAutomationService : Service() {
+data class LocationData(
+    val latitude: Double,
+    val longitude: Double,
+    val speed: Float,
+    val distanceToGarage: Double? = null
+)
+
+class LocationAutomationManager private constructor() {
     private val logger = AndroidLogger()
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationRequest: LocationRequest
     private lateinit var locationCallback: LocationCallback
     private lateinit var prefs: SharedPreferences
-    private val locationDataRepository = LocationDataRepository
+    private lateinit var context: Context
+    
+    // States
+    private val _locationState = MutableStateFlow<LocationState>(LocationState.Inactive)
+    val locationState: StateFlow<LocationState> = _locationState
+    
+    private val _locationData = MutableStateFlow<LocationData?>(null)
+    val locationData: StateFlow<LocationData?> = _locationData
 
     // Settings keys
-    private  val PREFS_NAME = "GContrlPrefs"
-    private  val KEY_LOCATION_AUTOMATION_ENABLED = "location_automation_enabled"
-    private  val KEY_TRIGGER_DISTANCE = "trigger_distance"
-    private  val KEY_HOME_LATITUDE = "garage_latitude"
-    private  val KEY_HOME_LONGITUDE = "garage_longitude"
+    private val PREFS_NAME = "GContrlPrefs"
+    private val KEY_LOCATION_AUTOMATION_ENABLED = "location_automation_enabled"
+    private val KEY_TRIGGER_DISTANCE = "trigger_distance"
+    private val KEY_HOME_LATITUDE = "garage_latitude"
+    private val KEY_HOME_LONGITUDE = "garage_longitude"
 
-    // Add new properties for state tracking
+    // State tracking
     private var lastKnownDistance: Double? = null
     private var lastCommandTime: Long = 0
-    private val COMMAND_COOLDOWN = 60000L // 1 minute cooldown between commands
+    private val COMMAND_COOLDOWN = 60000L // 1 minute cooldown
 
-    override fun onCreate() {
-        super.onCreate()
-        logger.d(LogConfig.TAG_LOCATION, "LocationAutomationService created")
-        prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
-        createLocationRequest()
-        createLocationCallback()
+    companion object {
+        @Volatile
+        private var instance: LocationAutomationManager? = null
+        
+        fun getInstance(): LocationAutomationManager {
+            return instance ?: synchronized(this) {
+                instance ?: LocationAutomationManager().also { instance = it }
+            }
+        }
     }
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        logger.d(LogConfig.TAG_LOCATION, "LocationAutomationService started")
-        startLocationUpdates()
-        return START_STICKY
+    fun initialize(context: Context) {
+        this.context = context
+        if (!::prefs.isInitialized) {
+            prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        }
+        if (!::fusedLocationClient.isInitialized) {
+            fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
+            createLocationRequest()
+            createLocationCallback()
+        }
     }
 
     private fun createLocationRequest() {
@@ -68,7 +86,6 @@ class LocationAutomationService : Service() {
             .build()
     }
 
-    // TODO: Implmenent preferences manager possibly using a stateflow to distribute changes to the settings...
     private fun createLocationCallback() {
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(locationResult: LocationResult) {
@@ -86,39 +103,54 @@ class LocationAutomationService : Service() {
                         calculateDistance(location, homeLocation)
                     } else null
 
-                    // Emit location update to SharedFlow with distance
-                    CoroutineScope(Dispatchers.IO).launch {
-                        locationDataRepository.emitLocation(
-                            LocationData(
-                                latitude = location.latitude,
-                                longitude = location.longitude,
-                                speed = location.speed,
-                                distanceToGarage = distance
-                            )
-                        )
-                    }
+                    // Update location data
+                    val locationData = LocationData(
+                        latitude = location.latitude,
+                        longitude = location.longitude,
+                        speed = location.speed,
+                        distanceToGarage = distance
+                    )
+                    _locationData.value = locationData
+                    
                     checkLocation(location)
                 }
             }
         }
     }
 
-    private fun startLocationUpdates() {
+    fun startLocationTracking() {
         if (ActivityCompat.checkSelfPermission(
-                this,
+                context,
                 Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_COARSE_LOCATION
             ) != PackageManager.PERMISSION_GRANTED
         ) {
+            _locationState.value = LocationState.Error("Missing location permission")
             return
         }
-        fusedLocationClient.requestLocationUpdates(
-            locationRequest,
-            locationCallback,
-            null
-        )
+
+        try {
+            fusedLocationClient.requestLocationUpdates(
+                locationRequest,
+                locationCallback,
+                null
+            )
+            _locationState.value = LocationState.Active
+            logger.d(LogConfig.TAG_LOCATION, "Location tracking started")
+        } catch (e: Exception) {
+            _locationState.value = LocationState.Error("Failed to start location tracking: ${e.message}")
+            logger.e(LogConfig.TAG_LOCATION, "Failed to start location tracking", e)
+        }
+    }
+
+    fun stopLocationTracking() {
+        try {
+            fusedLocationClient.removeLocationUpdates(locationCallback)
+            _locationState.value = LocationState.Inactive
+            logger.d(LogConfig.TAG_LOCATION, "Location tracking stopped")
+        } catch (e: Exception) {
+            _locationState.value = LocationState.Error("Failed to stop location tracking: ${e.message}")
+            logger.e(LogConfig.TAG_LOCATION, "Failed to stop location tracking", e)
+        }
     }
 
     private fun checkLocation(currentLocation: Location) {
@@ -177,7 +209,6 @@ class LocationAutomationService : Service() {
         lastKnownDistance = currentDistance
     }
 
-
     private fun calculateDistance(location1: Location, location2: Location): Double {
         val earthRadius = 6371000.0 // in meters
 
@@ -197,7 +228,9 @@ class LocationAutomationService : Service() {
         return earthRadius * c
     }
 
-    override fun onBind(intent: Intent): IBinder? {
-        return null
+    sealed class LocationState {
+        object Active : LocationState()
+        object Inactive : LocationState()
+        data class Error(val message: String) : LocationState()
     }
 }

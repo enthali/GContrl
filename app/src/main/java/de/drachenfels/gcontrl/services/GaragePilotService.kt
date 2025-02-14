@@ -28,6 +28,7 @@ class GaragePilotService : Service() {
     private val logger = AndroidLogger()
     private val serviceScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
     private var mqttManager: MqttManager? = null
+    private var locationManager: LocationAutomationManager? = null
     private var stateCollectorJob: Job? = null
 
     companion object {
@@ -54,7 +55,7 @@ class GaragePilotService : Service() {
         super.onCreate()
         logger.d(LogConfig.TAG_MAIN, "GaragePilotService: onCreate")
         isRunning = true
-        
+
         if (!hasNotificationPermission()) {
             logger.e(LogConfig.TAG_NOTIFICATION, "Missing POST_NOTIFICATIONS permission!")
             stopSelf()
@@ -65,11 +66,18 @@ class GaragePilotService : Service() {
         val notification = createNotification()
         logger.d(LogConfig.TAG_NOTIFICATION, "Starting foreground service with notification")
         startForeground(NOTIFICATION_ID, notification)
-        
+
+        // Manager initialisieren
         mqttManager = MqttManager.getInstance()
+        locationManager = LocationAutomationManager.getInstance().also {
+            it.initialize(applicationContext)
+        }
+
         startStateCollection()
         connectToMqtt()
+        locationManager?.startLocationTracking()
     }
+
 
     private fun hasNotificationPermission(): Boolean {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -108,6 +116,7 @@ class GaragePilotService : Service() {
         isRunning = false
         stateCollectorJob?.cancel()
         mqttManager?.disconnect()
+        locationManager?.stopLocationTracking()
         serviceScope.cancel()
     }
 

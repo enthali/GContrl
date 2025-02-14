@@ -29,7 +29,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import de.drachenfels.gcontrl.LocationAutomationSettings
 import de.drachenfels.gcontrl.services.DoorState
-import de.drachenfels.gcontrl.services.LocationDataRepository
+import de.drachenfels.gcontrl.services.LocationAutomationManager
 import de.drachenfels.gcontrl.services.MqttManager
 import de.drachenfels.gcontrl.ui.mainscreen.components.ConnectionStatusIcon
 import de.drachenfels.gcontrl.ui.mainscreen.components.ControlButtonArea
@@ -52,8 +52,9 @@ fun MainScreen(
     val doorState by mqttManager.doorState.collectAsState()
     val connectionState by mqttManager.connectionState.collectAsState()
     val configuration = LocalConfiguration.current
+    val locationManager = LocationAutomationManager.getInstance()
 
-    val locationData by LocationDataRepository.locationUpdates.collectAsState()
+    val locationData by locationManager.locationData.collectAsState()
     val currentSpeed = locationData?.speed ?: 0f
     val showSettings = currentSpeed <= 3f
     val currentDistance = locationData?.distanceToGarage?.toFloat() ?: 1000f

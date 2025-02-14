@@ -21,7 +21,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import de.drachenfels.gcontrl.services.GaragePilotService
-import de.drachenfels.gcontrl.services.LocationDataRepository
+import de.drachenfels.gcontrl.services.LocationAutomationManager
 import de.drachenfels.gcontrl.services.MqttManager
 import de.drachenfels.gcontrl.ui.mainscreen.MainScreen
 import de.drachenfels.gcontrl.ui.settings.SettingsScreen
@@ -32,6 +32,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
+// TODO: Move LocationAutomationSettings management to LocationAutomationManager as part of the preferences refactoring
+// The MainActivity should not be responsible for managing these settings
 data class LocationAutomationSettings(
     val isLocationAutomationEnabled: Boolean = false,
     val triggerDistance: Int = 100
@@ -79,7 +81,6 @@ class MainActivity : ComponentActivity() {
 
                 if (fineLocationGranted && coarseLocationGranted) {
                     logger.d(LogConfig.TAG_LOCATION, "Location permissions granted by user")
-                    startLocationAutomationService()
                 } else {
                     logger.d(LogConfig.TAG_LOCATION, "Location permissions denied by user")
                 }
@@ -94,11 +95,9 @@ class MainActivity : ComponentActivity() {
 
         enableEdgeToEdge()
         setContent {
-            GContrlApp(::updateLocationAutomationSettings, locationAutomationSettings, LocationDataRepository)
+            GContrlApp(::updateLocationAutomationSettings, locationAutomationSettings)
         }
         logger.d(LogConfig.TAG_MAIN, "onCreate - App initialized")
-
-        startLocationAutomationService()
     }
 
     private fun requestNotificationPermission() {
@@ -142,7 +141,6 @@ class MainActivity : ComponentActivity() {
     override fun onDestroy() {
         super.onDestroy()
         logger.d(LogConfig.TAG_MAIN, "onDestroy - Cleaning up")
-        stopLocationAutomationService()
     }
 
     private fun requestLocationPermissions() {
@@ -169,18 +167,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun startLocationAutomationService() {
-        logger.d(LogConfig.TAG_MAIN, "Starting LocationAutomationService")
-        val serviceIntent = Intent(this, LocationAutomationService::class.java)
-        startService(serviceIntent)
-    }
-
-    private fun stopLocationAutomationService() {
-        logger.d(LogConfig.TAG_MAIN, "Stopping LocationAutomationService")
-        val serviceIntent = Intent(this, LocationAutomationService::class.java)
-        stopService(serviceIntent)
-    }
-
     private fun startGaragePilotService() {
         logger.d(LogConfig.TAG_MAIN, "Starting GaragePilotService")
         val serviceIntent = Intent(this, GaragePilotService::class.java)
@@ -197,16 +183,16 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun GContrlApp(
     updateLocationAutomationSettings: (LocationAutomationSettings) -> Unit,
-    locationAutomationSettings: StateFlow<LocationAutomationSettings>,
-    locationDataRepository: LocationDataRepository
+    locationAutomationSettings: StateFlow<LocationAutomationSettings>
 ){
     val logger = AndroidLogger()
     var showSettings by remember { mutableStateOf(false) }
     val mqttManager = MqttManager.getInstance()
+    val locationManager = LocationAutomationManager.getInstance()
     val context = LocalContext.current
 
     // Collect location data for speed check
-    val locationData by locationDataRepository.locationUpdates.collectAsState()
+    val locationData by locationManager.locationData.collectAsState()
 
     // Effect to handle speed-based navigation
     if (locationData?.speed ?: 0f > 3f && showSettings) {
@@ -224,7 +210,7 @@ fun GContrlApp(
                 },
                 updateLocationAutomationSettings = updateLocationAutomationSettings,
                 locationAutomationSettings = locationAutomationSettings,
-                locationDataRepository = locationDataRepository
+                locationManager = locationManager
             )
         } else {
             MainScreen(

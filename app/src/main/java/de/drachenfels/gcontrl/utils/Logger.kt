@@ -11,7 +11,7 @@ object LogConfig {
     var ENABLE_DEBUG = BuildConfig.DEBUG      // Master switch for debug
     var ENABLE_DEBUG_MQTT = false            // MQTT logging
     var ENABLE_DEBUG_SETTINGS = false        // Settings debug flag
-    var ENABLE_DEBUG_LOCATION = false        // Location debug flag
+    var ENABLE_DEBUG_LOCATION = true        // Location debug flag
     var ENABLE_DEBUG_NOTIFICATION = true     // Notification debug flag
 
     // Standard tags for components
