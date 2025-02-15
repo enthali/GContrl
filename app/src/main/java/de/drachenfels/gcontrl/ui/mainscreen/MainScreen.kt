@@ -159,7 +159,7 @@ fun MainScreenPreviewWithoutLocation() {
             ) {
                 MainScreen(
                     onNavigateToSettings = { },
-                    mqttManager = MqttManager.getInstance(),
+                    mqttManager = MqttManager.getInstance(context = LocalContext.current),
                     locationAutomationSettingsFlow = locationAutomationSettingsFlow.asStateFlow()
                 )
             }
@@ -190,7 +190,7 @@ fun MainScreenPreviewWithLocation() {
             ) {
                 MainScreen(
                     onNavigateToSettings = { },
-                    mqttManager = MqttManager.getInstance(),
+                    mqttManager = MqttManager.getInstance(context = LocalContext.current),
                     locationAutomationSettingsFlow = locationAutomationSettingsFlow.asStateFlow()
                 )
             }

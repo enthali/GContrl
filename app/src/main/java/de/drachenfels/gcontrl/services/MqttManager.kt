@@ -1,11 +1,13 @@
 package de.drachenfels.gcontrl.services
 
+import android.content.Context
 import com.hivemq.client.mqtt.mqtt5.Mqtt5AsyncClient
 import com.hivemq.client.mqtt.mqtt5.Mqtt5Client
 import de.drachenfels.gcontrl.utils.AndroidLogger
 import de.drachenfels.gcontrl.utils.LogConfig
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -19,6 +21,7 @@ private const val PREFS_NAME = "GContrlPrefs"
 private const val KEY_MQTT_SERVER = "mqtt_server"
 private const val KEY_MQTT_USERNAME = "mqtt_username"
 private const val KEY_MQTT_PASSWORD = "mqtt_password"
+private const val KEY_CONFIG_VALID = "mqtt_config_valid"
 private const val MQTT_PORT = 8883  // Standard MQTT TLS port
 
 // MQTT Topics und Commands
@@ -30,7 +33,7 @@ private const val COMMAND_CLOSE = "close"
 private const val COMMAND_STOP = "stop"
 private const val COMMAND_REQUEST_STATUS = "request_status"
 
-class MqttManager private constructor () {
+class MqttManager private constructor (private val context: Context) {
     private val logger = AndroidLogger()
     private val _connectionState = MutableStateFlow<ConnectionState>(ConnectionState.Disconnected)
     val connectionState: StateFlow<ConnectionState> = _connectionState
@@ -40,15 +43,40 @@ class MqttManager private constructor () {
 
     private var client: Mqtt5AsyncClient? = null
     private var connectContinuation: Continuation<Boolean>? = null
+    private var lastReconnectAttempt: Long = 0
+    private val reconnectCooldownDuration: Long = 20000  // 20 Sekunden
 
-    //TODO: investigate sporadic disconnects
+
     companion object {
         @Volatile
         private var instance: MqttManager? = null
 
-        fun getInstance(): MqttManager {
+        fun getInstance(context: Context): MqttManager {
             return instance ?: synchronized(this) {
-                instance ?: MqttManager().also { instance = it }
+                instance ?: MqttManager(context.applicationContext).also { instance = it }
+            }
+        }
+    }
+
+    private fun scheduleReconnect() {
+        val currentTime = System.currentTimeMillis()
+        val timeSinceLastReconnect = currentTime - lastReconnectAttempt
+        val delay= if (timeSinceLastReconnect < reconnectCooldownDuration) {
+            logger.d(LogConfig.TAG_MQTT, "Recent reconnect attempt, applying cooldown")
+            reconnectCooldownDuration
+        } else {
+            logger.d(LogConfig.TAG_MQTT, "No recent reconnect attempt, reconnecting immediately")
+            1  // Fast sofort, aber nicht 0
+        }
+
+        CoroutineScope(Dispatchers.IO).launch {
+            logger.d(LogConfig.TAG_MQTT, "Scheduling reconnect with delay: $delay ms")
+            delay(delay)
+            try {
+                lastReconnectAttempt = System.currentTimeMillis()
+                connect()
+            } catch (e: Exception) {
+                logger.e(LogConfig.TAG_MQTT, "Scheduled reconnect failed", e)
             }
         }
     }
@@ -78,6 +106,7 @@ Client ID: $clientId""".trimMargin())
 Client ID: $clientId""".trimMargin())
                 _connectionState.value = ConnectionState.Disconnected
                 _doorState.value = DoorState.UNKNOWN
+                scheduleReconnect()
             }
             .buildAsync()
     }
@@ -109,7 +138,28 @@ Client ID: $clientId""".trimMargin())
             }
     }
 
-    suspend fun connect(server: String, username: String, password: String): Boolean = suspendCoroutine { continuation ->
+    suspend fun connect(): Boolean {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val isConfigValid = prefs.getBoolean(KEY_CONFIG_VALID, false)
+
+        if (!isConfigValid) {
+            logger.d(LogConfig.TAG_MQTT, "MQTT config not valid, skipping connection")
+            return false
+        }
+
+        val server = prefs.getString(KEY_MQTT_SERVER, "") ?: ""
+        val username = prefs.getString(KEY_MQTT_USERNAME, "") ?: ""
+        val password = prefs.getString(KEY_MQTT_PASSWORD, "") ?: ""
+
+        if (server.isEmpty()) {
+            logger.d(LogConfig.TAG_MQTT, "MQTT server not configured, skipping connection")
+            return false
+        }
+
+        return connectWithCredentials(server, username, password)
+    }
+
+    private suspend fun connectWithCredentials(server: String, username: String, password: String): Boolean = suspendCoroutine { continuation ->
         try {
             logger.d(LogConfig.TAG_MQTT, "Starting connect sequence")
             connectContinuation = continuation
@@ -215,19 +265,19 @@ Client ID: $clientId""".trimMargin())
 
     fun closeDoor() {
         CoroutineScope(Dispatchers.IO).launch {
-        logger.d(LogConfig.TAG_MQTT, "Publishing close command")
-        client?.publishWith()
-            ?.topic(TOPIC_COMMAND)
-            ?.payload(COMMAND_CLOSE.toByteArray())
-            ?.send()
-            ?.whenComplete { pubAck, throwable ->
-                if (throwable != null) {
-                    logger.e(LogConfig.TAG_MQTT, "Failed to publish close command", throwable)
-                    _connectionState.value = ConnectionState.Error(throwable.message ?: "Publish failed")
-                } else {
-                    logger.d(LogConfig.TAG_MQTT, "Close command published successfully")
+            logger.d(LogConfig.TAG_MQTT, "Publishing close command")
+            client?.publishWith()
+                ?.topic(TOPIC_COMMAND)
+                ?.payload(COMMAND_CLOSE.toByteArray())
+                ?.send()
+                ?.whenComplete { pubAck, throwable ->
+                    if (throwable != null) {
+                        logger.e(LogConfig.TAG_MQTT, "Failed to publish close command", throwable)
+                        _connectionState.value = ConnectionState.Error(throwable.message ?: "Publish failed")
+                    } else {
+                        logger.d(LogConfig.TAG_MQTT, "Close command published successfully")
+                    }
                 }
-            }
         }
     }
 

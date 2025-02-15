@@ -10,8 +10,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
@@ -27,7 +25,6 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import java.lang.Thread.sleep
 
 // TODO: consider moveing to dataStore
 // Settings keys
@@ -49,7 +46,7 @@ private const val KEY_TRIGGER_DISTANCE = "trigger_distance"
 private val logger = AndroidLogger()
 
 // feature to be implemented in future release
-private const val ENABLE_LOCATION_FEATURES = true  // Will be enabled in future release
+private const val ENABLE_LOCATION_FEATURES = true
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -138,25 +135,28 @@ fun SettingsScreen(
                 onSaveAndTest = {
                     scope.launch {
                         mqttManager.disconnect()
-                        sleep(500)
+                        delay(500)
                         isTestingConnection = true
 
                         val connectionJob = launch {
                             try {
+                                // Zuerst Einstellungen speichern
                                 prefs.edit()
                                     .putString(KEY_MQTT_SERVER, mqttServer)
                                     .putString(KEY_MQTT_USERNAME, mqttUser)
                                     .putString(KEY_MQTT_PASSWORD, mqttPassword)
-                                    .putBoolean(KEY_CONFIG_VALID, false)
+                                    .putBoolean(KEY_CONFIG_VALID, true)
                                     .apply()
 
-                                val connected = mqttManager.connect(mqttServer, mqttUser, mqttPassword)
+                                // Verbindung testen
+                                val connected = mqttManager.connect()
                                 if (connected) {
-                                    prefs.edit().putBoolean(KEY_CONFIG_VALID, true).apply()
                                     Toast.makeText(context, "Connection successful", Toast.LENGTH_SHORT).show()
                                     onNavigateBack()
                                 } else {
+                                    // if the test failed set to false.
                                     Toast.makeText(context, "Connection failed - could not establish connection", Toast.LENGTH_LONG).show()
+                                    prefs.edit().putBoolean(KEY_CONFIG_VALID, false).apply()
                                 }
                             } catch (e: Exception) {
                                 logger.e(LogConfig.TAG_SETTINGS, "Connection test failed", e)
@@ -180,7 +180,6 @@ fun SettingsScreen(
 
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
-            // feature to be implemented in future release
             if (ENABLE_LOCATION_FEATURES) {
                 // Location Automation Section
                 LocationAutomationSection(
@@ -215,6 +214,7 @@ fun SettingsScreen(
 
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             }
+
             VersionInfoSection()
         }
     }
@@ -234,27 +234,21 @@ class SettingsPreviewContextWrapper(
 )
 @Composable
 fun SettingsScreenPreview() {
-    val locationAutomationSettingsFlow = remember { MutableStateFlow(LocationAutomationSettings()) }
-    
-    CompositionLocalProvider(
-        LocalContext provides SettingsPreviewContextWrapper(
-            LocalContext.current,
-            locationAutomationSettingsFlow.asStateFlow()
-        )
-    ) {
-        GContrlTheme {
-            Surface(
-                modifier = Modifier.fillMaxSize(),
-                color = MaterialTheme.colorScheme.background
-            ) {
-                SettingsScreen(
-                    mqttManager = MqttManager.getInstance(),
-                    onNavigateBack = { },
-                    updateLocationAutomationSettings = { },
-                    locationAutomationSettings = locationAutomationSettingsFlow.asStateFlow(),
-                    locationManager = LocationAutomationManager.getInstance()
-                )
-            }
+    val context = LocalContext.current
+    GContrlTheme {
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = MaterialTheme.colorScheme.background
+        ) {
+            SettingsScreen(
+                mqttManager = MqttManager.getInstance(context),
+                onNavigateBack = { },
+                updateLocationAutomationSettings = { },
+                locationAutomationSettings = remember {
+                    MutableStateFlow(LocationAutomationSettings())
+                }.asStateFlow(),
+                locationManager = LocationAutomationManager.getInstance()
+            )
         }
     }
 }

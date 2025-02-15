@@ -219,10 +219,11 @@ fun GContrlApp(
     locationAutomationSettings: StateFlow<LocationAutomationSettings>
 ){
     val logger = AndroidLogger()
-    var showSettings by remember { mutableStateOf(false) }
-    val mqttManager = MqttManager.getInstance()
-    val locationManager = LocationAutomationManager.getInstance()
     val context = LocalContext.current
+    var showSettings by remember { mutableStateOf(false) }
+    val mqttManager = MqttManager.getInstance(context)
+    val locationManager = LocationAutomationManager.getInstance()
+
 
     // Collect location data for speed check
     val locationData by locationManager.locationData.collectAsState()

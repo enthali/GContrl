@@ -35,16 +35,9 @@ class GaragePilotService : Service() {
         private const val NOTIFICATION_ID = 1
         private const val CHANNEL_ID = "GaragePilotService"
         private const val CHANNEL_NAME = "Garage Pilot"
-        
+
         // Action für Stop Button
         const val ACTION_STOP_SERVICE = "de.drachenfels.gcontrl.STOP_SERVICE"
-        
-        // Settings keys
-        private const val PREFS_NAME = "GContrlPrefs"
-        private const val KEY_MQTT_SERVER = "mqtt_server"
-        private const val KEY_MQTT_USERNAME = "mqtt_username"
-        private const val KEY_MQTT_PASSWORD = "mqtt_password"
-        private const val KEY_CONFIG_VALID = "mqtt_config_valid"
 
         // Service Status
         private var isRunning = false
@@ -60,7 +53,7 @@ class GaragePilotService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         logger.d(LogConfig.TAG_MAIN, "GaragePilotService: onStartCommand")
-        
+
         // SOFORT eine Notification erstellen und startForeground aufrufen
         if (!hasNotificationPermission()) {
             logger.e(LogConfig.TAG_NOTIFICATION, "Missing POST_NOTIFICATIONS permission!")
@@ -70,7 +63,7 @@ class GaragePilotService : Service() {
 
         // Starte sofort im Foreground mit Notification
         startForeground(NOTIFICATION_ID, createNotification())
-        
+
         when (intent?.action) {
             ACTION_STOP_SERVICE -> {
                 logger.d(LogConfig.TAG_MAIN, "Stop service action received")
@@ -79,7 +72,7 @@ class GaragePilotService : Service() {
             else -> {
                 // Nur beim ersten Start (nicht beim Restart) die Manager initialisieren
                 if (mqttManager == null) {
-                    mqttManager = MqttManager.getInstance()
+                    mqttManager = MqttManager.getInstance(applicationContext)
                     locationManager = LocationAutomationManager.getInstance().also {
                         it.initialize(applicationContext)
                     }
@@ -89,7 +82,7 @@ class GaragePilotService : Service() {
                 }
             }
         }
-        
+
         return START_STICKY
     }
 
@@ -122,27 +115,10 @@ class GaragePilotService : Service() {
     }
 
     private fun connectToMqtt() {
-        val prefs = applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        val isConfigValid = prefs.getBoolean(KEY_CONFIG_VALID, false)
-        
-        if (!isConfigValid) {
-            logger.d(LogConfig.TAG_MAIN, "MQTT config not valid, skipping connection")
-            return
-        }
-
-        val server = prefs.getString(KEY_MQTT_SERVER, "") ?: ""
-        val username = prefs.getString(KEY_MQTT_USERNAME, "") ?: ""
-        val password = prefs.getString(KEY_MQTT_PASSWORD, "") ?: ""
-
-        if (server.isEmpty()) {
-            logger.d(LogConfig.TAG_MAIN, "MQTT server not configured, skipping connection")
-            return
-        }
-
         serviceScope.launch {
             try {
                 logger.d(LogConfig.TAG_MAIN, "Attempting MQTT connection")
-                val connected = mqttManager?.connect(server, username, password) ?: false
+                val connected = mqttManager?.connect() ?: false
                 if (connected) {
                     logger.d(LogConfig.TAG_MAIN, "MQTT connection established")
                 } else {
@@ -176,7 +152,7 @@ class GaragePilotService : Service() {
 
     private fun createNotification(doorState: DoorState = DoorState.UNKNOWN): Notification {
         logger.d(LogConfig.TAG_NOTIFICATION, "Creating notification with state: $doorState")
-        
+
         // Intent zum Öffnen der App
         val contentIntent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK

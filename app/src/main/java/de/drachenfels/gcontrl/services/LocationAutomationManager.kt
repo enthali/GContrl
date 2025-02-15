@@ -209,7 +209,7 @@ class LocationAutomationManager private constructor() {
                 lastDistance >= triggerDistance && currentDistance < triggerDistance -> {
                     logger.d(LogConfig.TAG_LOCATION, "Crossed trigger distance inward, opening garage")
                     CoroutineScope(Dispatchers.IO).launch {
-                        MqttManager.getInstance().openDoor()
+                        MqttManager.getInstance(context).openDoor()
                     }
                     lastCommandTime = currentTime
                 }
@@ -217,7 +217,7 @@ class LocationAutomationManager private constructor() {
                 lastDistance < triggerDistance && currentDistance >= triggerDistance -> {
                     logger.d(LogConfig.TAG_LOCATION, "Crossed trigger distance outward, closing garage")
                     CoroutineScope(Dispatchers.IO).launch {
-                        MqttManager.getInstance().closeDoor()
+                        MqttManager.getInstance(context).closeDoor()
                     }
                     lastCommandTime = currentTime
                 }
