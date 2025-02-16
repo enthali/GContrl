@@ -11,6 +11,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 import java.util.UUID
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
@@ -42,10 +43,6 @@ class MqttManager private constructor (private val context: Context) {
     val doorState: StateFlow<DoorState> = _doorState
 
     private var client: Mqtt5AsyncClient? = null
-    private var connectContinuation: Continuation<Boolean>? = null
-    private var lastReconnectAttempt: Long = 0
-    private val reconnectCooldownDuration: Long = 20000  // 20 Sekunden
-
 
     companion object {
         @Volatile
@@ -57,34 +54,9 @@ class MqttManager private constructor (private val context: Context) {
             }
         }
     }
-
-    private fun scheduleReconnect() {
-        val currentTime = System.currentTimeMillis()
-        val timeSinceLastReconnect = currentTime - lastReconnectAttempt
-        val delay= if (timeSinceLastReconnect < reconnectCooldownDuration) {
-            logger.d(LogConfig.TAG_MQTT, "Recent reconnect attempt, applying cooldown")
-            reconnectCooldownDuration
-        } else {
-            logger.d(LogConfig.TAG_MQTT, "No recent reconnect attempt, reconnecting immediately")
-            1  // Fast sofort, aber nicht 0
-        }
-
-        CoroutineScope(Dispatchers.IO).launch {
-            logger.d(LogConfig.TAG_MQTT, "Scheduling reconnect with delay: $delay ms")
-            delay(delay)
-            try {
-                lastReconnectAttempt = System.currentTimeMillis()
-                connect()
-            } catch (e: Exception) {
-                logger.e(LogConfig.TAG_MQTT, "Scheduled reconnect failed", e)
-            }
-        }
-    }
-
     private fun buildMqttClient(server: String): Mqtt5AsyncClient {
         val clientId = UUID.randomUUID().toString()
         logger.d(LogConfig.TAG_MQTT, "Building MQTT client with ID: $clientId")
-        logger.d(LogConfig.TAG_MQTT, "Server: $server")
 
         return Mqtt5Client.builder()
             .identifier(clientId)
@@ -94,19 +66,26 @@ class MqttManager private constructor (private val context: Context) {
             .applySslConfig()
             .automaticReconnectWithDefaultConfig()
             .addConnectedListener {
-                logger.d(LogConfig.TAG_MQTT, """Connected listener triggered for client:
-Client ID: $clientId""".trimMargin())
+                logger.d(LogConfig.TAG_MQTT, "Connected")
                 _connectionState.value = ConnectionState.Connected
                 subscribeToState()
-                connectContinuation?.resume(true)
-                connectContinuation = null
             }
-            .addDisconnectedListener {
+ /* do not delete
+            .addDisconnectedListener { event ->
                 logger.d(LogConfig.TAG_MQTT, """Disconnected listener triggered:
-Client ID: $clientId""".trimMargin())
-                _connectionState.value = ConnectionState.Disconnected
-                _doorState.value = DoorState.UNKNOWN
-                scheduleReconnect()
+Client ID: $clientId
+Available properties: ${event::class.java.methods.joinToString { it.name }}""".trimMargin())
+*/
+
+            .addDisconnectedListener { event ->
+                logger.d(LogConfig.TAG_MQTT, """Disconnected listener triggered:
+Client ID: $clientId
+Source: ${event.source}
+Client Config: ${event.clientConfig}""".trimMargin())
+                // We do get an automated disconnect when the Client autoreconnects
+                // _connectionState.value = ConnectionState.Disconnected
+                // door state should only be set from actual MQTT messages
+                // _doorState.value = DoorState.UNKNOWN
             }
             .buildAsync()
     }
@@ -140,10 +119,8 @@ Client ID: $clientId""".trimMargin())
 
     suspend fun connect(): Boolean {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        val isConfigValid = prefs.getBoolean(KEY_CONFIG_VALID, false)
-
-        if (!isConfigValid) {
-            logger.d(LogConfig.TAG_MQTT, "MQTT config not valid, skipping connection")
+        if (!prefs.getBoolean(KEY_CONFIG_VALID, false)) {
+            logger.d(LogConfig.TAG_MQTT, "MQTT config not valid")
             return false
         }
 
@@ -152,64 +129,56 @@ Client ID: $clientId""".trimMargin())
         val password = prefs.getString(KEY_MQTT_PASSWORD, "") ?: ""
 
         if (server.isEmpty()) {
-            logger.d(LogConfig.TAG_MQTT, "MQTT server not configured, skipping connection")
+            logger.d(LogConfig.TAG_MQTT, "MQTT server not configured")
             return false
         }
 
         return connectWithCredentials(server, username, password)
     }
 
-    private suspend fun connectWithCredentials(server: String, username: String, password: String): Boolean = suspendCoroutine { continuation ->
+    private suspend fun connectWithCredentials(
+        server: String,
+        username: String,
+        password: String
+    ): Boolean = suspendCancellableCoroutine { continuation ->
         try {
-            logger.d(LogConfig.TAG_MQTT, "Starting connect sequence")
-            connectContinuation = continuation
-
-            // Force new client creation
-            if (client != null) {
-                logger.d(LogConfig.TAG_MQTT, "Disposing old client")
-                try {
-                    client?.disconnect()
-                } catch (e: Exception) {
-                    logger.e(LogConfig.TAG_MQTT, "Error during old client disconnect", e)
-                }
-                client = null
-            }
-
-            // Create new client
+            // Clean up any existing client
+            client?.disconnect()
             client = buildMqttClient(server)
-            logger.d(LogConfig.TAG_MQTT, "Created new MQTT client")
 
             _connectionState.value = ConnectionState.Disconnected
 
             client?.connectWith()
+                ?.keepAlive(30)
                 ?.simpleAuth()
                 ?.username(username)
                 ?.password(password.toByteArray())
                 ?.applySimpleAuth()
                 ?.send()
-                ?.whenComplete { connAck, throwable ->
+                ?.whenComplete { _, throwable ->
                     if (throwable != null) {
                         logger.e(LogConfig.TAG_MQTT, "Connection failed", throwable)
                         _connectionState.value = ConnectionState.Error(throwable.message ?: "Connection failed")
-                        connectContinuation?.resume(false)
-                        connectContinuation = null
+                        if (!continuation.isCompleted) continuation.resume(false)
                     } else {
-                        logger.d(LogConfig.TAG_MQTT, "Connect acknowledged successfully")
-                        // Connected event will be handled by the ConnectedListener
+                        if (!continuation.isCompleted) continuation.resume(true)
                     }
                 }
+
+            continuation.invokeOnCancellation {
+                logger.d(LogConfig.TAG_MQTT, "Connection cancelled")
+                disconnect()
+            }
         } catch (e: Exception) {
             logger.e(LogConfig.TAG_MQTT, "Exception during connect", e)
             _connectionState.value = ConnectionState.Error(e.message ?: "Unknown error during connect")
-            continuation.resumeWithException(e)
-            connectContinuation = null
+            if (!continuation.isCompleted) continuation.resumeWithException(e)
         }
     }
 
     fun disconnect() {
         try {
             logger.d(LogConfig.TAG_MQTT, "Starting disconnect")
-            connectContinuation = null  // Clear any pending connection continuation
             client?.disconnect()
                 ?.whenComplete { _, throwable ->
                     if (throwable != null) {

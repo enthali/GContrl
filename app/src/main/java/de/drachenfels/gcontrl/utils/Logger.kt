@@ -9,13 +9,14 @@ import de.drachenfels.gcontrl.BuildConfig
 object LogConfig {
     // Debug flags
     var ENABLE_DEBUG = BuildConfig.DEBUG      // Master switch for debug
+    var ENABLE_DEBUG_MAIN = true              // App logging
     var ENABLE_DEBUG_MQTT = true            // MQTT logging
     var ENABLE_DEBUG_SETTINGS = false        // Settings debug flag
     var ENABLE_DEBUG_LOCATION = false        // Location debug flag
     var ENABLE_DEBUG_NOTIFICATION = false     // Notification debug flag
 
     // Standard tags for components
-    const val TAG_MAIN = "GPLog: GContrl"           // General app tag
+    const val TAG_MAIN = "GPLog: MainActivity"           // General app tag
     const val TAG_MQTT = "GPLog: MQTT"              // MQTT specific
     const val TAG_SETTINGS = "GPLog: Settings"      // Settings related
     const val TAG_LOCATION = "GPLog: LocAuto"       // LocationAutomationService
@@ -23,11 +24,12 @@ object LogConfig {
 
     // Computed property for debug status
     val isDebuggingEnabled: Boolean
-        get() = ENABLE_DEBUG || 
+        get() = ENABLE_DEBUG && (
+                ENABLE_DEBUG_MAIN ||
                 ENABLE_DEBUG_MQTT || 
                 ENABLE_DEBUG_SETTINGS ||
                 ENABLE_DEBUG_LOCATION ||
-                ENABLE_DEBUG_NOTIFICATION
+                ENABLE_DEBUG_NOTIFICATION)
 }
 
 /**

@@ -135,7 +135,7 @@ fun SettingsScreen(
                 onSaveAndTest = {
                     scope.launch {
                         mqttManager.disconnect()
-                        delay(500)
+
                         isTestingConnection = true
 
                         val connectionJob = launch {
