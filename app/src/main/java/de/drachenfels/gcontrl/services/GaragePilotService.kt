@@ -95,7 +95,9 @@ class GaragePilotService : Service() {
         logger.d(LogConfig.TAG_MAIN, "GaragePilotService: onDestroy")
         isRunning = false
         stateCollectorJob?.cancel()
-        mqttManager?.disconnect()
+        serviceScope.launch {
+            mqttManager?.disconnect()
+        }
         locationManager?.stopLocationTracking()
         serviceScope.cancel()
     }

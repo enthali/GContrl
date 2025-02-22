@@ -1,19 +1,24 @@
 package de.drachenfels.gcontrl.services
 
 import android.content.Context
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
+import com.hivemq.client.mqtt.lifecycle.MqttDisconnectSource
 import com.hivemq.client.mqtt.mqtt5.Mqtt5AsyncClient
 import com.hivemq.client.mqtt.mqtt5.Mqtt5Client
+import com.hivemq.client.mqtt.mqtt5.message.disconnect.Mqtt5Disconnect
+import com.hivemq.client.mqtt.mqtt5.message.disconnect.Mqtt5DisconnectReasonCode
 import de.drachenfels.gcontrl.utils.AndroidLogger
 import de.drachenfels.gcontrl.utils.LogConfig
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.suspendCancellableCoroutine
 import java.util.UUID
-import kotlin.coroutines.Continuation
+import java.util.concurrent.TimeUnit
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
@@ -39,8 +44,10 @@ class MqttManager private constructor (private val context: Context) {
     private val _connectionState = MutableStateFlow<ConnectionState>(ConnectionState.Disconnected)
     val connectionState: StateFlow<ConnectionState> = _connectionState
 
-    private val _doorState = MutableStateFlow<DoorState>(DoorState.UNKNOWN)
+    private val _doorState = MutableStateFlow(DoorState.UNKNOWN)
     val doorState: StateFlow<DoorState> = _doorState
+
+    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
     private var client: Mqtt5AsyncClient? = null
 
@@ -54,7 +61,10 @@ class MqttManager private constructor (private val context: Context) {
             }
         }
     }
+
+
     private fun buildMqttClient(server: String): Mqtt5AsyncClient {
+
         val clientId = UUID.randomUUID().toString()
         logger.d(LogConfig.TAG_MQTT, "Building MQTT client with ID: $clientId")
 
@@ -64,28 +74,52 @@ class MqttManager private constructor (private val context: Context) {
             .serverPort(MQTT_PORT)
             .sslConfig()
             .applySslConfig()
-            .automaticReconnectWithDefaultConfig()
             .addConnectedListener {
-                logger.d(LogConfig.TAG_MQTT, "Connected")
+                logger.d(LogConfig.TAG_MQTT, "Connected - ConnectionListener")
                 _connectionState.value = ConnectionState.Connected
                 subscribeToState()
             }
- /* do not delete
             .addDisconnectedListener { event ->
-                logger.d(LogConfig.TAG_MQTT, """Disconnected listener triggered:
-Client ID: $clientId
-Available properties: ${event::class.java.methods.joinToString { it.name }}""".trimMargin())
-*/
+                // Bestehende ausführliche Logging beibehalten für Diagnose
+                logger.d(LogConfig.TAG_MQTT, """Disconnected listener triggered: 
+        Client ID: ${event.clientConfig.clientIdentifier}
+        Source: ${event.source}
+        Client Config: ${event.clientConfig} 
+        Cause: ${event.cause?.message ?: "No cause provided"}
+        State: ${event.clientConfig.state}
+        Connection Details: ${event.clientConfig.connectionConfig}
+        Current Thread: ${Thread.currentThread().name}
+        Current connection state: ${_connectionState.value}
+        Server Address: ${event.clientConfig.serverAddress}
+        Server Port: ${event.clientConfig.serverPort}
+        Client Config Methods: ${event.clientConfig::class.java.methods.joinToString { it.name }}
+        Available properties: ${event::class.java.methods.joinToString { it.name }}
+    """.trimMargin())
 
-            .addDisconnectedListener { event ->
-                logger.d(LogConfig.TAG_MQTT, """Disconnected listener triggered:
-Client ID: $clientId
-Source: ${event.source}
-Client Config: ${event.clientConfig}""".trimMargin())
-                // We do get an automated disconnect when the Client autoreconnects
-                // _connectionState.value = ConnectionState.Disconnected
-                // door state should only be set from actual MQTT messages
-                // _doorState.value = DoorState.UNKNOWN
+                _connectionState.value = ConnectionState.Disconnected
+
+                when (event.source) {
+                    MqttDisconnectSource.CLIENT -> {
+                        logger.d(LogConfig.TAG_MQTT, "Client disconnect detected, attempting reconnect in 2 seconds")
+                        scope.launch {
+                            delay(2000)
+                            logger.d(LogConfig.TAG_MQTT, "Starting reconnect after client disconnect")
+                            connect()
+                        }
+                    }
+                    MqttDisconnectSource.SERVER -> {
+                    logger.d(LogConfig.TAG_MQTT, "Server disconnect detected, attempting reconnect in 5 seconds")
+                    scope.launch {
+                        delay(5000)
+                        logger.d(LogConfig.TAG_MQTT, "Starting reconnect after client disconnect")
+                        connect()
+                    }
+                }
+                    else -> {
+                        // SERVER or andere Gründe
+                        logger.d(LogConfig.TAG_MQTT, "Server or other disconnect detected (${event.source}), cause: ${event.cause?.message ?: "unknown"}, no auto-reconnect")
+                    }
+                }
             }
             .buildAsync()
     }
@@ -104,7 +138,7 @@ Client Config: ${event.clientConfig}""".trimMargin())
                 }
             }
             ?.send()
-            ?.whenComplete { subAck, throwable ->
+            ?.whenComplete { _, throwable ->
                 if (throwable != null) {
                     logger.e(LogConfig.TAG_MQTT, "Subscribe failed", throwable)
                     _connectionState.value = ConnectionState.Error(throwable.message ?: "Subscribe failed")
@@ -140,13 +174,9 @@ Client Config: ${event.clientConfig}""".trimMargin())
         server: String,
         username: String,
         password: String
-    ): Boolean = suspendCancellableCoroutine { continuation ->
+    ): Boolean = suspendCoroutine { continuation ->
         try {
-            // Clean up any existing client
-            client?.disconnect()
             client = buildMqttClient(server)
-
-            _connectionState.value = ConnectionState.Disconnected
 
             client?.connectWith()
                 ?.keepAlive(30)
@@ -158,120 +188,65 @@ Client Config: ${event.clientConfig}""".trimMargin())
                 ?.whenComplete { _, throwable ->
                     if (throwable != null) {
                         logger.e(LogConfig.TAG_MQTT, "Connection failed", throwable)
-                        _connectionState.value = ConnectionState.Error(throwable.message ?: "Connection failed")
-                        if (!continuation.isCompleted) continuation.resume(false)
+                        continuation.resume(false)
                     } else {
-                        if (!continuation.isCompleted) continuation.resume(true)
+                        continuation.resume(true)
                     }
                 }
-
-            continuation.invokeOnCancellation {
-                logger.d(LogConfig.TAG_MQTT, "Connection cancelled")
-                disconnect()
-            }
         } catch (e: Exception) {
             logger.e(LogConfig.TAG_MQTT, "Exception during connect", e)
             _connectionState.value = ConnectionState.Error(e.message ?: "Unknown error during connect")
-            if (!continuation.isCompleted) continuation.resumeWithException(e)
+            continuation.resumeWithException(e)
         }
     }
 
-    fun disconnect() {
+    suspend fun disconnect() = suspendCoroutine { continuation ->
         try {
             logger.d(LogConfig.TAG_MQTT, "Starting disconnect")
             client?.disconnect()
                 ?.whenComplete { _, throwable ->
                     if (throwable != null) {
                         logger.e(LogConfig.TAG_MQTT, "Disconnect failed", throwable)
-                        _connectionState.value = ConnectionState.Error(throwable.message ?: "Disconnect failed")
+                        continuation.resume(false)
                     } else {
                         logger.d(LogConfig.TAG_MQTT, "Disconnect successful")
                         client = null
-                        _connectionState.value = ConnectionState.Disconnected
-                        _doorState.value = DoorState.UNKNOWN
+                        continuation.resume(true)
                     }
                 }
         } catch (e: Exception) {
             logger.e(LogConfig.TAG_MQTT, "Exception during disconnect", e)
-            _connectionState.value = ConnectionState.Error(e.message ?: "Unknown error during disconnect")
+            continuation.resumeWithException(e)
         }
     }
 
-    fun requestStatus() {
-        logger.d(LogConfig.TAG_MQTT, "Requesting door status")
-        client?.publishWith()
-            ?.topic(TOPIC_COMMAND)
-            ?.payload(COMMAND_REQUEST_STATUS.toByteArray())
-            ?.send()
-            ?.whenComplete { pubAck, throwable ->
-                if (throwable != null) {
-                    logger.e(LogConfig.TAG_MQTT, "Failed to request status", throwable)
-                    _connectionState.value = ConnectionState.Error(throwable.message ?: "Status request failed")
-                } else {
-                    logger.d(LogConfig.TAG_MQTT, "Status request sent successfully")
-                }
-            }
-    }
-
-    fun openDoor() {
+    private fun publishCommand(command: String) {
         CoroutineScope(Dispatchers.IO).launch {
-            logger.d(LogConfig.TAG_MQTT, "Publishing open command")
+            logger.d(LogConfig.TAG_MQTT, "Publishing $command command")
             client?.publishWith()
                 ?.topic(TOPIC_COMMAND)
-                ?.payload(COMMAND_OPEN.toByteArray())
+                ?.payload(command.toByteArray())
                 ?.send()
-                ?.whenComplete { pubAck, throwable ->
+                ?.whenComplete { _, throwable ->
                     if (throwable != null) {
-                        logger.e(LogConfig.TAG_MQTT, "Failed to publish open command", throwable)
-                        _connectionState.value =
-                            ConnectionState.Error(throwable.message ?: "Publish failed")
-                    } else {
-                        logger.d(LogConfig.TAG_MQTT, "Open command published successfully")
-                    }
-                }
-        }
-    }
-
-    fun closeDoor() {
-        CoroutineScope(Dispatchers.IO).launch {
-            logger.d(LogConfig.TAG_MQTT, "Publishing close command")
-            client?.publishWith()
-                ?.topic(TOPIC_COMMAND)
-                ?.payload(COMMAND_CLOSE.toByteArray())
-                ?.send()
-                ?.whenComplete { pubAck, throwable ->
-                    if (throwable != null) {
-                        logger.e(LogConfig.TAG_MQTT, "Failed to publish close command", throwable)
+                        logger.e(LogConfig.TAG_MQTT, "Failed to publish $command command", throwable)
                         _connectionState.value = ConnectionState.Error(throwable.message ?: "Publish failed")
                     } else {
-                        logger.d(LogConfig.TAG_MQTT, "Close command published successfully")
+                        logger.d(LogConfig.TAG_MQTT, "Command $command published successfully")
                     }
                 }
         }
     }
 
-    fun stopDoor() {
-        CoroutineScope(Dispatchers.IO).launch {
-            logger.d(LogConfig.TAG_MQTT, "Publishing stop command")
-            client?.publishWith()
-                ?.topic(TOPIC_COMMAND)
-                ?.payload(COMMAND_STOP.toByteArray())
-                ?.send()
-                ?.whenComplete { pubAck, throwable ->
-                    if (throwable != null) {
-                        logger.e(LogConfig.TAG_MQTT, "Failed to publish stop command", throwable)
-                        _connectionState.value =
-                            ConnectionState.Error(throwable.message ?: "Publish failed")
-                    } else {
-                        logger.d(LogConfig.TAG_MQTT, "Stop command published successfully")
-                    }
-                }
-        }
-    }
+    // Öffentliche API bleibt gleich
+    fun openDoor() = publishCommand(COMMAND_OPEN)
+    fun closeDoor() = publishCommand(COMMAND_CLOSE)
+    fun stopDoor() = publishCommand(COMMAND_STOP)
+    fun requestStatus() = publishCommand(COMMAND_REQUEST_STATUS)
 
     sealed class ConnectionState {
-        object Connected : ConnectionState()
-        object Disconnected : ConnectionState()
+        data object Connected : ConnectionState()
+        data object Disconnected : ConnectionState()
         data class Error(val message: String) : ConnectionState()
     }
 }
