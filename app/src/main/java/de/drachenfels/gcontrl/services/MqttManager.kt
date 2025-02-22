@@ -179,7 +179,7 @@ class MqttManager private constructor (private val context: Context) {
             client = buildMqttClient(server)
 
             client?.connectWith()
-                ?.keepAlive(30)
+                ?.keepAlive(15)
                 ?.simpleAuth()
                 ?.username(username)
                 ?.password(password.toByteArray())

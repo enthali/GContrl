@@ -25,7 +25,7 @@ fun VersionInfoSection(
         )
         
         Text(
-            text = "Version: ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE}) - ${BuildConfig.GIT_BRANCH}",
+            text = "Version: ${BuildConfig.VERSION_NAME} - ${BuildConfig.GIT_BRANCH}",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
