@@ -82,41 +82,31 @@ class MqttManager private constructor (private val context: Context) {
             .addDisconnectedListener { event ->
                 // Bestehende ausführliche Logging beibehalten für Diagnose
                 logger.d(LogConfig.TAG_MQTT, """Disconnected listener triggered: 
-        Client ID: ${event.clientConfig.clientIdentifier}
-        Source: ${event.source}
-        Client Config: ${event.clientConfig} 
-        Cause: ${event.cause?.message ?: "No cause provided"}
-        State: ${event.clientConfig.state}
-        Connection Details: ${event.clientConfig.connectionConfig}
-        Current Thread: ${Thread.currentThread().name}
-        Current connection state: ${_connectionState.value}
-        Server Address: ${event.clientConfig.serverAddress}
-        Server Port: ${event.clientConfig.serverPort}
-        Client Config Methods: ${event.clientConfig::class.java.methods.joinToString { it.name }}
-        Available properties: ${event::class.java.methods.joinToString { it.name }}
-    """.trimMargin())
+                                                Client ID: ${event.clientConfig.clientIdentifier}
+                                                Source: ${event.source}
+                                                Client Config: ${event.clientConfig} 
+                                                Cause: ${event.cause?.message ?: "No cause provided"}
+                                                State: ${event.clientConfig.state}
+                                                Connection Details: ${event.clientConfig.connectionConfig}
+                                                Current Thread: ${Thread.currentThread().name}
+                                                Current connection state: ${_connectionState.value}
+                                                Server Address: ${event.clientConfig.serverAddress}
+                                                Server Port: ${event.clientConfig.serverPort}
+                                                Client Config Methods: ${event.clientConfig::class.java.methods.joinToString { it.name }}
+                                                Available properties: ${event::class.java.methods.joinToString { it.name }}
+                                            """.trimMargin())
 
                 _connectionState.value = ConnectionState.Disconnected
 
                 when (event.source) {
-                    MqttDisconnectSource.CLIENT -> {
-                        logger.d(LogConfig.TAG_MQTT, "Client disconnect detected, attempting reconnect in 2 seconds")
+                    MqttDisconnectSource.CLIENT, MqttDisconnectSource.SERVER -> {
                         scope.launch {
                             delay(2000)
-                            logger.d(LogConfig.TAG_MQTT, "Starting reconnect after client disconnect")
+                            logger.d(LogConfig.TAG_MQTT, "Attempting reconnect")
                             connect()
                         }
                     }
-                    MqttDisconnectSource.SERVER -> {
-                    logger.d(LogConfig.TAG_MQTT, "Server disconnect detected, attempting reconnect in 5 seconds")
-                    scope.launch {
-                        delay(5000)
-                        logger.d(LogConfig.TAG_MQTT, "Starting reconnect after client disconnect")
-                        connect()
-                    }
-                }
                     else -> {
-                        // SERVER or andere Gründe
                         logger.d(LogConfig.TAG_MQTT, "Server or other disconnect detected (${event.source}), cause: ${event.cause?.message ?: "unknown"}, no auto-reconnect")
                     }
                 }
@@ -177,7 +167,6 @@ class MqttManager private constructor (private val context: Context) {
     ): Boolean = suspendCoroutine { continuation ->
         try {
             client = buildMqttClient(server)
-
             client?.connectWith()
                 ?.keepAlive(15)
                 ?.simpleAuth()
@@ -187,16 +176,15 @@ class MqttManager private constructor (private val context: Context) {
                 ?.send()
                 ?.whenComplete { _, throwable ->
                     if (throwable != null) {
-                        logger.e(LogConfig.TAG_MQTT, "Connection failed", throwable)
+                        _connectionState.value = ConnectionState.Error(throwable.message ?: "Connection failed")
                         continuation.resume(false)
                     } else {
                         continuation.resume(true)
                     }
                 }
         } catch (e: Exception) {
-            logger.e(LogConfig.TAG_MQTT, "Exception during connect", e)
-            _connectionState.value = ConnectionState.Error(e.message ?: "Unknown error during connect")
-            continuation.resumeWithException(e)
+            _connectionState.value = ConnectionState.Error(e.message ?: "Connection failed")
+            continuation.resume(false)
         }
     }
 
@@ -222,17 +210,17 @@ class MqttManager private constructor (private val context: Context) {
 
     private fun publishCommand(command: String) {
         CoroutineScope(Dispatchers.IO).launch {
-            logger.d(LogConfig.TAG_MQTT, "Publishing $command command")
+            logger.d(LogConfig.TAG_MQTT, "Publishing command: $command")
             client?.publishWith()
                 ?.topic(TOPIC_COMMAND)
                 ?.payload(command.toByteArray())
                 ?.send()
                 ?.whenComplete { _, throwable ->
                     if (throwable != null) {
-                        logger.e(LogConfig.TAG_MQTT, "Failed to publish $command command", throwable)
+                        logger.e(LogConfig.TAG_MQTT, "Failed to publish command: $command", throwable)
                         _connectionState.value = ConnectionState.Error(throwable.message ?: "Publish failed")
                     } else {
-                        logger.d(LogConfig.TAG_MQTT, "Command $command published successfully")
+                        logger.d(LogConfig.TAG_MQTT, "Published command: $command")
                     }
                 }
         }
