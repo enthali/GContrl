@@ -26,8 +26,8 @@ android {
         applicationId = "de.drachenfels.gcontrl"
         minSdk = 26
         targetSdk = 35
-        versionCode = 37
-        versionName = "We stay online"
+        versionCode = 38
+        versionName = "Let's reconnect"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -119,3 +119,4 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 }
+

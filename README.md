@@ -65,6 +65,7 @@ This project is open for contributions. For major changes, please open an issue 
 
 | Version | Title | Description |
 |---------|-------|-------------|
+| 38 | Let's reconnect | New reconnect logic ensuring to stay connected |
 | 37 | We stay online | The automation now works even if the app is not in the foreground |
 | 36 | What a wide view again | Portrait and landscape support - startup crash fixed |
 | 35 | What a wide view | Portrait and landscape support - non-functional |
