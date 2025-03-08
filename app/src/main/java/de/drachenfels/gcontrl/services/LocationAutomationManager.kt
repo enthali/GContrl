@@ -11,6 +11,7 @@ import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
 import de.drachenfels.gcontrl.utils.AndroidLogger
 import de.drachenfels.gcontrl.utils.LogConfig
 import kotlinx.coroutines.CoroutineScope
@@ -23,23 +24,7 @@ import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
 
-/* TODO: Battery Optimization through Dynamic Location Updates
- * Implement adaptive location tracking based on distance to garage:
- * 
- * Within 500m of garage:
- * - Update interval: 1000ms (1 second)
- * - Priority: PRIORITY_HIGH_ACCURACY
- * 
- * Outside 500m of garage:
- * - Update interval: 20000ms (20 seconds)
- * - Priority: PRIORITY_BALANCED_POWER_ACCURACY
- * 
- * Rationale:
- * - High precision needed only near garage (within 500m)
- * - At 50 km/h, car travels ~300m in 21.6 seconds
- * - 20-second update interval outside gives sufficient time to detect approach
- * - PRIORITY_BALANCED_POWER_ACCURACY saves battery while maintaining adequate tracking
- */
+// Battery optimization implemented through dynamic location updates
 
 data class LocationData(
     val latitude: Double,
@@ -70,10 +55,16 @@ class LocationAutomationManager private constructor() {
     private val KEY_HOME_LATITUDE = "garage_latitude"
     private val KEY_HOME_LONGITUDE = "garage_longitude"
 
+    // Location tracking constants
+    private val NEAR_DISTANCE = 500.0 // meters
+    private val FAST_UPDATE_INTERVAL = 2000L // 2 second
+    private val SLOW_UPDATE_INTERVAL = 20000L // 20 seconds
+
     // State tracking
     private var lastKnownDistance: Double? = null
     private var lastCommandTime: Long = 0
     private val COMMAND_COOLDOWN = 60000L // 1 minute cooldown
+    private var currentUpdateMode: UpdateMode = UpdateMode.UNKNOWN
 
     companion object {
         @Volatile
@@ -93,14 +84,15 @@ class LocationAutomationManager private constructor() {
         }
         if (!::fusedLocationClient.isInitialized) {
             fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
-            createLocationRequest()
+            // Initial setup with default values - will be updated based on distance
+            createLocationRequest(FAST_UPDATE_INTERVAL, Priority.PRIORITY_HIGH_ACCURACY)
             createLocationCallback()
         }
     }
 
-    private fun createLocationRequest() {
-        locationRequest = LocationRequest.Builder(2000L)
-            .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
+    private fun createLocationRequest(interval: Long, priority: Int) {
+        locationRequest = LocationRequest.Builder(interval)
+            .setPriority(priority)
             .build()
     }
 
@@ -130,9 +122,64 @@ class LocationAutomationManager private constructor() {
                     )
                     _locationData.value = locationData
                     
+                    // Adjust location update strategy based on distance
+                    distance?.let { adjustLocationUpdates(it) }
+                    
                     checkLocation(location)
                 }
             }
+        }
+    }
+
+    private fun adjustLocationUpdates(distance: Double) {
+        val newMode = if (distance < NEAR_DISTANCE) {
+            UpdateMode.NEAR
+        } else {
+            UpdateMode.FAR
+        }
+        
+        // Only update if the mode changed
+        if (newMode != currentUpdateMode) {
+            when (newMode) {
+                UpdateMode.NEAR -> {
+                    logger.d(LogConfig.TAG_LOCATION, "Switching to high accuracy mode (within 500m)")
+                    updateLocationRequest(FAST_UPDATE_INTERVAL, Priority.PRIORITY_HIGH_ACCURACY)
+                }
+                UpdateMode.FAR -> {
+                    logger.d(LogConfig.TAG_LOCATION, "Switching to balanced power mode (beyond 500m)")
+                    //updateLocationRequest(SLOW_UPDATE_INTERVAL, Priority.PRIORITY_BALANCED_POWER_ACCURACY)
+                    // TODO : find out why balanced power accuracy doesn't work in the background, for now we use high accuracy
+                    updateLocationRequest(SLOW_UPDATE_INTERVAL, Priority.PRIORITY_HIGH_ACCURACY)
+                }
+                else -> { /* Do nothing for UNKNOWN */ }
+            }
+            currentUpdateMode = newMode
+        }
+    }
+
+    private fun updateLocationRequest(interval: Long, priority: Int) {
+        if (ActivityCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            return
+        }
+
+        try {
+            // Create new request with updated parameters
+            createLocationRequest(interval, priority)
+
+            // Update existing request without removing
+            fusedLocationClient.requestLocationUpdates(
+                locationRequest,
+                locationCallback,
+                null
+            )
+
+            logger.d(LogConfig.TAG_LOCATION, "Location updates adjusted: interval=$interval, priority=$priority")
+        } catch (e: Exception) {
+            logger.e(LogConfig.TAG_LOCATION, "Failed to update location request", e)
         }
     }
 
@@ -147,6 +194,10 @@ class LocationAutomationManager private constructor() {
         }
 
         try {
+            // Start with default high accuracy - will adjust based on distance
+            createLocationRequest(FAST_UPDATE_INTERVAL, Priority.PRIORITY_HIGH_ACCURACY)
+            currentUpdateMode = UpdateMode.UNKNOWN
+            
             fusedLocationClient.requestLocationUpdates(
                 locationRequest,
                 locationCallback,
@@ -164,6 +215,7 @@ class LocationAutomationManager private constructor() {
         try {
             fusedLocationClient.removeLocationUpdates(locationCallback)
             _locationState.value = LocationState.Inactive
+            currentUpdateMode = UpdateMode.UNKNOWN
             logger.d(LogConfig.TAG_LOCATION, "Location tracking stopped")
         } catch (e: Exception) {
             _locationState.value = LocationState.Error("Failed to stop location tracking: ${e.message}")
@@ -250,5 +302,9 @@ class LocationAutomationManager private constructor() {
         object Active : LocationState()
         object Inactive : LocationState()
         data class Error(val message: String) : LocationState()
+    }
+    
+    private enum class UpdateMode {
+        NEAR, FAR, UNKNOWN
     }
 }
