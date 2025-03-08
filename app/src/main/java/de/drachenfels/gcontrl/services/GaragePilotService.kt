@@ -21,8 +21,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import java.text.DecimalFormat
 
 class GaragePilotService : Service() {
     private val logger = AndroidLogger()
@@ -30,6 +33,7 @@ class GaragePilotService : Service() {
     private var mqttManager: MqttManager? = null
     private var locationManager: LocationAutomationManager? = null
     private var stateCollectorJob: Job? = null
+    private var periodicUpdateJob: Job? = null
 
     companion object {
         private const val NOTIFICATION_ID = 1
@@ -77,6 +81,7 @@ class GaragePilotService : Service() {
                         it.initialize(applicationContext)
                     }
                     startStateCollection()
+                    startPeriodicNotificationUpdates()
                     connectToMqtt()
                     locationManager?.startLocationTracking()
                 }
@@ -95,6 +100,7 @@ class GaragePilotService : Service() {
         logger.d(LogConfig.TAG_MAIN, "GaragePilotService: onDestroy")
         isRunning = false
         stateCollectorJob?.cancel()
+        periodicUpdateJob?.cancel()
         serviceScope.launch {
             mqttManager?.disconnect()
         }
@@ -155,6 +161,12 @@ class GaragePilotService : Service() {
     private fun createNotification(doorState: DoorState = DoorState.UNKNOWN): Notification {
         logger.d(LogConfig.TAG_NOTIFICATION, "Creating notification with state: $doorState")
 
+        // Entfernung zur Garage abrufen
+        val distanceText = locationManager?.locationData?.value?.distanceToGarage?.let { distance ->
+            val formatter = DecimalFormat("#,##0.0")
+            "Distance: ${formatter.format(distance)}m"
+        } ?: "Distance: Unknown"
+
         // Intent zum Öffnen der App
         val contentIntent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
@@ -180,6 +192,8 @@ class GaragePilotService : Service() {
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("GaragePilot Active")
             .setContentText("Door Status: ${doorState.name}")
+            .setStyle(NotificationCompat.BigTextStyle()
+                .bigText("Door Status: ${doorState.name}\n$distanceText"))
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setOngoing(true)
@@ -194,8 +208,35 @@ class GaragePilotService : Service() {
 
     private fun startStateCollection() {
         stateCollectorJob = serviceScope.launch {
-            mqttManager?.doorState?.collectLatest { state ->
-                updateNotification(state)
+            // Collect door state changes
+            launch {
+                mqttManager?.doorState?.collectLatest { state ->
+                    logger.d(LogConfig.TAG_MAIN, "Door state changed to: $state")
+                    updateNotification(state)
+                }
+            }
+
+            // Collect location data changes - this is critical for background updates
+            launch {
+                locationManager?.locationData?.collectLatest { locationData ->
+                    logger.d(LogConfig.TAG_MAIN, "Location data changed: distance=${locationData?.distanceToGarage}m")
+                    val currentDoorState = mqttManager?.doorState?.value ?: DoorState.UNKNOWN
+                    updateNotification(currentDoorState)
+                }
+            }
+        }
+    }
+
+    private fun startPeriodicNotificationUpdates() {
+        periodicUpdateJob?.cancel()
+        periodicUpdateJob = serviceScope.launch {
+            while (isActive) {
+                // Periodic update as a fallback (every 60 seconds regardless of distance)
+                val currentDoorState = mqttManager?.doorState?.value ?: DoorState.UNKNOWN
+                val distance = locationManager?.locationData?.value?.distanceToGarage ?: Double.MAX_VALUE
+                logger.d(LogConfig.TAG_NOTIFICATION, "Periodic notification update - distance: ${distance}m")
+                updateNotification(currentDoorState)
+                delay(60000L)  // Update every minute as a backup
             }
         }
     }
