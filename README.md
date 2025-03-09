@@ -63,27 +63,28 @@ This project is open for contributions. For major changes, please open an issue 
 
 ## Version History
 
-| Version | Title | Description |
-|---------|-------|-------------|
-| 38 | Let's reconnect | New reconnect logic ensuring to stay connected |
-| 37 | We stay online | The automation now works even if the app is not in the foreground |
-| 36 | What a wide view again | Portrait and landscape support - startup crash fixed |
-| 35 | What a wide view | Portrait and landscape support - non-functional |
-| 34 | Let's make the door move | Enhanced garage door movement visualization with animated icons |
-| 33 | A long way from home | Geo-location features improvements |
-| 32 | New icon | New app icon design |
-| 31 | Connect me | Improved MQTT connection |
-| 30 | Set things right | Bug fixes |
-| 29 | Lets drive | Android Automotive OS optimizations |
-| 28 | New Live | Important updates |
-| 26 | Stabilization | Fix: 'Abort during opening/closing action' |
-| 25 | AGP Upgrade | Android Gradle Plugin update |
-| 24 | UI Update | Swapped car and house pictograms (user feedback) |
-| 13 | Geo location | Added geo-location services |
-| 4 | Color theme | Color scheme update |
-| 3 | Public | Initial public release |
-| 2 | Test | Internal test release |
-| 1 | Initial | First internal release |
+| Version | Title | Description                                                                                 |
+|---------|-------|---------------------------------------------------------------------------------------------|
+| 39 | We like to work in the foreground | Added location to the Notification, and implement location automation in foreground service |
+| 38 | Let's reconnect | New reconnect logic ensuring to stay connected                                              |
+| 37 | We stay online | The automation now works even if the app is not in the foreground                           |
+| 36 | What a wide view again | Portrait and landscape support - startup crash fixed                                        |
+| 35 | What a wide view | Portrait and landscape support - non-functional                                             |
+| 34 | Let's make the door move | Enhanced garage door movement visualization with animated icons                             |
+| 33 | A long way from home | Geo-location features improvements                                                          |
+| 32 | New icon | New app icon design                                                                         |
+| 31 | Connect me | Improved MQTT connection                                                                    |
+| 30 | Set things right | Bug fixes                                                                                   |
+| 29 | Lets drive | Android Automotive OS optimizations                                                         |
+| 28 | New Live | Important updates                                                                           |
+| 26 | Stabilization | Fix: 'Abort during opening/closing action'                                                  |
+| 25 | AGP Upgrade | Android Gradle Plugin update                                                                |
+| 24 | UI Update | Swapped car and house pictograms (user feedback)                                            |
+| 13 | Geo location | Added geo-location services                                                                 |
+| 4 | Color theme | Color scheme update                                                                         |
+| 3 | Public | Initial public release                                                                      |
+| 2 | Test | Internal test release                                                                       |
+| 1 | Initial | First internal release                                                                      |
 
 ## Support & Contact
 
