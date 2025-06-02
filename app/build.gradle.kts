@@ -36,26 +36,15 @@ android {
         buildConfigField("String", "BUILD_DATE", "\"${formattedDate}\"")
 
         // Add Git Branch Information
-        buildConfigField("String", "GIT_BRANCH", "\"${getGitBranch()}\"")
-    }
-
-    signingConfigs {
-        create("release") {
-            storeFile = file("C:\\Users\\georg\\OneDrive\\Computer\\Android\\AppKeys\\gcontrol\\keystore.jks")
-            storePassword = "gcontrol"
-            keyAlias = "upload"
-            keyPassword = "gcontrol"
-        }
-    }
-
-    buildTypes {
+        buildConfigField("St    	ring", "GIT_BRANCH", "\"${getGitBranch()}\"")
+    }    buildTypes {
         release {
             isMinifyEnabled = false
             proguardFiles(
                 "proguard-android.txt",
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.getByName("release")
+            // Signing configuration handled externally (CI/CD or manual process)
             buildConfigField("Boolean", "ENABLE_DEBUG", "false")
             ndk {
                 debugSymbolLevel = "FULL"
