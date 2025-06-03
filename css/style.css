@@ -225,6 +225,23 @@ section h3 {
     text-align: center;
 }
 
+.internal-test-notice {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border: 2px solid #f59e0b;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+    color: #92400e;
+}
+
+.internal-test-notice p {
+    margin: 0.5rem 0;
+}
+
+.internal-test-notice strong {
+    color: #78350f;
+}
+
 .download-buttons {
     display: flex;
     gap: 1rem;
