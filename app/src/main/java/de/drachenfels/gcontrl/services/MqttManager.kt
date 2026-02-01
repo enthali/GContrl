@@ -63,25 +63,25 @@ class MqttManager private constructor (private val context: Context) {
     }
 
 
-    private fun buildMqttClient(server: String): Mqtt5AsyncClient {
+    private fun buildMqttClient(server: String): Mqtt5AsyncClient? {
+        return try {
+            val clientId = UUID.randomUUID().toString()
+            logger.d(LogConfig.TAG_MQTT, "Building MQTT client with ID: $clientId for server: $server")
 
-        val clientId = UUID.randomUUID().toString()
-        logger.d(LogConfig.TAG_MQTT, "Building MQTT client with ID: $clientId")
-
-        return Mqtt5Client.builder()
-            .identifier(clientId)
-            .serverHost(server)
-            .serverPort(MQTT_PORT)
-            .sslConfig()
-            .applySslConfig()
-            .addConnectedListener {
-                logger.d(LogConfig.TAG_MQTT, "Connected - ConnectionListener")
-                _connectionState.value = ConnectionState.Connected
-                subscribeToState()
-            }
-            .addDisconnectedListener { event ->
-                // Bestehende ausführliche Logging beibehalten für Diagnose
-                logger.d(LogConfig.TAG_MQTT, """Disconnected listener triggered: 
+            Mqtt5Client.builder()
+                .identifier(clientId)
+                .serverHost(server)
+                .serverPort(MQTT_PORT)
+                .sslConfig()
+                .applySslConfig()
+                .addConnectedListener {
+                    logger.d(LogConfig.TAG_MQTT, "Connected - ConnectionListener")
+                    _connectionState.value = ConnectionState.Connected
+                    subscribeToState()
+                }
+                .addDisconnectedListener { event ->
+                    // Bestehende ausführliche Logging beibehalten für Diagnose
+                    logger.d(LogConfig.TAG_MQTT, """Disconnected listener triggered: 
                                                 Client ID: ${event.clientConfig.clientIdentifier}
                                                 Source: ${event.source}
                                                 Client Config: ${event.clientConfig} 
@@ -96,22 +96,26 @@ class MqttManager private constructor (private val context: Context) {
                                                 Available properties: ${event::class.java.methods.joinToString { it.name }}
                                             """.trimMargin())
 
-                _connectionState.value = ConnectionState.Disconnected
+                    _connectionState.value = ConnectionState.Disconnected
 
-                when (event.source) {
-                    MqttDisconnectSource.CLIENT, MqttDisconnectSource.SERVER -> {
-                        scope.launch {
-                            delay(2000)
-                            logger.d(LogConfig.TAG_MQTT, "Attempting reconnect")
-                            connect()
+                    when (event.source) {
+                        MqttDisconnectSource.CLIENT, MqttDisconnectSource.SERVER -> {
+                            scope.launch {
+                                delay(2000)
+                                logger.d(LogConfig.TAG_MQTT, "Attempting reconnect")
+                                connect()
+                            }
+                        }
+                        else -> {
+                            logger.d(LogConfig.TAG_MQTT, "Server or other disconnect detected (${event.source}), cause: ${event.cause?.message ?: "unknown"}, no auto-reconnect")
                         }
                     }
-                    else -> {
-                        logger.d(LogConfig.TAG_MQTT, "Server or other disconnect detected (${event.source}), cause: ${event.cause?.message ?: "unknown"}, no auto-reconnect")
-                    }
                 }
-            }
-            .buildAsync()
+                .buildAsync()
+        } catch (e: Exception) {
+            logger.e(LogConfig.TAG_MQTT, "Failed to build MQTT client", e)
+            null
+        }
     }
 
     private fun subscribeToState() {
@@ -166,23 +170,46 @@ class MqttManager private constructor (private val context: Context) {
         password: String
     ): Boolean = suspendCoroutine { continuation ->
         try {
+            logger.d(LogConfig.TAG_MQTT, "Starting connection to server: $server with username: $username")
+            _connectionState.value = ConnectionState.Connecting
+
             client = buildMqttClient(server)
-            client?.connectWith()
+
+            if (client == null) {
+                logger.e(LogConfig.TAG_MQTT, "Failed to build MQTT client")
+                _connectionState.value = ConnectionState.Error("Failed to build MQTT client")
+                continuation.resume(false)
+                return@suspendCoroutine
+            }
+
+            logger.d(LogConfig.TAG_MQTT, "Client built successfully, attempting to connect...")
+            val connectFuture = client?.connectWith()
                 ?.keepAlive(15)
                 ?.simpleAuth()
                 ?.username(username)
                 ?.password(password.toByteArray())
                 ?.applySimpleAuth()
                 ?.send()
-                ?.whenComplete { _, throwable ->
-                    if (throwable != null) {
-                        _connectionState.value = ConnectionState.Error(throwable.message ?: "Connection failed")
-                        continuation.resume(false)
-                    } else {
-                        continuation.resume(true)
-                    }
+
+            if (connectFuture == null) {
+                logger.e(LogConfig.TAG_MQTT, "Connect future is null")
+                _connectionState.value = ConnectionState.Error("Connection setup failed")
+                continuation.resume(false)
+                return@suspendCoroutine
+            }
+
+            connectFuture.whenComplete { _, throwable ->
+                if (throwable != null) {
+                    logger.e(LogConfig.TAG_MQTT, "Connection failed", throwable)
+                    _connectionState.value = ConnectionState.Error(throwable.message ?: "Connection failed")
+                    continuation.resume(false)
+                } else {
+                    logger.d(LogConfig.TAG_MQTT, "Connection successful")
+                    continuation.resume(true)
                 }
+            }
         } catch (e: Exception) {
+            logger.e(LogConfig.TAG_MQTT, "Exception during connection", e)
             _connectionState.value = ConnectionState.Error(e.message ?: "Connection failed")
             continuation.resume(false)
         }
@@ -191,20 +218,37 @@ class MqttManager private constructor (private val context: Context) {
     suspend fun disconnect() = suspendCoroutine { continuation ->
         try {
             logger.d(LogConfig.TAG_MQTT, "Starting disconnect")
-            client?.disconnect()
-                ?.whenComplete { _, throwable ->
-                    if (throwable != null) {
-                        logger.e(LogConfig.TAG_MQTT, "Disconnect failed", throwable)
-                        continuation.resume(false)
-                    } else {
-                        logger.d(LogConfig.TAG_MQTT, "Disconnect successful")
-                        client = null
-                        continuation.resume(true)
-                    }
+
+            if (client == null) {
+                logger.d(LogConfig.TAG_MQTT, "Client is already null, nothing to disconnect")
+                continuation.resume(true)
+                return@suspendCoroutine
+            }
+
+            val disconnectFuture = client?.disconnect()
+
+            if (disconnectFuture == null) {
+                logger.d(LogConfig.TAG_MQTT, "Disconnect future is null")
+                client = null
+                continuation.resume(true)
+                return@suspendCoroutine
+            }
+
+            disconnectFuture.whenComplete { _, throwable ->
+                if (throwable != null) {
+                    logger.e(LogConfig.TAG_MQTT, "Disconnect failed", throwable)
+                    client = null
+                    continuation.resume(false)
+                } else {
+                    logger.d(LogConfig.TAG_MQTT, "Disconnect successful")
+                    client = null
+                    continuation.resume(true)
                 }
+            }
         } catch (e: Exception) {
             logger.e(LogConfig.TAG_MQTT, "Exception during disconnect", e)
-            continuation.resumeWithException(e)
+            client = null
+            continuation.resume(false)
         }
     }
 
@@ -234,6 +278,7 @@ class MqttManager private constructor (private val context: Context) {
 
     sealed class ConnectionState {
         data object Connected : ConnectionState()
+        data object Connecting : ConnectionState()
         data object Disconnected : ConnectionState()
         data class Error(val message: String) : ConnectionState()
     }

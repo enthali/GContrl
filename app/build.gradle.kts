@@ -36,8 +36,10 @@ android {
         buildConfigField("String", "BUILD_DATE", "\"${formattedDate}\"")
 
         // Add Git Branch Information
-        buildConfigField("St    	ring", "GIT_BRANCH", "\"${getGitBranch()}\"")
-    }    buildTypes {
+        buildConfigField("String", "GIT_BRANCH", "\"${getGitBranch()}\"")
+    }
+
+    buildTypes {
         release {
             isMinifyEnabled = false
             proguardFiles(
