@@ -79,7 +79,7 @@ class MqttManager private constructor (private val context: Context) {
                                                 Client ID: ${event.clientConfig.clientIdentifier}
                                                 Source: ${event.source}
                                                 Client Config: ${event.clientConfig} 
-                                                Cause: ${event.cause?.message ?: "No cause provided"}
+                                                Cause: ${event.cause.message ?: "No cause provided"}
                                                 State: ${event.clientConfig.state}
                                                 Connection Details: ${event.clientConfig.connectionConfig}
                                                 Current Thread: ${Thread.currentThread().name}
@@ -101,7 +101,7 @@ class MqttManager private constructor (private val context: Context) {
                             }
                         }
                         else -> {
-                            logger.d(LogConfig.TAG_MQTT, "Server or other disconnect detected (${event.source}), cause: ${event.cause?.message ?: "unknown"}, no auto-reconnect")
+                            logger.d(LogConfig.TAG_MQTT, "Server or other disconnect detected (${event.source}), cause: ${event.cause.message ?: "unknown"}, no auto-reconnect")
                         }
                     }
                 }
@@ -121,7 +121,7 @@ class MqttManager private constructor (private val context: Context) {
                 logger.d(LogConfig.TAG_MQTT, "Received state: $message")
                 try {
                     _doorState.value = DoorState.valueOf(message)
-                } catch (e: IllegalArgumentException) {
+                } catch (_: IllegalArgumentException) {
                     _doorState.value = DoorState.UNKNOWN
                 }
             }

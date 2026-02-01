@@ -1,9 +1,9 @@
+import com.android.build.api.dsl.ApplicationExtension
 import java.text.SimpleDateFormat
 import java.util.Date
 
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
 }
 
@@ -17,15 +17,15 @@ fun getGitBranch(): String {
         .ifEmpty { "unknown" }
 }
 
-android {
+configure<ApplicationExtension> {
     namespace = "de.drachenfels.gcontrl"
-    compileSdk = 35
+    compileSdk = 36
     ndkVersion = "28.0.13004108"
 
     defaultConfig {
         applicationId = "de.drachenfels.gcontrl"
         minSdk = 26
-        targetSdk = 35
+        targetSdk = 36
         versionCode = 39
         versionName = "We like to work in the foreground"
 
@@ -78,12 +78,15 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlinOptions {
-        jvmTarget = "17"
-    }
     buildFeatures {
         compose = true
         buildConfig = true
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
     }
 }
 
