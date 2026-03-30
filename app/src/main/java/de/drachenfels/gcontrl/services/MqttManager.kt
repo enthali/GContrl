@@ -210,7 +210,7 @@ class MqttManager private constructor (private val context: Context) {
     }
 
     private fun publishCommand(command: String) {
-        CoroutineScope(Dispatchers.IO).launch {
+        scope.launch {
             logger.d(LogConfig.TAG_MQTT, "Publishing command: $command")
             client?.publishWith()
                 ?.topic(TOPIC_COMMAND)

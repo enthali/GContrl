@@ -15,11 +15,8 @@ import com.google.android.gms.location.Priority
 import de.drachenfels.gcontrl.utils.AndroidLogger
 import de.drachenfels.gcontrl.utils.LogConfig
 import de.drachenfels.gcontrl.utils.getSecurePrefs
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
@@ -261,17 +258,13 @@ class LocationAutomationManager private constructor() {
                 // Trigger when crossing from outside to inside
                 lastDistance >= triggerDistance && currentDistance < triggerDistance -> {
                     logger.d(LogConfig.TAG_LOCATION, "Crossed trigger distance inward, opening garage")
-                    CoroutineScope(Dispatchers.IO).launch {
-                        MqttManager.getInstance(context).openDoor()
-                    }
+                    MqttManager.getInstance(context).openDoor()
                     lastCommandTime = currentTime
                 }
                 // Trigger when crossing from inside to outside
                 lastDistance < triggerDistance && currentDistance >= triggerDistance -> {
                     logger.d(LogConfig.TAG_LOCATION, "Crossed trigger distance outward, closing garage")
-                    CoroutineScope(Dispatchers.IO).launch {
-                        MqttManager.getInstance(context).closeDoor()
-                    }
+                    MqttManager.getInstance(context).closeDoor()
                     lastCommandTime = currentTime
                 }
             }
