@@ -28,6 +28,7 @@ import de.drachenfels.gcontrl.ui.settings.SettingsScreen
 import de.drachenfels.gcontrl.ui.theme.GContrlTheme
 import de.drachenfels.gcontrl.utils.AndroidLogger
 import de.drachenfels.gcontrl.utils.LogConfig
+import de.drachenfels.gcontrl.utils.getSecurePrefs
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -56,7 +57,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         logger.d(LogConfig.TAG_MAIN, "onCreate - Initializing app")
-        prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        prefs = getSecurePrefs(this)
 
         _locationAutomationSettings.value = LocationAutomationSettings(
             isLocationAutomationEnabled = prefs.getBoolean(KEY_LOCATION_AUTOMATION_ENABLED, false),

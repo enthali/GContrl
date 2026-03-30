@@ -21,6 +21,7 @@ import de.drachenfels.gcontrl.ui.settings.components.*
 import de.drachenfels.gcontrl.ui.theme.GContrlTheme
 import de.drachenfels.gcontrl.utils.AndroidLogger
 import de.drachenfels.gcontrl.utils.LogConfig
+import de.drachenfels.gcontrl.utils.getSecurePrefs
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -59,7 +60,7 @@ fun SettingsScreen(
     modifier: Modifier = Modifier
 ){
     val context = LocalContext.current
-    val prefs = remember { context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE) }
+    val prefs = remember { getSecurePrefs(context) }
     val scope = rememberCoroutineScope()
     val scrollState = rememberScrollState()
 

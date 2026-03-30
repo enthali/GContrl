@@ -14,6 +14,7 @@ import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import de.drachenfels.gcontrl.utils.AndroidLogger
 import de.drachenfels.gcontrl.utils.LogConfig
+import de.drachenfels.gcontrl.utils.getSecurePrefs
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -80,7 +81,7 @@ class LocationAutomationManager private constructor() {
     fun initialize(context: Context) {
         this.context = context
         if (!::prefs.isInitialized) {
-            prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            prefs = getSecurePrefs(context)
         }
         if (!::fusedLocationClient.isInitialized) {
             fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)

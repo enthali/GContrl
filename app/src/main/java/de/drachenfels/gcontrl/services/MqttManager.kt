@@ -10,6 +10,7 @@ import com.hivemq.client.mqtt.mqtt5.message.disconnect.Mqtt5Disconnect
 import com.hivemq.client.mqtt.mqtt5.message.disconnect.Mqtt5DisconnectReasonCode
 import de.drachenfels.gcontrl.utils.AndroidLogger
 import de.drachenfels.gcontrl.utils.LogConfig
+import de.drachenfels.gcontrl.utils.getSecurePrefs
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -142,7 +143,7 @@ class MqttManager private constructor (private val context: Context) {
     }
 
     suspend fun connect(): Boolean {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val prefs = getSecurePrefs(context)
         if (!prefs.getBoolean(KEY_CONFIG_VALID, false)) {
             logger.d(LogConfig.TAG_MQTT, "MQTT config not valid")
             return false
