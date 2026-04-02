@@ -41,8 +41,10 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = true
-            isShrinkResources = true
+            // NOTE: isMinifyEnabled intentionally false - R8 causes crashes on Polestar
+            // (Android 12 x86, versionCode 36, commit 59b2eb4). Needs investigation
+            // before re-enabling. See git log for history.
+            isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
